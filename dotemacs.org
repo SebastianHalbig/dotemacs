@@ -34,7 +34,7 @@ Note also that the first time you will start emacs using this configuration, *it
 
 ** To sort :INACTIVE:
 
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 
 (setq-default
  ad-redefinition-action 'accept         ; Silence warnings for redefinition
@@ -57,7 +57,7 @@ Note also that the first time you will start emacs using this configuration, *it
 
 * Core
 
-** Header 
+** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
 
@@ -106,7 +106,7 @@ This code is meant to go to the [[file:early-init.el][early-init.el]] file.
 #+begin_src emacs-lisp
 
 (setq
- site-run-file nil                         ; No site-wide run-time initializations. 
+ site-run-file nil                         ; No site-wide run-time initializations.
  inhibit-default-init t                    ; No site-wide default library
  gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
                                            ; collector during init
@@ -119,7 +119,7 @@ This code is meant to go to the [[file:early-init.el][early-init.el]] file.
 (add-hook 'after-init-hook
           #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
 
-#+end_src 
+#+end_src
 
 ** Packages management :PERSONAL:
 
@@ -155,7 +155,7 @@ Library and theme load paths with a special case for mu4e (you may need to adapt
              (expand-file-name "lisp" user-emacs-directory))
 (add-to-list 'custom-theme-load-path
              (expand-file-name "theme" user-emacs-directory))
-(add-to-list 'load-path 
+(add-to-list 'load-path
   "/usr/local/Cellar/mu/1.6.10/share/emacs/site-lisp/mu/mu4e/mu4e.el")
 
 #+end_src
@@ -174,7 +174,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         consult             ; Consulting completing-read
         corfu               ; Completion Overlay Region FUnction
         deft                ; Quickly browse, filter, and edit plain text notes
-        elpher              ; A friendly gopher and gemini client 
+        elpher              ; A friendly gopher and gemini client
         elfeed              ; Emacs Atom/RSS feed reader
         elfeed-org          ; Configure elfeed with one or more org-mode files
         f                   ; Modern API for working with files and directories
@@ -196,7 +196,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         yaml-mode           ; YAML mode
         consult-recoll      ; Consult interface for recoll query
         org-auto-tangle     ; Tangle org file when it is saved
-        exec-path-from-shell; Get environment variables such as $PATH from the shell 
+        exec-path-from-shell; Get environment variables such as $PATH from the shell
         which-key))         ; Display available keybindings in popup
 
 ;; Install packages that are not yet installed
@@ -394,7 +394,7 @@ Emacs carefully copies the old contents to another file, called the “backup”
 
 Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
 
- #+begin_src emacs-lisp 
+ #+begin_src emacs-lisp
 
 (defun unpropertize-kill-ring ()
   (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
@@ -405,7 +405,7 @@ Remove text properties for kill ring entries (see https://emacs.stackexchange.co
 
 We save every possible history we can think of.
 
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 
 (require 'savehist)
 
@@ -416,12 +416,12 @@ We save every possible history we can think of.
       '(kill-ring
         command-history
         set-variable-value-history
-        custom-variable-history   
-        query-replace-history     
-        read-expression-history   
-        minibuffer-history        
-        read-char-history         
-        face-name-history         
+        custom-variable-history
+        query-replace-history
+        read-expression-history
+        minibuffer-history
+        read-char-history
+        face-name-history
         bookmark-history
         file-name-history))
 
@@ -438,13 +438,13 @@ We save every possible history we can think of.
 #+end_src
 
 No duplicates in history
-  
+
 #+begin_src emacs-lisp
 
 (setq history-delete-duplicates t)
 
 #+end_src
-  
+
 Start history mode.
 
 #+begin_src emacs-lisp
@@ -535,7 +535,7 @@ A set of functions to join two strings such as to fit a given width. This will b
 (defun my/string-pad-left (len s)
   "If S is shorter than LEN, pad it on the left,
    if S is longer than LEN, truncate it on the left."
-  
+
   (if (> (length s) len)
       (concat  "…" (substring s (- (length s) len -1)))
     (concat (make-string (max 0 (- len (length s))) ?\ ) s)))
@@ -546,7 +546,7 @@ A set of functions to join two strings such as to fit a given width. This will b
 #+begin_src emacs-lisp
 
 (defun my/string-join (len left right &optional spacing)
-  "Join LEFT and RIGHT strings to fit LEN characters with at least SPACING characters 
+  "Join LEFT and RIGHT strings to fit LEN characters with at least SPACING characters
 between them. If len is negative, it is retrieved from current window width."
 
     (let* ((spacing (or spacing 3))
@@ -591,11 +591,11 @@ A set of date related functions, mostly used for mail display.
 
 (defun my/date-month (date)
   "Return DATE month number (1-12)."
-  
+
   (nth 4 (decode-time date)))
 
 #+end_src
-  
+
 #+name: my/date-year
 #+begin_src emacs-lisp
 
@@ -611,7 +611,7 @@ A set of date related functions, mostly used for mail display.
 
 (defun my/date-equal (date1 date2)
   "Check if DATE1 is equal to DATE2."
-  
+
   (and (eq (my/date-day date1)
            (my/date-day date2))
        (eq (my/date-month date1)
@@ -642,7 +642,7 @@ A set of date related functions, mostly used for mail display.
 
 (defun my/date-dec (date &optional days months years)
   "Return DATE - DAYS day & MONTH months & YEARS years"
-  
+
   (let ((days (or days 0))
         (months (or months 0))
         (years (or years 0)))
@@ -655,7 +655,7 @@ A set of date related functions, mostly used for mail display.
 
 (defun my/date-today ()
   "Return today date."
-  
+
   (current-time))
 
 #+end_src
@@ -665,7 +665,7 @@ A set of date related functions, mostly used for mail display.
 
 (defun my/date-is-today (date)
   "Check if DATE is today."
-  
+
   (my/date-equal (current-time) date))
 
 #+end_src
@@ -675,7 +675,7 @@ A set of date related functions, mostly used for mail display.
 
 (defun my/date-is-yesterday (date)
   "Check if DATE is yesterday."
-  
+
   (my/date-equal (my/date-dec (my/date-today) 1) date))
 
 #+end_src
@@ -712,7 +712,7 @@ width corresponds to the width of the current selected window.
 The HEIGHT in lines can be specified, as well as the BACKGROUND
 color of the frame. BORDER width (pixels) and color (FOREGROUND)
 can be also specified."
-  
+
   (interactive)
   (let* ((foreground (or foreground
                          (face-foreground 'font-lock-comment-face nil t)))
@@ -771,7 +771,7 @@ can be also specified."
 
   Move frame at the top of parent frame and resize it
   horizontally to fit the width of current selected window."
-  
+
   (interactive)
   (let* ((border (frame-parameter frame 'internal-border-width))
          (height (frame-parameter frame 'height)))
@@ -817,7 +817,7 @@ A set of mail (mu4e) related functions.
 
 (defun my/mu4e-get-account (msg)
   "Get MSG related account."
-  
+
   (let* ((maildir (mu4e-message-field msg :maildir))
          (maildir (substring maildir 1)))
     (nth 0 (split-string maildir "/"))))
@@ -829,7 +829,7 @@ A set of mail (mu4e) related functions.
 
 (defun my/mu4e-get-maildir (msg)
   "Get MSG related maildir."
-  
+
   (let* ((maildir (mu4e-message-field msg :maildir))
          (maildir (substring maildir 1)))
     (nth 0 (reverse (split-string maildir "/")))))
@@ -841,7 +841,7 @@ A set of mail (mu4e) related functions.
 
 (defun my/mu4e-get-mailbox (msg)
   "Get MSG related mailbox as 'account - maildir' "
-  
+
   (format "%s - %s" (mu4e-get-account msg) (mu4e-get-maildir msg)))
 
 #+end_src
@@ -851,7 +851,7 @@ A set of mail (mu4e) related functions.
 
 (defun my/mu4e-get-sender (msg)
   "Get MSG sender."
-  
+
   (let ((addr (cdr-safe (car-safe (mu4e-message-field msg :from)))))
       (mu4e~headers-contact-str (mu4e-message-field msg :from))))
 
@@ -890,14 +890,14 @@ This defines an org sidebar using imenu-list.
 
 (defun my/org-tree-to-indirect-buffer ()
   "Create indirect buffer, narrow it to current subtree and unfold blocks"
-  
+
   (org-tree-to-indirect-buffer)
   (org-show-block-all)
   (setq-local my/org-blocks-hidden nil))
 
 (defun my/org-sidebar ()
   "Open an imenu list on the left that allow navigation."
-  
+
   (interactive)
   (setq imenu-list-after-jump-hook #'my/org-tree-to-indirect-buffer
         imenu-list-position 'left
@@ -932,10 +932,10 @@ This toggles the org-sidebar.
 
 (defun my/org-sidebar-toggle ()
   "Toggle the org-sidebar"
-  
+
   (interactive)
   (if (get-buffer-window "*Ilist*")
-      (progn 
+      (progn
         (quit-window nil (get-buffer-window "*Ilist*"))
         (switch-to-buffer (buffer-base-buffer)))
     (my/org-sidebar)))
@@ -967,7 +967,7 @@ Toggle code blocks folding, starting folded.
 
 (defun my/org-toggle-blocks ()
   "Toggle code blocks folding."
-  
+
   (interactive)
   (if my/org-blocks-hidden
       (org-show-block-all)
@@ -986,7 +986,7 @@ Toggle code blocks folding, starting folded.
 
 (defun my/imenu-list-toggle-folding ()
   "Toggle top level nodes of the imenu-list buffer"
-  
+
   (interactive)
   (with-current-buffer "*Ilist*"
     (save-excursion
@@ -1079,7 +1079,7 @@ This provide the ~my/org-imenu-filter~ that allow to filter sidebar entries usin
 
 (defun my/org-imenu-filter ()
   "Define and apply a new filter"
-  
+
   (interactive)
   (let* ((match (completing-read-multiple
                  "FILTER: "
@@ -1096,7 +1096,7 @@ This provide the ~my/org-imenu-filter~ that allow to filter sidebar entries usin
 
 (defun my/org-imenu-filter-tree (&optional bound parent-match)
   "Build a imenu list using current filter function"
-  
+
   (let* ((headlines '()))
     (save-excursion
       (org-with-wide-buffer
@@ -1116,7 +1116,7 @@ This provide the ~my/org-imenu-filter~ that allow to filter sidebar entries usin
                          (goto-char begin)
                          (funcall my/org-imenu-filter-function
                                   nil (org-get-tags) level)))
-                
+
                 (title (org-element-property :raw-value element))
                 (title (org-link-display-format
                         (substring-no-properties title)))
@@ -1155,7 +1155,7 @@ Navigation commands using the ilist menu.
 
 (defun my/config-mode-prev-header ()
   "Move to previous header"
-  
+
   (interactive)
   (with-current-buffer "*Ilist*"
     (search-backward-regexp "^  ")
@@ -1163,7 +1163,7 @@ Navigation commands using the ilist menu.
 
 (defun my/config-mode-next-header ()
   "Move to next header"
-    
+
   (interactive)
   (with-current-buffer "*Ilist*"
     (forward-line)
@@ -1172,7 +1172,7 @@ Navigation commands using the ilist menu.
 
 (defun my/config-mode-prev-section ()
   "Move to previous section"
-    
+
   (interactive)
   (with-current-buffer "*Ilist*"
     (search-backward-regexp "\\+ " nil nil 2)
@@ -1181,7 +1181,7 @@ Navigation commands using the ilist menu.
 
 (defun my/config-mode-next-section ()
   "Move to next section"
-    
+
   (interactive)
   (with-current-buffer "*Ilist*"
     (previous-line)
@@ -1198,7 +1198,7 @@ A minor mode for configuration
 
 (define-minor-mode my/config-mode
   "Configuration mode"
-  
+
   :init-value nil
   :global nil
   :keymap (let* ((map (make-sparse-keymap)))
@@ -1223,7 +1223,7 @@ A shortcut to edit configuration
 #+begin_src emacs-lisp :prologue "" :epilogue ""
 (defun my/config ()
   "Create a new for editing configuration"
-  
+
   (interactive)
   (select-frame (make-frame '((name . "my/config")
                               (width . 150)
@@ -1316,7 +1316,7 @@ A function that close the current frame and kill emacs if it was the last frame.
 
 (defun my/kill-emacs ()
   "Delete frame or kill Emacs if there is only one frame."
-  
+
   (interactive)
   (condition-case nil
       (delete-frame)
@@ -1513,7 +1513,7 @@ Pretty self-explanatory
 #+end_src
 
 Replace region when inserting text
-               
+
 #+begin_src emacs-lisp
 
 (delete-selection-mode 1)
@@ -1526,7 +1526,7 @@ A smarter fill/unfill command
 
 (defun my/fill-unfill ()
   "Like `fill-paragraph', but unfill if used twice."
-  
+
   (interactive)
   (let ((fill-column
          (if (eq last-command #'my/fill-unfill)
@@ -1546,7 +1546,7 @@ Disable the bell (auditory or visual).
 
 #+begin_src emacs-lisp
 
-(setq-default visible-bell nil             ; No visual bell      
+(setq-default visible-bell nil             ; No visual bell
               ring-bell-function 'ignore)  ; No bell
 
 #+end_src
@@ -1626,7 +1626,7 @@ It is a bit slow to load so we do need load it explicitely.
 
 (bind-key "C-h f"   #'helpful-callable) ; Look up callable
 (bind-key "C-h v"   #'helpful-variable) ; Look up variable
-(bind-key "C-h k"   #'helpful-key)      ; Look up key 
+(bind-key "C-h k"   #'helpful-key)      ; Look up key
 (bind-key "C-c C-d" #'helpful-at-point) ; Look up the current symbol at point
 (bind-key "C-h F"   #'helpful-function) ; Look up *F*unctions (excludes macros).
 (bind-key "C-h C"   #'helpful-command)  ; Look up *C*ommands.
@@ -1689,13 +1689,13 @@ This is the font stack we install:
 
 - Default font:  Roboto Mono 14pt Light       [[https://fonts.google.com/specimen/Roboto+Mono][]]
 - /Italic font/:   Victor Mono 14pt Semilight   [[https://github.com/rubjo/victor-mono][]]
-- *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]] 
-- Unicode font:  Inconsolata 16pt Light       [[https://github.com/googlefonts/Inconsolata][]] 
+- *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]]
+- Unicode font:  Inconsolata 16pt Light       [[https://github.com/googlefonts/Inconsolata][]]
 - Icon font:     Roboto Mono Nerd 12pt Light  [[https://www.nerdfonts.com/][]]
-  
+
 Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
 chosen to really *stand out* from the default font (Roboto Mono).
-┌───────────────────────────────────────────────┐ 
+┌───────────────────────────────────────────────┐
 │  The quick brown fox jumps over the lazy dog │
 │  /The quick brown fox jumps over the lazy dog/ ┼─ Victor Mono Italic
 │  *The quick brown fox jumps over the lazy dog* ├─ Inconsolata
@@ -1704,7 +1704,7 @@ chosen to really *stand out* from the default font (Roboto Mono).
 
 Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
 
- 
+
 #+begin_src lisp
 
 (set-face-attribute 'default nil
@@ -1735,7 +1735,7 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 
 #+begin_src emacs-lisp
 
-(setq-default fill-column 80                          ; Default line width 
+(setq-default fill-column 80                          ; Default line width
               sentence-end-double-space nil           ; Use a single space after dots
               bidi-paragraph-direction 'left-to-right ; Faster
               truncate-string-ellipsis "…")           ; Nicer ellipsis
@@ -1748,7 +1748,7 @@ Changing the symbol for truncation (…) and wrap (↩).
 
 (require 'nano-theme)
 
-;; Nicer glyphs for continuation and wrap 
+;; Nicer glyphs for continuation and wrap
 (set-display-table-slot standard-display-table
                         'truncation (make-glyph-code ?… 'nano-faded))
 
@@ -1959,14 +1959,14 @@ Allow completion based on space-separated tokens, out of order.
 #+begin_src emacs-lisp
 
 (require 'orderless)
-  
+
 (setq completion-styles '(substring orderless basic)
       orderless-component-separator 'orderless-escapable-split-on-space
       read-file-name-completion-ignore-case t
       read-buffer-completion-ignore-case t
       completion-ignore-case t)
 
-#+end_src 
+#+end_src
 
 ** Benchmark
 
@@ -2010,7 +2010,7 @@ For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ command
 
 (defun my/consult-line ()
   "Consult line with live preview"
-  
+
   (interactive)
   (let ((consult-preview-key 'any)
         (mini-frame-resize 'grow-only)) ;; !! Important
@@ -2024,7 +2024,7 @@ For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ command
 
 (defun my/consult-goto-line ()
   "Consult goto line with live preview"
-  
+
   (interactive)
   (let ((consult-preview-key 'any))
     (consult-goto-line)))
@@ -2106,7 +2106,7 @@ Prefix the current candidate
 (defun minibuffer-format-candidate (orig cand prefix suffix index _start)
   (let ((prefix (if (= vertico--index index)
                     "  "
-                  "   "))) 
+                  "   ")))
     (funcall orig cand prefix suffix index _start)))
 
 (advice-add #'vertico--format-candidate
@@ -2130,7 +2130,7 @@ See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-comple
 See https://github.com/minad/vertico/issues/145
 
 #+begin_src emacs-lisp
- 
+
 (defun minibuffer-vertico-setup ()
 
   (setq truncate-lines t)
@@ -2231,7 +2231,7 @@ We set a thin modeline
 
 (defun my/thin-modeline ()
   "Transform the modeline in a thin faded line"
-  
+
   (nano-modeline-face-clear 'mode-line)
   (nano-modeline-face-clear 'mode-line-inactive)
   (setq mode-line-format (list ""))
@@ -2285,7 +2285,7 @@ This should be an advice but it is simpler to rewrite the function
 
 (defun my/minibuffer-header-format (prompt)
   "Minibuffer header"
-  
+
   (let* ((prompt (replace-regexp-in-string "[: \t]*$" "" prompt))
          (depth (minibuffer-depth))
          (prompt (cond ((string= prompt "M-x") "Extended command")
@@ -2456,7 +2456,7 @@ No prompt editing and recursive minibuffer
 
     (append `((left-fringe . 0)
               (right-fringe . 0)
-              (user-position . t) 
+              (user-position . t)
               (foreground-color . ,(face-foreground 'highlight nil 'default))
               (background-color . ,(face-background 'highlight nil 'default)))
             (cond ((and (eq my/minibuffer-position 'bottom))
@@ -2579,7 +2579,7 @@ Lots of options. Make sure to adapt paths to your system.
       mu4e-index-update-in-background t   ; Background update
       mu4e-change-filenames-when-moving t ; Needed for mbsync
       mu4e-index-lazy-check nil           ; Don't be lazy, index everything
-        
+
       mu4e-confirm-quit nil
       mu4e-split-view 'single-window
 
@@ -2619,7 +2619,7 @@ Some bindings to avoid confirmation for execution (headers and message view)
 
 ** Accounts :PERSONAL:
 
-*** General 
+*** General
 
 General information about me.
 
@@ -2671,7 +2671,7 @@ Refile/archive depending on the context (via maildir)
 
 (defun my/mu4e-refile-folder (msg)
   "Contextual refile"
-  
+
   (let ((maildir (mu4e-message-field msg :maildir)))
     (cond
      ((string-match "inria" maildir) "/inria/archive")
@@ -2825,7 +2825,7 @@ Custom faces
 (set-face-attribute 'mu4e-system-face nil :inherit 'nano-critical)
 (set-face-attribute 'mu4e-header-marks-face nil :inherit 'nano-critical)
 (set-face-attribute 'mu4e-header-highlight-face nil :inherit 'nano-salient-i)
- 
+
 #+end_src
 ** Write :HOOK:BINDING:
 
@@ -2848,7 +2848,7 @@ See www.gnu.org/software/emacs/manual/html_node/message/Insertion-Variables.html
       mu4e-compose-complete-only-after "2021-01-01" ; Limite address auto-completion
       mu4e-compose-dont-reply-to-self t
       mu4e-compose-crypto-reply-policy 'sign-and-encrypt)
-      
+
 #+end_src
 
 Multi-language flyspell in compose mode
@@ -2863,7 +2863,7 @@ Multi-language flyspell in compose mode
 (bind-key "C-;" #'flyspell-popup-correct flyspell-mode-map)
 
 ;; Automatically detect language for Flyspell
-(with-eval-after-load 'guess-language  
+(with-eval-after-load 'guess-language
     (add-hook 'text-mode-hook #'guess-language-mode)
     (setq guess-language-langcodes '((en . ("en_GB" "English"))
                                      (fr . ("fr_FR" "French")))
@@ -2903,12 +2903,12 @@ Multi-language flyspell in compose mode
 
         (:name "Inbox"
          :key ?i
-         :show-unread t 
+         :show-unread t
          :query "m:/inria/inbox or m:/univ/inbox or m:/gmail/inbox")
 
         (:name "Today"
          :key ?t
-         :show-unread t 
+         :show-unread t
          :query "date:today..now")
 
         (:name "Yesterday"
@@ -2918,17 +2918,17 @@ Multi-language flyspell in compose mode
 
         (:name "Last week"
          :key ?w
-         :hide-unread t 
+         :hide-unread t
          :query "date:7d..now")
 
         (:name "Flagged"
          :key ?f
-         :show-unread t 
+         :show-unread t
          :query "flag:flagged")
 
         (:name "Sent"
          :key ?s
-         :hide-unread t 
+         :hide-unread t
          :query "from:Nicolas.Rougier")
 
         (:name "Drafts"
@@ -2993,7 +2993,7 @@ Here is the actual tag action
                                   (mu4e-action-retag-message msg target)))))
 
 ;; Tell mu4e about the new mark
-;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html 
+;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
 (mu4e~headers-defun-mark-for tag)
 
 #+end_src
@@ -3069,7 +3069,7 @@ Some face specification for folding.
 
 (defun my/mu4e-headers-colorize (item msg)
   "Colorize item depending on whe msg was received"
-  
+
   (let* ((recent (* 5 60)) ;; 5 minutes
          (now (current-time))
          (unread (mu4e-message-field msg :unread))
@@ -3200,7 +3200,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-*** Folding 
+*** Folding
 
 #+begin_src emacs-lisp
 
@@ -3208,7 +3208,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 ;; (defun mu4e-folding--make-root-overlay (beg end)
 ;;   "Create the root overlay."
-  
+
 ;;   (let* ((buffer-read-only)
 ;;          (overlay (car (mu4e-folding--children-overlay)))
 ;;          (count (if overlay
@@ -3228,7 +3228,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 ;; (defun mu4e-folding--make-root-overlay (beg end)
 ;;   "Create the root overlay."
- 
+
 ;;   (let* ((buffer-read-only)
 ;;          (overlay (car (mu4e-folding--children-overlay)))
 ;;          (count (if overlay
@@ -3244,7 +3244,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 ;;       (when (search-forward "    " end t)
 ;;         (set-text-properties (- (point) 4) (+ (point) 1)
 ;;                              `(display ,tag)))))
- 
+
 ;;   (let ((buffer-read-only)
 ;;         (overlay (make-overlay beg end)))
 ;;     overlay))
@@ -3300,7 +3300,7 @@ A custom multiline headers view for mu4e.
 
 (defun my/mu4e-headers-multiline (msg)
   "A multiline headers mode."
-  
+
   (let* ((sender  (my/mu4e-get-sender msg))
          (date (mu4e-message-field msg :date))
          (date (concat (propertize "" 'display " ")
@@ -3340,7 +3340,7 @@ A custom multiline headers view for mu4e.
          (face-tags (cond (related '(:inherit (nano-faded)              :height 120))
                           (t       '(:inherit (nano-popout nano-strong) :height 120))))
          (face-date    (cond (t '(:inherit nano-faded :height 140))))
-         
+
          (icons (string-join
                  `(,@(if draft   `( ,(propertize "" 'face 'nano-faded)))
                    ,@(if attach  `( ,(propertize "" 'face 'nano-faded)))
@@ -3363,7 +3363,7 @@ A custom multiline headers view for mu4e.
 
      ;; Children are always indented (relatively to root)
      (when (and child one-line)
-       (concat 
+       (concat
         (propertize "│" 'face 'nano-faded)))
 
      ;; Unread mark appears in the left margin
@@ -3376,7 +3376,7 @@ A custom multiline headers view for mu4e.
            ((and root has-child) (propertize (concat " " sender)
                                              'face face-sender))
            (t (propertize sender 'face face-sender)))
-     
+
      " "
      ;; Replied
      (when replied
@@ -3389,7 +3389,7 @@ A custom multiline headers view for mu4e.
 
      ;; Tags next to sender
      (when tags
-       (concat 
+       (concat
         (propertize " " 'face face-tags)
         (mapconcat #'(lambda (tag)
                        (propertize tag 'face face-tags))
@@ -3530,7 +3530,7 @@ into account & insert the number of children at the root level (replacing "" 
 
 (defun mu4e-folding--make-root-overlay (beg end)
   "Create the root overlay."
-  
+
   (let* ((buffer-read-only)
          (overlay (car (mu4e-folding--children-overlay)))
          (count (if overlay
@@ -3581,7 +3581,7 @@ Provide a [[help:mu4e-dashboard][mu4e-dashboard]] command that opens the mu4e da
 
 (defun mu4e-dashboard ()
   "Open the mu4e dashboard on the left side."
-  
+
   (interactive)
   (with-selected-window
       (split-window (selected-window) -34 'left)
@@ -3617,7 +3617,7 @@ Provide a [[help:mu4e-dashboard][mu4e-dashboard]] command that opens the mu4e da
 
 * Bibliography
 
-** Bibtex 
+** Bibtex
 
 Settings for bibtex
 
@@ -3669,7 +3669,7 @@ A shortcut to edit bibliography
 #+begin_src emacs-lisp :prologue "" :epilogue ""
 (defun my/biblio ()
   "Create a new frame for editing bibliography"
-  
+
   (interactive)
   (require 'org-bib)
   (setq imenu-list-position 'left
@@ -3716,7 +3716,7 @@ An autoload function for my/config (that will load org mode).
               org-tags-column 1              ; Tags next to header title
               org-hide-emphasis-markers t    ; Hide markers
               org-cycle-separator-lines 2    ; Number of empty lines between sections
-              org-use-tag-inheritance nil    ; Tags ARE NOT inherited 
+              org-use-tag-inheritance nil    ; Tags ARE NOT inherited
               org-use-property-inheritance t ; Properties ARE inherited
               org-indent-indentation-per-level 2 ; Indentation per level
               org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
@@ -3747,13 +3747,13 @@ We adapt fill functions according to the indent level.
 
  (defun my/org-fill-paragraph (&optional justify region)
    "Calculate apt fill-column value and fill paragraph."
-  
+
    (let* ((fill-column (- fill-column (my/calc-offset-on-org-level))))
      (org-fill-paragraph justify region)))
 
  (defun my/org-auto-fill-function ()
    "Calculate apt fill-column value and do auto-fill"
-  
+
    (let* ((fill-column (- fill-column (my/calc-offset-on-org-level))))
      (org-auto-fill-function)))
 
@@ -3955,7 +3955,7 @@ A small function to cancel a meeting
 
 #+end_src
 
-Week day name with holidays 
+Week day name with holidays
 
 #+name: my/org-agenda-format-date
 #+begin_src emacs-lisp
@@ -4030,10 +4030,10 @@ now        -> *now*
 
 (require 'svg-lib)
 (require 'svg-tag-mode)
- 
+
 (defun my/svg-tag-timestamp (&rest args)
   "Create a timestamp SVG tag for the time at point."
-  
+
   (interactive)
   (let ((inhibit-read-only t))
 
@@ -4182,10 +4182,10 @@ We install a time to refresh the daily agenda (a) at regular intervals such that
 
 (defun my/org-agenda-update ()
   "Refresh daily agenda view"
-  
+
   (when my/org-agenda-update-timer
     (cancel-timer my/org-agenda-update-timer))
-  
+
   (let ((window (get-buffer-window "*Org Agenda(a)*" t)))
     (when window
       (with-selected-window window
@@ -4232,7 +4232,7 @@ Set refile targets according to my setup
         ("m" "Meeting" entry  (file+headline "agenda.org" "Future")
          "* %?Meeting   <%<%Y-%m-%d %a 12:00-13:00>>"
          :empty-lines-after 1)))
-      
+
 #+end_src
 
 Assign key
@@ -4324,7 +4324,7 @@ may have been stored before."
                              'face 'nano-subtle))
          (header (concat left spacer right " ")))
     (setq-local header-line-format header))
-    
+
     (set-window-dedicated-p nil t)
     (set-frame-parameter (selected-frame) 'height 5)
     (face-remap-add-relative 'mode-line :background (face-background 'highlight))
@@ -4347,7 +4347,7 @@ may have been stored before."
     (advice-remove 'org-capture #'my/org-capture-frame)))
 
 (require 'org-capture)
-  
+
 ;; (bind-key "C-c m" #'(lambda ()
 ;;                       (interactive)
 ;;                       (my/org-capture nil "m")))
@@ -4368,7 +4368,7 @@ The default [[help:org-agenda-goto][org-agenda-goto]], which is used when =tab= 
 
 (defun my/org-agenda-goto (buffer args)
   "Open a headline in a window below the current window"
-  
+
   (setq-local mode-line-format nil)
   (select-window (or (window-in-direction 'below (selected-window))
                      (split-window nil -6 'below)))
@@ -4486,7 +4486,7 @@ Alternative print entry function using [[https://github.com/rougier/svg-tag-mode
 
 (defun my/elfeed-search-print-entry (entry)
   "Alternative printing of elfeed entries using SVG tags."
-  
+
   (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
          (title (or (elfeed-meta entry :title)
                     (elfeed-entry-title entry) ""))
@@ -4528,7 +4528,7 @@ Elfeed setup.
       elfeed-search-title-min-width 40    ; Minimum titles width
       elfeed-search-trailing-width 24     ; Space reserved for feed & tag
       elfeed-search-filter                ; Default filter
-          "@1-weeks-ago +unread"          
+          "@1-weeks-ago +unread"
       elfeed-search-print-entry-function  ; Alternative print function
            #'my/elfeed-search-print-entry)
 
@@ -4582,7 +4582,7 @@ Setup bookmarlks ([[file:elfeed.org][elfeed.org]]) using [[https://github.com/re
   (require 'elfeed-org)
   (setq rmh-elfeed-org-files (list (expand-file-name "elfeed.org" user-emacs-directory)))
   (elfeed-org))
-  
+
 #+end_src
 
 ** Benchmark
@@ -4797,7 +4797,7 @@ terminated sentence and add tags if any."
 
 (defun deft-note-toggle-keywords ()
   "Toggle visibility of all keywords."
-  
+
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -4805,10 +4805,10 @@ terminated sentence and add tags if any."
     (if (get-text-property (match-beginning 1) 'display)
         (deft-note-show-keywords)
       (deft-note-hide-keywords))))
-        
+
 (defun deft-note-hide-keywords ()
   "Hide all keywords."
-  
+
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -4819,7 +4819,7 @@ terminated sentence and add tags if any."
 
 (defun deft-note-show-keywords ()
   "Show all keywords."
-  
+
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -4830,7 +4830,7 @@ terminated sentence and add tags if any."
 
 (defun deft-note-get-keyword (keyword)
   "Get the value of a KEYWORD"
-  
+
   (interactive)
   (let ((case-fold-search t)
         (re (format "^#\\+%s:[ \t]+\\([^\t\n]+\\)" keyword)))
@@ -4856,7 +4856,7 @@ Setup note modes and ask for a title if the file does not exist
 #+begin_src emacs-lisp
 (defun my/deft-open-file ()
   "Setup note modes and ask for a title if the file does not exist."
-  
+
   (when (= (buffer-size (current-buffer)) 0)
     (setq title (read-from-minibuffer "Note title: "))
     (deft-note-set-keyword "DATE" (format-time-string "[%Y-%m-%d %a]"))
@@ -4914,7 +4914,7 @@ Kill term buffer when exiting.
 
 (defun my/term-handle-exit (&optional proc msg)
   "Kill term buffer (advice)."
-  
+
   (message "%s | %s" proc msg)
   (kill-buffer (current-buffer)))
 
