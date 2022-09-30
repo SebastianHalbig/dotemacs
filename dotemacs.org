@@ -3083,27 +3083,32 @@ Multi-language flyspell in compose mode
         (:name "Sent"
                :key ?s
                :hide-unread t
-               :query "from:Sebastian.Halbig")
+               :query "from:Sebastian.Halbig or from:halbigs or from: SebastianHalbig")
 
         (:name "Drafts"
                :key ?d
                :hide-unread t
                :query "flag:draft")
 
+        (:name "Immediate"
+               :key ?I
+               :hide-unread t
+               :query "prio:high")
+
         (:name "Important"
                :key ?I
                :hide-unread t
-               :query "flag:important")
+               :query "flag:flagged")
 
-        (:name "Eventually"
+        (:name "Secondary"
                :key ?e
                :hide-unread t
-               :query "flag:eventually")
+               :query "tags:secondary")
 
         (:name "Action"
                :key ?a
                :hide-unread t
-               :query "flag:needs_action")
+               :query "tags:untreated")
       ))
 #+end_src
 
@@ -3122,6 +3127,12 @@ This provides a tag action inside the mu4e headers view to quickly tag message. 
 
 #+end_src
 
+#+begin_src emacs-lisp
+(defun add-to-mu4e-tag-history (tag)
+"Add the new tags to the history"
+(add-to-list 'mu4e-tag-history tag))
+#+end_src
+
 Here is the actual tag action
 
 #+begin_src emacs-lisp
@@ -3137,7 +3148,8 @@ Here is the actual tag action
                     nil
                     nil
                     (mapconcat #'identity old-tags ",")
-                    'mu4e-tag-history)))
+                    ;; 'mu4e-tag-history
+                    )))
     (dolist (tag old-tags)
       (let ((tag (string-trim tag)))
         (if (and (> (length tag) 0)
@@ -3147,7 +3159,9 @@ Here is the actual tag action
       (let ((tag (string-trim tag)))
         (if (and (> (length tag) 0)
                  (not (member tag old-tags)))
-            (push (concat "+" tag) tags))))
+            (progn
+              (add-to-mu4e-tag-history tag)
+              (push (concat "+" tag) tags)))))
     (mapconcat #'identity tags ",")))
 
 ;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
@@ -3207,7 +3221,7 @@ Some face specification for folding.
       '((:my-flags      . 2)
         (:my-from       . 25)
         (:my-subject    . 70)
-        (:my-tags       . 6)
+        (:my-tags       . 10)
         (:my-date       . 14)))
 
 
@@ -3318,17 +3332,60 @@ Some face specification for folding.
 
 **** Tags (custom info)
 
+We want pretty tags to get a good overview what an email is about.
+This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we replace tags by their symbols
+
 #+begin_src emacs-lisp
 
+(defvar my-prettify-tag-alist
+  '(("TODO"         . "")
+    ("DATE"         . "")
+    ("RESEARCH"     . "ﱦ")
+    ("REPLY"        . "")
+    ("INVOICE"      . "")
+    ("TEACHING"     . "")
+    ("INFO"         . "")
+    ("ORGANISATION" . "﮷")))
+
+(defun my-prettify-tag (tag)
+  "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
+  (let* ((local-tag tag)
+         (prettified-tag (car (split-string local-tag ","))))
+  (dolist (sym-pair my-prettify-tag-alist)
+    (when (string= prettified-tag (car sym-pair))
+      (setq prettified-tag (cdr sym-pair)))
+    )
+  prettified-tag
+  ))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+(defface  mu4e-tag-face
+  '((((class color) (min-colors 88) (background light))
+     :background "gray50")
+    (((class color) (min-colors 88) (background dark))
+     :background "gray90")
+    (((class color) (min-colors 16) (background light))
+     :background "darkseagreen2")
+    (((class color) (min-colors 16) (background dark))
+     :background "darkolivegreen")
+    (((class color) (min-colors 8))
+     :background "green" :foreground "black")
+    (t :inverse-video t))
+  "Basic face for highlighting."
+  :group  'mu4e-tag-face)
+
 (defface mu4e-tag-face
-  '((t :inherit (nano-popout nano-strong)))
+  '((t :inherit (nano-salient)))
   "Face for message tags"
   :group 'mu4e-faces)
 
 (defun my-mu4e-headers-tags (msg)
   (let* ((tags (mu4e-message-field msg :tags)))
     (if tags
-        (propertize (format "[%s]" (mapconcat #'identity tags ","))
+        (propertize (format "%s" (mapconcat #'my-prettify-tag tags " "))
                     'face 'mu4e-tag-face)
       "")))
 (add-to-list 'mu4e-header-info-custom
@@ -3895,26 +3952,34 @@ An autoload function for my-config (that will load org mode).
 
 #+begin_src emacs-lisp
 
-(setq-default org-directory "~/Documents/org"
-              org-ellipsis " …"              ; Nicer ellipsis
-              org-tags-column 1              ; Tags next to header title
-              org-hide-emphasis-markers t    ; Hide markers
-              org-cycle-separator-lines 2    ; Number of empty lines between sections
-              org-use-tag-inheritance nil    ; Tags ARE NOT inherited
-              org-use-property-inheritance t ; Properties ARE inherited
-              org-indent-indentation-per-level 2 ; Indentation per level
+(setq-default org-directory "~/Documents/org-files"
+              org-ellipsis " …"                            ; Nicer ellipsis
+              org-tags-column 1                            ; Tags next to header title
+              org-hide-emphasis-markers t                  ; Hide markers
+              org-cycle-separator-lines 2                  ; Number of empty lines between sections
+              org-use-tag-inheritance nil                  ; Tags ARE NOT inherited
+              org-use-property-inheritance t               ; Properties ARE inherited
+              org-indent-indentation-per-level 2           ; Indentation per level
               org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
-              org-fontify-quote-and-verse-blocks t ; Specific face for quote and verse blocks
-              org-return-follows-link nil    ; Follow links when hitting return
-              org-image-actual-width nil     ; Resize image to window width
-              org-indirect-buffer-display 'other-window ; Tab on a task expand it in a new window
-              org-outline-path-complete-in-steps nil) ; No steps in path display
+              org-fontify-quote-and-verse-blocks t         ; Specific face for quote and verse blocks
+              org-return-follows-link nil                  ; Follow links when hitting return
+              org-image-actual-width nil                   ; Resize image to window width
+              org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
+              org-outline-path-complete-in-steps nil)      ; No steps in path display
+
+#+end_src
+
+Always indent org-files
+
+#+begin_src emacs-lisp
+
+(add-hook 'org-mode-hook 'org-indent-mode)
 
 #+end_src
 
 Better latex preview (see https://stackoverflow.com/questions/30151338)
 
-#+begin_src emacs-lisp
+,#+begin_src emacs-lisp
 
 (setq org-latex-create-formula-image-program 'dvisvgm)
 
