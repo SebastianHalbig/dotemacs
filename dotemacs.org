@@ -3116,9 +3116,10 @@ Multi-language flyspell in compose mode
 
 This provides a tag action inside the mu4e headers view to quickly tag message. Tags are saved in the ~mu4e-tag-history~ variable that is also saved from one session to the other. We use the ~consult-completing-read-multiple~ function to read tags.
 
+
 #+begin_src emacs-lisp
 
-(defvar mu4e-tag-history '()
+(defvar mu4e-tag-history '("TODO" "DATE" "RESEARCH" "PENDING" "INVOICE" "TEACHING" "INFO" "ORGANISATIONAL")
   "Mu4e tag history list.")
 
 (add-to-list 'savehist-additional-variables 'mu4e-tag-history)
@@ -3274,12 +3275,12 @@ Some face specification for folding.
 (defun my-mu4e-headers-date (msg)
   (let* ((date (mu4e-message-field msg :date)))
     (my-mu4e-headers-colorise
-       (format "%12s" (relative-date date)) msg)))
+     (format "%12s" (relative-date date)) msg)))
 
 (add-to-list 'mu4e-header-info-custom
-                 '(:my-date . (:name "my-date"
-                               :shortname "D"
-                               :function my-mu4e-headers-date)))
+             '(:my-date . (:name "my-date"
+                                 :shortname "D"
+                                 :function my-mu4e-headers-date)))
 #+end_src
 
 **** From (custom info)
@@ -3302,8 +3303,8 @@ Some face specification for folding.
 
 (add-to-list 'mu4e-header-info-custom
              '(:my-from . (:name "my-from"
-                           :shortname "F"
-                           :function my-mu4e-headers-from)))
+                                 :shortname "F"
+                                 :function my-mu4e-headers-from)))
 
 #+end_src
 
@@ -3314,19 +3315,19 @@ Some face specification for folding.
 (defun my-mu4e-headers-flags (msg)
   (let* ((size (mu4e-message-field msg :size))
          (flags (cond ((memq 'flagged   (mu4e-message-field msg :flags)) "")
-                     ((and (> size 256000)
-                     (memq 'attach    (mu4e-message-field msg :flags))) "")
-                     ((memq 'replied   (mu4e-message-field msg :flags)) "")
-                     ((memq 'draft     (mu4e-message-field msg :flags)) "")
-                     ((memq 'trashed   (mu4e-message-field msg :flags)) "")
-                     ((memq 'encrypted (mu4e-message-field msg :flags)) "")
-                     (t ""))))
+                      ((and (> size 256000)
+                            (memq 'attach    (mu4e-message-field msg :flags))) "")
+                      ((memq 'replied   (mu4e-message-field msg :flags)) "")
+                      ((memq 'draft     (mu4e-message-field msg :flags)) "")
+                      ((memq 'trashed   (mu4e-message-field msg :flags)) "")
+                      ((memq 'encrypted (mu4e-message-field msg :flags)) "")
+                      (t ""))))
     (my-mu4e-headers-colorise flags msg)))
 
 (add-to-list 'mu4e-header-info-custom
              '(:my-flags . (:name "my-flags"
-                            :shortname "F"
-                            :function my-mu4e-headers-flags)))
+                                  :shortname "F"
+                                  :function my-mu4e-headers-flags)))
 
 #+end_src
 
@@ -3338,14 +3339,14 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
 #+begin_src emacs-lisp
 
 (defvar my-prettify-tag-alist
-  '(("TODO"         . "")
-    ("DATE"         . "")
-    ("RESEARCH"     . "ﱦ")
-    ("REPLY"        . "")
-    ("INVOICE"      . "")
-    ("TEACHING"     . "")
-    ("INFO"         . "")
-    ("ORGANISATION" . "﮷")))
+  '(("TODO"           . "")
+    ("DATE"           . "")
+    ("RESEARCH"       . "ﱦ")
+    ("PENDING"        . "")
+    ("INVOICE"        . "")
+    ("TEACHING"       . "")
+    ("INFO"           . "")
+    ("ORGANISATIONAL" . "﮷")))
 
 (defun my-prettify-tag (tag)
   "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
