@@ -420,6 +420,9 @@ We save every possible history we can think of.
 
 (require 'savehist)
 
+
+(setq savehist-file (concat user-emacs-directory "history.el"))
+
 (setq kill-ring-max 50
       history-length 50)
 
@@ -2780,15 +2783,27 @@ Refile/archive depending on the context (via maildir)
 (defun my-mu4e-refile-folder (msg)
   "Contextual refile"
 
-  (let ((maildir (mu4e-message-field msg :maildir)))
-    (cond
-     ((string-match "Marburg (internal)" maildir) "/MarburgInternal/archive")
-     ((string-match "Marburg" maildir) "/Marburg/archive")
-     ((string-match "GMX"  maildir) "/GMX/archive")
-     ((string-match "TUD (deprecated)"  maildir) "/TUD/archive")
-     ((string-match "Web"  maildir) "/Web/archive")
-
-     (t ""))))
+  (let (
+        (maildir (mu4e-message-field msg :maildir))
+        (tags (mu4e-message-field msg :tags))
+        (subfolder "saved")
+        )
+(cond
+ ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
+ ((member "INFO" tags) (setq subfolder "info"))
+ ((member "TEACHING" tags) (setq subfolder "teaching"))
+ ((member "RESEARCH" tags) (setq subfolder "research"))
+ ((member "INVOICE" tags) (setq subfolder "invoice"))
+ )
+(concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
+    ;; (cond
+    ;;  ((string-match "MarburgInternal" maildir) "/MarburgInternal/archive")
+    ;;  ((string-match "Marburg" maildir) "/Marburg/archive")
+    ;;  ((string-match "GMX"  maildir) "/GMX/archive")
+    ;;  ((string-match "TUD"  maildir) "/TUD/archive")
+    ;;  ((string-match "Web"  maildir) "/Web/archive")
+    ;;  (t ""))
+    ))
 
 (setq mu4e-refile-folder 'my-mu4e-refile-folder)
 
@@ -2808,7 +2823,7 @@ Refile/archive depending on the context (via maildir)
                                        :to "xolotl.spam@web.de")))
               :vars `((user-mail-address . "xolotl.spam@web.de"  )
                       (user-full-name . "Sebastian Halbig" )
-                      (mu4e-compose-signature . ,mu4e-signature)
+                      (mu4e-compose-signature . nil)
                       (mu4e-sent-folder . "/Web/sent")
                       (mu4e-trash-folder . "/Web/trash")
                       (mu4e-drafts-folder . "/Web/drafts")
@@ -2835,7 +2850,7 @@ Refile/archive depending on the context (via maildir)
                                        :to "sebastian.halbig@tu-dresden.de")))
               :vars `((user-mail-address . "Sebastian.Halbig@tu-dresden.de"  )
                       (user-full-name . "Sebastian Halbig" )
-                      (mu4e-compose-signature . ,mu4e-signature)
+                      (mu4e-compose-signature . nil)
                       (mu4e-sent-folder . "/TUD/sent")
                       (mu4e-trash-folder . "/TUD/trash")
                       (mu4e-drafts-folder . "/TUD/drafts")
@@ -2862,6 +2877,7 @@ Refile/archive depending on the context (via maildir)
                                                                           :to "sebastianhalbig@gmx.de")))
               :vars `((user-mail-address . "SebastianHalbig@gmx.de"  )
                       (user-full-name . "Sebastian Halbig" )
+                      (mu4e-compose-signature . nil)
                       (mu4e-sent-folder . "/GMX/sent")
                       (mu4e-trash-folder . "/GMX/trash")
                       (mu4e-drafts-folder . "/GMX/drafts")
@@ -3119,12 +3135,12 @@ This provides a tag action inside the mu4e headers view to quickly tag message. 
 
 #+begin_src emacs-lisp
 
-(defvar mu4e-tag-history '("TODO" "DATE" "RESEARCH" "PENDING" "INVOICE" "TEACHING" "INFO" "ORGANISATIONAL")
+(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE" "SAVE" "TODO" "DATE" "PENDING" "KITAEV" "WEYL" "INFINITY" "LEIBNITZ" "ADJUNCTION"  )
   "Mu4e tag history list.")
 
 (add-to-list 'savehist-additional-variables 'mu4e-tag-history)
 
-(put 'mu4e-tag-history 'history-length 100)
+(put 'mu4e-tag-history 'history-length 20)
 
 #+end_src
 
@@ -3341,12 +3357,19 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
 (defvar my-prettify-tag-alist
   '(("TODO"           . "")
     ("DATE"           . "")
-    ("RESEARCH"       . "ﱦ")
+    ("RESEARCH"       . "")
     ("PENDING"        . "")
     ("INVOICE"        . "")
+    ("SAVE"           . "")
     ("TEACHING"       . "")
     ("INFO"           . "")
-    ("ORGANISATIONAL" . "﮷")))
+    ("ORGANISATIONAL" . "")
+    ("KITAEV"         . "")
+    ("WEYL"           . "")
+    ("INFINITY"       . "")
+    ("LEIBNITZ"       . "")
+    ("ADJUNCTION"     . "")
+    ("TALK"           . "")))
 
 (defun my-prettify-tag (tag)
   "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
@@ -3362,21 +3385,6 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
 #+end_src
 
 #+begin_src emacs-lisp
-
-(defface  mu4e-tag-face
-  '((((class color) (min-colors 88) (background light))
-     :background "gray50")
-    (((class color) (min-colors 88) (background dark))
-     :background "gray90")
-    (((class color) (min-colors 16) (background light))
-     :background "darkseagreen2")
-    (((class color) (min-colors 16) (background dark))
-     :background "darkolivegreen")
-    (((class color) (min-colors 8))
-     :background "green" :foreground "black")
-    (t :inverse-video t))
-  "Basic face for highlighting."
-  :group  'mu4e-tag-face)
 
 (defface mu4e-tag-face
   '((t :inherit (nano-salient)))
