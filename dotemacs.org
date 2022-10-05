@@ -1300,7 +1300,7 @@ A minor mode for configuration
 | my-config-mode         | keymap | (67108960 . my-org-sidebar-toggle)                                                                                                    | (3 keymap (116 . my-org-toggle-blocks) (22 keymap (116 . my-org-babel-tangle)) (33554446 . my-config-mode-next-section) (33554448 . my-config-mode-prev-section) (14 . my-config-mode-next-header) (16 . my-config-mode-prev-header)) |
 | vc-dir-git-mode        | keymap | (122 keymap (112 . vc-git-stash-pop) (115 . vc-git-stash-snapshot) (99 . vc-git-stash))                                               |                                                                                                                                       |
 | diff-minor-mode        | keymap | (3 keymap (61 keymap (remap keymap (undo . diff-undo)) (82 . diff-reverse-direction) (114 . diff-restrict-view) (65 . diff-ediff-patch) (111 . diff-goto-source) (87 . widen) (mouse-2 . diff-goto-source) (13 . diff-goto-source) (123 . diff-file-prev) (125 . diff-file-next) (75 . diff-file-kill) (107 . diff-hunk-kill) (backtab . diff-hunk-prev) (9 . diff-hunk-next) (80 . diff-file-prev) (112 . diff-hunk-prev) (78 . diff-file-next) (110 . diff-hunk-next) keymap (103 . revert-buffer) (60 . beginning-of-buffer) (62 . end-of-buffer) (104 . describe-mode) (63 . describe-mode) (127 . scroll-down-command) (33554464 . scroll-down-command) (32 . scroll-up-command) (113 . quit-window) (57 . digit-argument) (56 . digit-argument) (55 . digit-argument) (54 . digit-argument) (53 . digit-argument) (52 . digit-argument) (51 . digit-argument) (50 . digit-argument) (49 . digit-argument) (48 . digit-argument) (45 . negative-argument) (remap keymap (self-insert-command . undefined)))) |                                                                                                                                       |
-| gnus-dead-summary-mode | keymap | #^[nil nil keymap                                                                                                                     |                                                                                                                                       |
+| gnus-dead-summary-mode | keymap | #^nil nil keymap                                                                                                                     |                                                                                                                                       |
 
 A shortcut to edit configuration
 
@@ -1757,7 +1757,7 @@ It is a bit slow to load so we do need load it explicitely.
 
 #+end_src
 
-** Colors :MODE:TIMER:
+** TODO Colors :MODE:TIMER:
 
 A consistent theme for GNU Emacs. The light theme is based on Material colors and the dark theme is based on Nord colors. The theme is based on a set of six faces (only).
 
@@ -1778,14 +1778,6 @@ A consistent theme for GNU Emacs. The light theme is based on Material colors an
                       :underline  'unspecified :overline   'unspecified
                       :box        'unspecified :inherit    style))
 (my-set-face 'italic 'nano-faded)
-
-#+end_src
-
-We still want the transient nano splash screen
-
-#+begin_src emacs-lisp
-
-(require 'nano-splash)
 
 #+end_src
 
