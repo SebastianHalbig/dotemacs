@@ -1790,12 +1790,14 @@ This is the font stack we install:
 - *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]]
 - Unicode font:  Inconsolata 16pt Light       [[https://github.com/googlefonts/Inconsolata][]]
 - Icon font:     Roboto Mono Nerd 12pt Light  [[https://www.nerdfonts.com/][]]
+- Serif font:
+- math font:
 
 Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
 chosen to really *stand out* from the default font (Roboto Mono).
 ┌───────────────────────────────────────────────┐
 │  The quick brown fox jumps over the lazy dog │
-│  /The quick brown fox jumps over the lazy dog/            ┼─ Victor Mono Italic
+│  /The quick brown fox jumps over the lazy dog/     ┼─ Victor Mono Italic
 │  *The quick brown fox jumps over the lazy dog* ├─ Inconsolata
 └─┼───────────────────────────┼─────────────────┘
 Roboto Mono Nerd            Roboto Mono
@@ -1817,7 +1819,9 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 (set-face-attribute 'italic nil
                     :family "Victor Mono"
                     :weight 'semilight
-                    :slant 'italic)
+                    :slant 'italic
+                    :height 140)
+
 
 (set-fontset-font t 'unicode
                   (font-spec :name "Inconsolata Light"
@@ -1871,7 +1875,7 @@ Fix a bug on OSX in term mode & zsh (spurious "%" after each command)
 
 #+end_src
 
-Make sure underline is positionned at the very bottom.
+Make sure underline is positioned at the very bottom.
 
 #+begin_src emacs-lisp
 
@@ -1935,17 +1939,53 @@ No tabulation, ever.
 
 ** Parenthesis :MODE:
 
-Paren mode for highlighting matcing paranthesis
+We enable paren mode for highlighting matching parenthesis and rainbow-delimiters in order to be able to visually distinguish delimiters of different depths.
 
 #+begin_src emacs-lisp
 
-(require 'paren)
-;; (setq show-paren-style 'expression)
-(setq show-paren-style 'parenthesis)
-(setq show-paren-when-point-in-periphery t)
-(setq show-paren-when-point-inside-paren nil)
-(show-paren-mode)
+(use-package emacs
+  :init (show-paren-mode t); Matches parentheses and such in every mode
+  )
 
+(use-package rainbow-delimiters
+  :hook ((prog-mode org-mode LaTeX-mode) . rainbow-delimiters-mode)
+  )
+
+#+end_src
+
+
+
+#+begin_src emacs-lisp
+
+
+(use-package puni
+  :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
+  :bind (:map puni-mode-map
+              ("C-<right>" . puni-slurp-forward)
+              ("C-<left>"  . puni-barf-forward)
+              ("M-<left>"  . puni-slurp-backward)
+              ("M-<right>" . puni-barf-backward)
+              ("C-x C-d"   . puni-splice)
+              ("M-i"       . puni-squeeze)
+              ("C-<up>"    . puni-rewrap)))
+
+(defun puni-rewrap ()
+  (interactive)
+  (pcase-let* ((c (read-char "Replace with? "))
+               ((,fst . ,lst) (pcase c
+                                 (?\( '("(" . ")"))
+                                 (?\) '("(" . ")"))
+                                 (?\{ '("{" . "}"))
+                                 (?\} '("{" . "}"))
+                                 (?\[ '("[" . "]"))
+                                 (?\] '("[" . "]"))
+                                 (?\< '("<" . ">"))
+                                 (?\> '("<" . ">"))
+                                 (?\" '("\"" . "\"")))))
+    (puni-squeeze)
+    (insert fst)
+    (yank)
+    (insert lst)))
 #+end_src
 
 ** Imenu list
@@ -1960,15 +2000,15 @@ Imenu setup
               imenu-max-item-length 1000)
 
 #+end_src
-** Highlighting :MODE:
+** Highlighting :MODE:INACTIVE:
 
 Highlighting of the current line (native mode)
 
 #+begin_src emacs-lisp
 
-(require 'hl-line)
+;; (require 'hl-line)
 
-(global-hl-line-mode)
+;; (global-hl-line-mode)
 
 #+end_src
 
@@ -3907,6 +3947,35 @@ Provide a [[help:mu4e-dashboard][mu4e-dashboard]] command that opens the mu4e da
 
 
 
+* Math-mode :DEFER:MODE:BINDING:
+Writing long LaTeX documents is painful. In the following, we define some faces that make the interface more readable.
+
+#+begin_src emacs-lisp
+
+(add-hook 'LaTeX-mode-hook
+          #'(lambda()
+              (set-face-attribute 'font-latex-math-face nil
+                                  :family "Fira Fira Code Symbol"
+                                  :weight 'semilight
+                                  :foreground nil)
+
+          (set-face-attribute 'font-latex-italic-face nil
+                              :family "Helvetica Now Text"
+                              :weight 'semilight
+                              :slant 'italic
+                              :foreground nil)))
+
+
+;; (defface serif-font
+;;     '((t :(:family "Helvetica-Narrow"
+;;          :height 140
+;;          :weight light)))
+;;   "Basic face for long texts."
+;;   :group 'basic-faces)
+
+
+#+end_src
+
 * Bibliography
 
 ** Bibtex
@@ -5485,8 +5554,7 @@ Open an iterm (OSX) and go to the curent directory
 
    (use-package fira-code-mode
      :custom (fira-code-mode-disabled-ligatures '("[]" "#{" "#(" "#_" "#_(" "x" "{-" "-}" )) ;; List of ligatures to turn off
-     ;; :config (global-fira-code-mode)
-   )
+     :hook LaTeX-math-mode-hook)
 
     ;; https://www.emacswiki.org/emacs/SavePlace
      (save-place-mode 1)
@@ -5531,7 +5599,6 @@ Open an iterm (OSX) and go to the curent directory
    (remove-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
 
    (global-visual-line-mode 1); Proper line wrapping
-   (global-hl-line-mode 1); Highlight current line
    (setq visible-bell t); Flashes on error
    (setq calendar-week-start-day 1); Calendar starts on Monday
 
@@ -5548,68 +5615,11 @@ Open an iterm (OSX) and go to the curent directory
 
    (require 'all-the-icons)      ;; Better handeling of icons
    (require 'projectile)         ;; Projectile offers a 'project-based' logic
-   ;; (require 'dashboard)          ;; Dashboard for the startup buffer
 
    ;; Where the projects are to be searched
    (setq projectile-project-search-path '(("~/Documents/mathematics/research/" . 3)))
 
-   ;; Startup window config
-   ;; (dashboard-setup-startup-hook)
-   ;; (setq dashboard-center-content t)
-   ;; (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-   ;; (setq dashboard-set-heading-icons t)
-   ;; (setq dashboard-set-file-icons t)
-   ;; (setq dashboard-week-agenda t)
-   ;; (setq dashboard-filter-agenda-entry 'dashboard-no-filter-agenda)
-   ;; (setq dashboard-items '((projects . 5)
-   ;;                         (agenda . 5)
-   ;;                         (recents  . 5)))
-
-
    ;; Paranthesis
-
-   ;; Enable smart parentheses mode globally
-   ;; (smartparens-global-mode 1)
-   (show-paren-mode 1); Matches parentheses and such in every mode
-
-   ;; Use rainbow-delimiters
-
-   (use-package rainbow-delimiters
-     :hook ((prog-mode text-mode LaTeX-mode) . rainbow-delimiters-mode))
-
-   ;; (use-package rainbow-delimiters
-   ;;  :init
-   ;;   (add-hook 'emacs-lisp-mode-hook #'(lambda() (rainbow-delimiters-mode)))
-   ;;   (add-hook 'LaTeX-mode-hook #'(lambda() (rainbow-delimiters-mode))))
-
-   (use-package puni
-     :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
-     :bind (:map puni-mode-map
-                 ("C-<right>" . puni-slurp-forward)
-                 ("C-<left>"  . puni-barf-forward)
-                 ("M-<left>"  . puni-slurp-backward)
-                 ("M-<right>" . puni-barf-backward)
-                 ("C-x C-d"   . puni-splice)
-                 ("M-i"       . puni-squeeze)
-                 ("C-<up>"    . puni-rewrap)))
-
-   (defun puni-rewrap ()
-     (interactive)
-     (pcase-let* ((c (read-char "Replace with? "))
-                  (`(,fst . ,lst) (pcase c
-                                    (?\( '("(" . ")"))
-                                    (?\) '("(" . ")"))
-                                    (?\{ '("{" . "}"))
-                                    (?\} '("{" . "}"))
-                                    (?\[ '("[" . "]"))
-                                    (?\] '("[" . "]"))
-                                    (?\< '("<" . ">"))
-                                    (?\> '("<" . ">"))
-                                    (?\" '("\"" . "\"")))))
-       (puni-squeeze)
-       (insert fst)
-       (yank)
-       (insert lst)))
 
    ;; Org-Agenda
 
