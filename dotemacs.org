@@ -3515,9 +3515,11 @@ This provides a tag action inside the mu4e headers view to quickly tag message. 
 #+end_src
 
 #+begin_src emacs-lisp
+
 (defun add-to-mu4e-tag-history (tag)
 "Add the new tags to the history"
 (add-to-list 'mu4e-tag-history tag))
+
 #+end_src
 
 Here is the actual tag action
@@ -3559,7 +3561,7 @@ Here is the actual tag action
                :dyn-target mu4e-tag-read
                :action      (lambda (docid msg target)
                               (when (> (length target) 0)
-                                (mu4e-action-retag-message msg target))))
+                                (mu4e-action-retag-message msg target)))))
 
 ;; Tell mu4e about the new mark
 ;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
