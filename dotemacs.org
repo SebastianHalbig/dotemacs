@@ -40,8 +40,8 @@ Note also that the first time you will start emacs using this configuration, *it
  ad-redefinition-action 'accept         ; Silence warnings for redefinition
  custom-unlispify-menu-entries nil      ; Prefer kebab-case for titles
  custom-unlispify-tag-names nil         ; Prefer kebab-case for symbols
-(put 'downcase-region 'disabled nil)    ; Enable downcase-region
-(put 'upcase-region 'disabled nil)      ; Enable upcase-region
+ (put 'downcase-region 'disabled nil)    ; Enable downcase-region
+ (put 'upcase-region 'disabled nil)      ; Enable upcase-region
  native-comp-async-report-warnings-errors nil ; Skip compilation error buffers
  read-process-output-max (* 1024 1024)  ; Increase read size per process
 
@@ -166,6 +166,8 @@ Packages used in this specific configuration. You may want to adapt this list. T
         anzu                ; Show number of matches in modeline
         swiper              ; Better search with swiper
         lsp-mode            ; Implementation of language server protocol
+        lsp-ui              ; TODO
+        rainbow-mode        ; TODO
         dictcc              ; Online DE/EN dictionary interface
         flyspell-lazy       ; Lazy flyspell-completion
         puni                ; Parenthesis handeling
@@ -333,7 +335,7 @@ We want to ensure that there is no littering. Hereto we enable no-littering.
 
 #+end_src
 
-** Encoding and locale
+** Encoding
 
 We tell emacs to use UTF-8 encoding as much as possible.
 
@@ -343,9 +345,14 @@ We tell emacs to use UTF-8 encoding as much as possible.
 (prefer-coding-system       'utf-8)     ; Add utf-8 at the front for automatic detection.
 (set-terminal-coding-system 'utf-8)     ; Set coding system of terminal output
 (set-keyboard-coding-system 'utf-8)     ; Set coding system for keyboard input on TERMINAL
+
+#+end_src
+
+Furthermore, we fix English as the default language.
+
+#+begin_src
+
 (set-language-environment "English")    ; Set up multilingual environment
-(setq calendar-date-style 'european     ; European style calenders
-      calendar-week-start-day '1)       ; The week starts on Monday
 
 #+end_src
 
@@ -355,13 +362,14 @@ If Emacs or the computer crashes, you can recover the files you were editing at 
 
 #+begin_src emacs-lisp
 
-(setq auto-save-file-name-transforms
-	  `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
-;; auto-save-list-file-prefix ; Prefix for generating auto-save-list-file-name
-;;         (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
+(setq auto-save-list-file-prefix ; Prefix for generating auto-save-list-file-name
+               (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
+      ;; auto-save-file-name-transforms ; An alternative to the above prefix.
+	  ;; `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
       auto-save-default t        ; Auto-save every buffer that visits a file
       auto-save-timeout 20       ; Number of seconds between auto-save
-      auto-save-interval 200)    ; Number of keystrokes between auto-saves
+      auto-save-interval 200     ; Number of keystrokes between auto-saves
+      create-lockfiles t)        ; Create lockfiles to interact nicely with different editors operating on the same file.
 
 #+end_src
 
@@ -493,10 +501,10 @@ A buffer can get out of sync with respect to its visited file on disk if that fi
 
 #+begin_src emacs-lisp
 
- (use-package autorevert
-     :config
-     (setq auto-revert-verbose t)
-     (global-auto-revert-mode))
+(use-package autorevert
+:config
+(setq auto-revert-verbose t)
+(global-auto-revert-mode))
 
 #+end_src emacs-lisp
 
@@ -516,10 +524,10 @@ Record cursor position from one session ot the other
 #+begin_src emacs-lisp
 
 (use-package saveplace
-     :config
-     (setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
-     (setq save-place-forget-unreadable-files t)
-     (save-place-mode 1))
+  :config
+  (setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
+  (setq save-place-forget-unreadable-files t)
+  (save-place-mode 1))
 
 #+end_src
 
@@ -639,6 +647,16 @@ between them. If len is negative, it is retrieved from current window width."
            (concat left
                    (make-string (- len (length right) (length left)) ?\ )
                    right)))))
+
+#+end_src
+
+Unwords seems to be undefined we remodel it here
+
+
+#+begin_src emacs-lisp
+
+(defun unwords (&rest words)        ;; unwords seems to be missing this function takes care of it.
+  (mapconcat #'identity words " ")) ;; it joins a list of strings with a blank space as seperator.
 
 #+end_src
 
@@ -1625,17 +1643,17 @@ We define some standard directories.
 #+begin_src emacs-lisp
 
 (use-package files
-     :config
-     (setq my-files-dir-alist
-           '(((title . "  Research")     (path . "~/Documents/mathematics/research"))
-             ((title . "  Teaching")     (path . "~/Documents/mathematics/research"))
-             ((title . "  Literature")   (path . "~/Documents/mathematics/literature"))
-             ((title . "  Notes")        (path . "~/Documents/org-files"))
-             ((title . "  Photos")       (path . "~/Documents/Pictures"))
-             ((title . "ﱘ  Music")        (path . "~/Documents/Music"))
-             ((title . "  Downloads")    (path . "~/Downloads"))))
-     (setq large-file-warning-threshold (* 16 1024 1024))
-     )
+  :config
+  (setq my-files-dir-alist
+        '(((title . "  Research")     (path . "~/Documents/mathematics/research"))
+          ((title . "  Teaching")     (path . "~/Documents/mathematics/research"))
+          ((title . "  Literature")   (path . "~/Documents/mathematics/literature"))
+          ((title . "  Notes")        (path . "~/Documents/org-files"))
+          ((title . "  Photos")       (path . "~/Documents/Pictures"))
+          ((title . "ﱘ  Music")        (path . "~/Documents/Music"))
+          ((title . "  Downloads")    (path . "~/Downloads"))))
+  (setq large-file-warning-threshold (* 16 1024 1024))
+  )
 
 #+end_src
 
@@ -1693,65 +1711,65 @@ Thanks to dirvish, navigating through files is now like dancing.
   :config
   (dirvish-override-dired-mode)
   (dirvish-define-preview exa (file)
-    "Use `exa' to generate directory preview."
-    :require ("exa")
-    (when (file-directory-p file)
-      `(shell . ("exa" "--color=always" "-al" "--group-directories-first" ,file))))
+                          "Use `exa' to generate directory preview."
+                          :require ("exa")
+                          (when (file-directory-p file)
+                            `(shell . ("exa" "--color=always" "-al" "--group-directories-first" ,file))))
   (add-to-list 'dirvish-preview-dispatchers 'exa)
   (add-to-list 'nano-modeline-mode-formats '(dirvish-mode
-                                              :mode-p my-nano-modeline-dirvish-list-mode-p
-                                              :format my-nano-modeline-dirvish-list-mode
-                                              :icon "") t)
-(setq dirvish-quick-access-entries
-       '(("h" "~/"                                " Home")
-         ("e" "~/.emacs.d/    "                   " Emacs cache")
-         ("r" "~/Documents/mathematics/research"  " Research")
-         ("t" "~/Documents/mathematics/teaching"  " Teaching")
-         ("d" "~/Documents/organisation"          " Organisation")
-         ;; ("o" "fd -e org"   "All org files in ~/Documents") TODO
-         ("t" "~/.local/share/Trash/files/" "Trash")))
-(setq dirvish-emerge-groups '(("Research documents"
-                               (extensions "tex" "bib")
-                               nil nil)
-                              ("Plaintext documents"
-                               (extensions "pdf" "epub" "org" "txt")
-                               nil nil)
-                              ("Recent files"
-                               (predicate . recent-files-today)
-                               nil nil)
-                              ("Directories"
-                               (predicate . directories)
-                               nil nil)
-                              ("Pictures"
-                               (extensions "jpg" "png" "svg" "gif")
-                               t t)
-                              ("Video"
-                               (extensions "mp4" "mkv" "webm")
-                               t t)
-                              ("Audio"
-                               (extensions "mp3" "flac" "wav" "ape" "aac")
-                               t t)
-                              ("Archives"
-                               (extensions "gz" "rar" "zip")
-                               t t)
-                              ("Auxiliary files"
-                               (extensions "aux" "auxlock" "bbl" "blg" "fls" "log" "out" "latexmkrc")
-                               t t)
-                              ("other files"
-                               (regex . ".*")
-                               t t)
-                              ))
-(setq dirvish-open-with-programs
+                                             :mode-p my-nano-modeline-dirvish-list-mode-p
+                                             :format my-nano-modeline-dirvish-list-mode
+                                             :icon "") t)
+  (setq dirvish-quick-access-entries
+        '(("h" "~/"                                " Home")
+          ("e" "~/.emacs.d/    "                   " Emacs cache")
+          ("r" "~/Documents/mathematics/research"  " Research")
+          ("t" "~/Documents/mathematics/teaching"  " Teaching")
+          ("d" "~/Documents/organisation"          " Organisation")
+          ;; ("o" "fd -e org"   "All org files in ~/Documents") TODO
+          ("t" "~/.local/share/Trash/files/" "Trash")))
+  (setq dirvish-emerge-groups '(("Research documents"
+                                 (extensions "tex" "bib")
+                                 nil nil)
+                                ("Plaintext documents"
+                                 (extensions "pdf" "epub" "org" "txt")
+                                 nil nil)
+                                ("Recent files"
+                                 (predicate . recent-files-today)
+                                 nil nil)
+                                ("Directories"
+                                 (predicate . directories)
+                                 nil nil)
+                                ("Pictures"
+                                 (extensions "jpg" "png" "svg" "gif")
+                                 t t)
+                                ("Video"
+                                 (extensions "mp4" "mkv" "webm")
+                                 t t)
+                                ("Audio"
+                                 (extensions "mp3" "flac" "wav" "ape" "aac")
+                                 t t)
+                                ("Archives"
+                                 (extensions "gz" "rar" "zip")
+                                 t t)
+                                ("Auxiliary files"
+                                 (extensions "aux" "auxlock" "bbl" "blg" "fls" "log" "out" "latexmkrc")
+                                 t t)
+                                ("other files"
+                                 (regex . ".*")
+                                 t t)
+                                ))
+  (setq dirvish-open-with-programs
         `((,dirvish-video-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))
           (,dirvish-audio-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))))
-(setq dirvish-attributes '(vc-state file-size git-msg subtree-state all-the-icons collapse))
-(setq dirvish-all-the-icons-height 0.8)
-(setq dirvish-side-attributes dirvish-attributes)
-(setq dirvish-side-preview-dispatchers (append '(vc-diff) dirvish-preview-dispatchers))
-(setq dirvish-side-display-alist '((side . left) (slot . -1) (window-width . 0.2)))
-(setq dirvish-side-header-line-format '(:left (project) :right (vc-info)))
-(setq dirvish-side-mode-line-format '(:left (sort omit) :right (index)))
-)
+  (setq dirvish-attributes '(vc-state file-size git-msg subtree-state all-the-icons collapse))
+  (setq dirvish-all-the-icons-height 0.8)
+  (setq dirvish-side-attributes dirvish-attributes)
+  (setq dirvish-side-preview-dispatchers (append '(vc-diff) dirvish-preview-dispatchers))
+  (setq dirvish-side-display-alist '((side . left) (slot . -1) (window-width . 0.2)))
+  (setq dirvish-side-header-line-format '(:left (project) :right (vc-info)))
+  (setq dirvish-side-mode-line-format '(:left (sort omit) :right (index)))
+  )
 
 #+end_src
 
@@ -1961,9 +1979,9 @@ A consistent theme for GNU Emacs. The light theme is based on Material colors an
 
 #+begin_src lisp
 
-  (require 'nano-theme)
-  (setq nano-fonts-use t) ; Use theme font stack
-  (nano-mode)             ; Recommended settings
+(require 'nano-theme)
+(setq nano-fonts-use t) ; Use theme font stack
+(nano-mode)             ; Recommended settings
 
 
 (defun my-set-face (face style)
@@ -1975,6 +1993,9 @@ A consistent theme for GNU Emacs. The light theme is based on Material colors an
                       :underline  'unspecified :overline   'unspecified
                       :box        'unspecified :inherit    style))
 (my-set-face 'italic 'nano-faded)
+
+#+end_src
+
 We define a set of colours as defined by Paul Tol in his blog [[https://personal.sron.nl/~pault/][]].
 
 #+begin_src emacs-lisp
@@ -2035,9 +2056,8 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
       dark-red    '"#663333"
       dark-gray   '"#555555")
 
-
-
-(setq light-blue   '"#77AADD"
+(setq light-black  '"#454545"
+      light-blue   '"#77AADD"
       light-cyan   '"#99DDFF"
       light-mint   '"#44BB99"
       light-pear   '"#BBCC33"
@@ -2047,13 +2067,12 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
       light-pink   '"#FFAABB"
       light-gray   '"#DDDDDD")
 
-(setq almost-black '"#111A3A"
+(setq almost-black '"#111A1A"
       almost-white '"#FBFAFC"
-      almost-blue  '"#4F5565")
+      almost-blue  '"#4F5565"
+      almost-gray  '"#F1F1F1")
 
 #+end_src
-
-We define a faded version of the nano-light-theme.
 
 #+begin_src emacs-lisp
 
@@ -2065,12 +2084,15 @@ We define a faded version of the nano-light-theme.
   (set-face-attribute 'nano-popout-i   nil :background vibrant-red)
   (set-face-attribute 'nano-strong     nil :foreground almost-black)
   (set-face-attribute 'nano-strong-i   nil :background almost-black)
-  (set-face-attribute 'nano-salient    nil :foreground muted-indigo)
-  (set-face-attribute 'nano-salient-i  nil :background muted-indigo)
-  (set-face-attribute 'nano-faded      nil :foreground vibrant-gray)
-  (set-face-attribute 'nano-faded-i    nil :foreground vibrant-gray)
-  (set-face-attribute 'nano-subtle     nil :background pale-gray)
-  (set-face-attribute 'nano-subtle-i   nil :foreground pale-gray))
+  (set-face-attribute 'nano-salient    nil :foreground medium-contrast-light-blue)
+  (set-face-attribute 'nano-salient-i  nil :background bright-blue)
+  (set-face-attribute 'nano-faded      nil :foreground dark-gray)
+  (set-face-attribute 'nano-faded-i    nil :background dark-gray)
+  (set-face-attribute 'nano-subtle     nil :foreground light-black)
+  (set-face-attribute 'nano-subtle     nil :background almost-gray)
+  (set-face-attribute 'nano-subtle-i   nil :foreground almost-gray)
+  (set-face-attribute 'nano-subtle-i   nil :background light-black)
+  )
 
 (defun my-nano-dark-muted ()
   (nano-dark)
@@ -2083,9 +2105,12 @@ We define a faded version of the nano-light-theme.
   (set-face-attribute 'nano-salient    nil :foreground pale-cyan)
   (set-face-attribute 'nano-salient-i  nil :background pale-cyan)
   (set-face-attribute 'nano-faded      nil :foreground pale-blue)
-  (set-face-attribute 'nano-faded-i    nil :foreground pale-blue)
+  (set-face-attribute 'nano-faded-i    nil :background pale-blue)
+  (set-face-attribute 'nano-subtle     nil :foreground almost-white)
   (set-face-attribute 'nano-subtle     nil :background almost-blue)
-  (set-face-attribute 'nano-subtle-i   nil :foreground almost-blue))
+  (set-face-attribute 'nano-subtle-i   nil :foreground almost-blue)
+  (set-face-attribute 'nano-subtle-i   nil :background almost-white)
+  )
 
 (setq my-current-theme-light t)
 
@@ -2094,15 +2119,16 @@ We define a faded version of the nano-light-theme.
 (defun my-toggle-theme ()
   (interactive)
   (if my-current-theme-light
-  (progn (setq my-current-theme-light nil)
-         (my-nano-dark-muted))
-  (setq my-current-theme-light t)
-  (my-nano-light-muted)))
+      (progn (setq my-current-theme-light nil)
+             (my-nano-dark-muted))
+    (setq my-current-theme-light t)
+    (my-nano-light-muted)))
 
+(bind-key "<f6>" #'my-toggle-theme ergoemacs-override-keymap)
 
 #+end_src
 
-** Fonts
+** Fonts :BUGFIX:
 
 This is the font stack we install:
 
@@ -2116,11 +2142,11 @@ This is the font stack we install:
 
 Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
 chosen to really *stand out* from the default font (Roboto Mono).
-┌───────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────────────┐
 │  The quick brown fox jumps over the lazy dog │
 │  /The quick brown fox jumps over the lazy dog/     ┼─ Victor Mono Italic
 │  *The quick brown fox jumps over the lazy dog* ├─ Inconsolata
-└─┼───────────────────────────┼─────────────────┘
+└──┼────────────────────────────────────────────┼─────────────────┘
 Roboto Mono Nerd            Roboto Mono
 
 Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
@@ -2150,7 +2176,9 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 
 (set-fontset-font t '(#xe000 . #xffdd)
                   (font-spec :name "RobotoMono Nerd Font"
-                             :size 28) nil)
+                             :size (if(>=(window-pixel-height) 1700)
+                                      28
+                                      14)) nil)
 
 #+end_src
 
@@ -2274,35 +2302,91 @@ We enable paren mode for highlighting matching parenthesis and rainbow-delimiter
 
 #+end_src
 
+ We need a small helper to distinguish between words and special characters  which should be treated differently.
 
 
 #+begin_src emacs-lisp
 
+(defvar my-backward-special-characters '".,:;!?(){}[]~@#$%^&*()_=-+\\\"' \n\t")
 
-(use-package puni
-  :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
-  :bind (:map puni-mode-map
-              ("C-<right>" . puni-slurp-forward)
-              ("C-<left>"  . puni-barf-forward)
-              ("M-<left>"  . puni-slurp-backward)
-              ("M-<right>" . puni-barf-backward)
-              ("C-x C-d"   . puni-splice)
-              ("M-i"       . puni-squeeze)
-              ("C-<up>"    . my-puni-rewrap)))
 
-(defun my-puni-rewrap ()
+(defun my-backward-word ()
+ " muW4e want to go back by words in a smart way"
   (interactive)
-  (let*((next-delimiters (completing-read
-                          "Rewrap the sexp at point with: "
-                          '("(...)" "{...}" "[...]" "\\langle...\\rangle" "\\|...\\|"  "<...>" "\\left(...\\right)" )
-                          nil
-                          t
-                          ))
-        (opening-del "A"))
-    (puni-squeeze)
-    (insert (car (split-string next-delimiters "\\.+" t)))
-    (yank)
-    (insert (car (cdr (split-string next-delimiters "\\.+" t))))))
+    (if (string-search (string (preceding-char)) my-backward-special-characters)
+      (backward-char)
+          (backward-word))
+)
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+  (use-package puni
+    :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
+    :bind (:map puni-mode-map
+                ("C-<right>" . puni-slurp-forward)
+                ("C-<left>"  . puni-barf-forward)
+                ("M-<left>"  . puni-slurp-backward)
+                ("M-<right>" . puni-barf-backward)
+                ("C-x C-d"   . puni-splice)
+                ("M-i"       . puni-squeeze)
+                ("C-<up>"    . my-puni-rewrap)
+                ("<left>"    . my-backward-word)
+  ))
+
+  (defun my-puni-rewrap ()
+    (interactive)
+    (let*((next-delimiters (completing-read
+                            "Rewrap the sexp at point with: "
+                            '("(...)" "{...}" "[...]" "\\langle...\\rangle" "\\|...\\|"  "<...>" "\\left(...\\right)" )
+                            nil
+                            t
+                            ))
+          (opening-del "A"))
+      (puni-squeeze)
+      (insert (car (split-string next-delimiters "\\.+" t)))
+      (yank)
+      (insert (car (cdr (split-string next-delimiters "\\.+" t))))))
+
+#+end_src
+
+** Spell-checking
+
+We set up multi-language lazy flyspell checks in text modes.
+
+Now we can set up flyspell and guess-language.
+
+#+begin_src emacs-lisp
+
+(use-package flyspell
+  :hook (text-mode org-mode latex-mode mu4e-compose-mode)
+  :config
+  (setq ispell-program-name "aspell")
+  (setq ispell-list-command "--list"))
+
+;; (use-package flyspell-lazy
+;;   :after flyspell
+;;   :hook (text-mode org-mode latex-mode mu4e-compose-mode))
+
+(use-package flyspell-correct
+  :after flyspell
+  :bind (:map ergoemacs-override-keymap ("M-t" . flyspell-correct-wrapper)))
+
+(use-package flyspell-correct-popup
+  :after flyspell-correct)
+
+(use-package guess-language
+  :hook (mu4e-compose-mode)
+  :config
+(setq guess-language-langcodes '((en . ("en_GB" "English"))
+                                 (de . ("de_DE" "German")))
+      guess-language-languages '(en de)
+      guess-language-min-paragraph-length 45))
+
+(use-package mu4e
+  :after flyspell
+  :init (setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify))
 
 #+end_src
 
@@ -2361,7 +2445,7 @@ For retina display (OSX)
 
 #+end_src
 
-** Corfu :MODE:
+** TODO Corfu :MODE:
 
 [[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
 
@@ -2371,7 +2455,7 @@ For retina display (OSX)
 
 (setq corfu-cycle t                ; Enable cycling for `corfu-next/previous'
       corfu-auto t                 ; Enable auto completion
-      corfu-auto-delay 60.0        ; Delay before auto-completion shows up
+      corfu-auto-delay 20.0        ; Delay before auto-completion shows up
       corfu-separator ?\s          ; Orderless field separator
       corfu-quit-at-boundary nil   ; Never quit at completion boundary
       corfu-quit-no-match t        ; Quit when no match
@@ -2428,6 +2512,72 @@ Allow completion based on space-separated tokens, out of order.
   (setq completion-styles '(orderless)
         completion-category-defaults nil
         completion-category-overrides '((file (styles . (partial-completion))))))
+
+#+end_src
+
+** LSP-Mode
+
+A few more niceties for our completion setup are provided by using the lsp-mode.
+It has a nice and quite useful wiki [[https://emacs-lsp.github.io/lsp-mode/][]]. The following config is derived from Tony Zorman's settings.
+
+#+begin_src emacs-lisp
+
+(use-package lsp-mode
+  :preface
+  (defun my-lsp-shutdown-last-workspaces ()
+    "Shut down the `lsp--last-active-workspaces'."
+    (interactive)
+    (mapc (lambda (ws)
+            (lsp--warn "Stopping %s" (lsp--workspace-print ws))
+            (with-lsp-workspace ws (lsp--shutdown-workspace)))
+          lsp--last-active-workspaces))
+  :hook
+  ((latex-mode LaTeX-mode) . lsp-deferred)
+  (lsp-mode . (lambda ()
+                (setq-local read-process-output-max (* 1024 1024))))
+  (lsp-completion-mode ; for corfu compatibility
+   . (lambda ()
+       (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+             '(flex))))
+  :commands (lsp-deferred lsp)
+  :bind (:map lsp-mode-map
+              ("C-c l i" . lsp-ui-imenu)
+              ("C-c C-r" . lsp-execute-code-action)
+              ("C-c C-d" . lsp-ui-doc-show)
+              ("C-c l s" . (lambda ()
+                             (interactive)
+                             (lsp-ui-sideline-enable (not lsp-ui-sideline-mode))))
+              ("C-c h"   . (lambda ()
+                             (interactive)
+                             (when lsp-lens-mode
+                               (lsp-lens-mode -1))
+                             (lsp-lens-hide)))
+              ("C-c d"   . (lambda ()
+                             (interactive)
+                             (when (not lsp-lens-mode)
+                               (lsp-lens-mode 1))
+                             (lsp-lens-show))))
+  :custom
+  (lsp-use-plists t)
+  (lsp-completion-provider :none)       ; Corfu
+  (lsp-keymap-prefix "C-c l")
+  (lsp-idle-delay 0.6)
+  ;; Disable things I don't care about
+  (lsp-headerline-breadcrumb-enable nil)
+  (lsp-modeline-code-actions-enable nil)
+  (lsp-modeline-diagnostics-enable nil)
+  (lsp-enable-symbol-highlighting nil)
+  )
+
+(use-package lsp-ui
+  :after lsp-mode
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-doc-show-with-mouse nil)
+  (lsp-ui-sideline-enable nil)
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-show-hover t)
+  )
 
 #+end_src
 
@@ -3136,14 +3286,14 @@ Refile/archive depending on the context (via maildir)
         (tags (mu4e-message-field msg :tags))
         (subfolder "saved")
         )
-(cond
- ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
- ((member "INFO" tags) (setq subfolder "info"))
- ((member "TEACHING" tags) (setq subfolder "teaching"))
- ((member "RESEARCH" tags) (setq subfolder "research"))
- ((member "INVOICE" tags) (setq subfolder "invoice"))
- )
-(concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
+    (cond
+     ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
+     ((member "INFO" tags) (setq subfolder "info"))
+     ((member "TEACHING" tags) (setq subfolder "teaching"))
+     ((member "RESEARCH" tags) (setq subfolder "research"))
+     ((member "INVOICE" tags) (setq subfolder "invoice"))
+     )
+    (concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
     ))
 
 (setq mu4e-refile-folder 'my-mu4e-refile-folder)
@@ -3190,7 +3340,7 @@ Move emails to the relative spam folder.
               :leave-func (lambda () (mu4e-message "Leaving Spam context"))
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
-                                       :to "xolotl.spam@web.de")))
+                                                                          :to "xolotl.spam@web.de")))
               :vars `((user-mail-address . "xolotl.spam@web.de"  )
                       (user-full-name . "Sebastian Halbig" )
                       (mu4e-compose-signature . nil)
@@ -3217,7 +3367,7 @@ Move emails to the relative spam folder.
               :leave-func (lambda () (mu4e-message "Leaving Dresden(deprecated) context"))
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
-                                       :to "sebastian.halbig@tu-dresden.de")))
+                                                                          :to "sebastian.halbig@tu-dresden.de")))
               :vars `((user-mail-address . "Sebastian.Halbig@tu-dresden.de"  )
                       (user-full-name . "Sebastian Halbig" )
                       (mu4e-compose-signature . nil)
@@ -3270,7 +3420,7 @@ Move emails to the relative spam folder.
               :leave-func (lambda () (mu4e-message "Leaving Marburg(general) context"))
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
-                                       :to "halbigs@mathematik.uni-marburg.de")))
+                                                                          :to "halbigs@mathematik.uni-marburg.de")))
               :vars `((user-mail-address . "halbigs@mathematik.uni-marburg.de")
                       (user-full-name . "Sebastian Halbig")
                       (mu4e-compose-signature . ,mu4e-signature)
@@ -3297,7 +3447,7 @@ Move emails to the relative spam folder.
               :leave-func (lambda () (mu4e-message "Leaving Marburg(general) context"))
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
-                                       :to "Sebastian.Halbig@uni-marburg.de")))
+                                                                          :to "Sebastian.Halbig@uni-marburg.de")))
               :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de"  )
                       (user-full-name . "Sebastian Halbig" )
                       (mu4e-compose-signature . ,mu4e-signature)
@@ -3396,28 +3546,7 @@ We try to sign all mails. Encryption should also be managed automatically
 
 #+end_src
 
-Multi-language flyspell in compose mode
-
-#+begin_src emacs-lisp
-
-(require 'flyspell)
-(require 'guess-language)
-(require 'flyspell-correct-popup)
-
-;;(bind-key "C-;" #'flyspell-popup-wrapper flyspell-mode-map)
-;;(bind-key "C-;" #'flyspell-popup-correct flyspell-mode-map)
-
-;; Automatically detect language for Flyspell
-(with-eval-after-load 'guess-language
-  (add-hook 'text-mode-hook #'guess-language-mode)
-  (setq guess-language-langcodes '((en . ("en_GB" "English"))
-                                   (de . ("de_DE" "German")))
-        guess-language-languages '(en de)
-        guess-language-min-paragraph-length 45))
-
-(setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify)
-
-#+end_src
+Setting up mail composition.
 
 #+name: my-mu4e-compose-hook
 #+begin_src emacs-lisp
@@ -3426,11 +3555,10 @@ Multi-language flyspell in compose mode
   "Settings for message composition."
 
   (auto-save-mode -1)
-  (turn-off-auto-fill)
   (set-fill-column 79)
+  (auto-fill-mode)
   (setq flyspell-generic-check-word-predicate
-        'mail-mode-flyspell-verify)
-  (flyspell-mode))
+        'mail-mode-flyspell-verify))
 
 (add-hook 'mu4e-compose-mode-hook #'my-mu4e-compose-hook)
 
@@ -3495,7 +3623,7 @@ Multi-language flyspell in compose mode
                :key ?a
                :hide-unread t
                :query "tags:untreated")
-      ))
+        ))
 #+end_src
 
 ** Tags :BINDING:
@@ -3517,8 +3645,8 @@ This provides a tag action inside the mu4e headers view to quickly tag message. 
 #+begin_src emacs-lisp
 
 (defun add-to-mu4e-tag-history (tag)
-"Add the new tags to the history"
-(add-to-list 'mu4e-tag-history tag))
+  "Add the new tags to the history"
+  (add-to-list 'mu4e-tag-history tag))
 
 #+end_src
 
@@ -3526,46 +3654,46 @@ Here is the actual tag action
 
 #+begin_src emacs-lisp
 
-(defun mu4e-tag-read (target msg)
-  "Ask for tags to be added and/or removed."
-  (let* ((tags nil)
-         (old-tags (mu4e-message-field msg :tags))
-         (new-tags (completing-read-multiple
-                    "TAGS: "
-                    mu4e-tag-history
-                    nil
-                    nil
-                    (mapconcat #'identity old-tags ",")
-                    ;; 'mu4e-tag-history
-                    )))
-    (dolist (tag old-tags)
-      (let ((tag (string-trim tag)))
-        (if (and (> (length tag) 0)
-                 (not (member tag new-tags)))
-            (push (concat "-" tag) tags))))
-    (dolist (tag new-tags)
-      (let ((tag (string-trim tag)))
-        (if (and (> (length tag) 0)
-                 (not (member tag old-tags)))
-            (progn
-              (add-to-mu4e-tag-history tag)
-              (push (concat "+" tag) tags)))))
-    (mapconcat #'identity tags ",")))
+  (defun mu4e-tag-read (target msg)
+    "Ask for tags to be added and/or removed."
+    (let* ((tags nil)
+           (old-tags (mu4e-message-field msg :tags))
+           (new-tags (completing-read-multiple
+                      "TAGS: "
+                      mu4e-tag-history
+                      nil
+                      nil
+                      (mapconcat #'identity old-tags ",")
+                      ;; 'mu4e-tag-history
+                      )))
+      (dolist (tag old-tags)
+        (let ((tag (string-trim tag)))
+          (if (and (> (length tag) 0)
+                   (not (member tag new-tags)))
+              (push (concat "-" tag) tags))))
+      (dolist (tag new-tags)
+        (let ((tag (string-trim tag)))
+          (if (and (> (length tag) 0)
+                   (not (member tag old-tags)))
+              (progn
+                (add-to-mu4e-tag-history tag)
+                (push (concat "+" tag) tags)))))
+      (mapconcat #'identity tags ",")))
 
-;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
-;; I Did not find a way to cancel the marks
-(add-to-list 'mu4e-marks
-             '(tag
-               :char       "g"
-               :prompt     "gtag"
-               :dyn-target mu4e-tag-read
-               :action      (lambda (docid msg target)
-                              (when (> (length target) 0)
-                                (mu4e-action-retag-message msg target)))))
+  ;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
+  ;; I Did not find a way to cancel the marks
+  (add-to-list 'mu4e-marks
+                 '(tag
+                   :char       "g"
+                   :prompt     "gtag"
+                   :dyn-target mu4e-tag-read
+                   :action      (lambda (docid msg target)
+                                  (when (> (length target) 0)
+                                    (mu4e-action-retag-message msg target)))))
 
-;; Tell mu4e about the new mark
-;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
-(mu4e~headers-defun-mark-for tag)
+  ;; Tell mu4e about the new mark
+  ;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
+  (mu4e~headers-defun-mark-for tag)
 
 #+end_src
 
@@ -3777,12 +3905,12 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
   "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
   (let* ((local-tag tag)
          (prettified-tag (car (split-string local-tag ","))))
-  (dolist (sym-pair my-prettify-tag-alist)
-    (when (string= prettified-tag (car sym-pair))
-      (setq prettified-tag (cdr sym-pair)))
-    )
-  prettified-tag
-  ))
+    (dolist (sym-pair my-prettify-tag-alist)
+      (when (string= prettified-tag (car sym-pair))
+        (setq prettified-tag (cdr sym-pair)))
+      )
+    prettified-tag
+    ))
 
 #+end_src
 
@@ -3801,8 +3929,8 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
       "")))
 (add-to-list 'mu4e-header-info-custom
              '(:my-tags . (:name "my-tags"
-                           :shortname "T"
-                           :function my-mu4e-headers-tags)))
+                                 :shortname "T"
+                                 :function my-mu4e-headers-tags)))
 
 #+end_src
 
@@ -3816,8 +3944,8 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
   "    ") ;; NON-BREAKING spaces
 (add-to-list 'mu4e-header-info-custom
              '(:my-counter . (:name "my-counter"
-                              :shortname "#"
-                              :function my-mu4e-headers-thread-counter)))
+                                    :shortname "#"
+                                    :function my-mu4e-headers-thread-counter)))
 #+end_src
 
 **** Subject (custom info)
@@ -3834,8 +3962,8 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 (add-to-list 'mu4e-header-info-custom
              '(:my-subject . (:name "my-subject"
-                              :shortname "S"
-                              :function my-mu4e-headers-subject)))
+                                    :shortname "S"
+                                    :function my-mu4e-headers-subject)))
 
 #+end_src
 
@@ -3929,13 +4057,13 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
                       (and (> (point) (point-min))
                            (get-text-property (- (point) 1) 'mu4e-separator)))
             (insert
-              (propertize "\n"
-                          'mu4e-separator t
-                          'face '(:inherit nano-strong
-                                  :strike-through t
-                                  :height 45
-                                  :weight bold
-                                  :extend t)))))
+             (propertize "\n"
+                         'mu4e-separator t
+                         'face '(:inherit nano-strong
+                                          :strike-through t
+                                          :height 45
+                                          :weight bold
+                                          :extend t)))))
         (forward-line)))))
 
 (add-hook 'mu4e-headers-found-hook #'my-mu4e-headers-separate-root)
@@ -4008,8 +4136,8 @@ A custom multiline headers view for mu4e.
                     'display `((margin left-margin) "  "))
         (propertize "-" 'display "\n"
                     'face '(:extend t
-                            :strike-through t
-                            :inherit nano-subtle-i))
+                                    :strike-through t
+                                    :inherit nano-subtle-i))
         "  ")) ;; !! NON-BREAKING SPACE -> will be searched later
 
      ;; Children are always indented (relatively to root)
@@ -4019,7 +4147,7 @@ A custom multiline headers view for mu4e.
 
      ;; Unread mark appears in the left margin
      (propertize " " 'face (if unread 'nano-default face-sender)
-                     'display `((margin left-margin) ,unread-mark))
+                 'display `((margin left-margin) ,unread-mark))
 
      ;; Sender
      (cond (one-line     (propertize (concat prefix sender)
@@ -4031,12 +4159,12 @@ A custom multiline headers view for mu4e.
      " "
      ;; Replied
      (when replied
-         (propertize " " 'face face-sender))
+       (propertize " " 'face face-sender))
 
      ;; In one line mode (children), icons are displayed next to sender
      (when one-line
-         (concat (propertize icons)
-                 " "))
+       (concat (propertize icons)
+               " "))
 
      ;; Tags next to sender
      (when tags
@@ -4061,14 +4189,14 @@ A custom multiline headers view for mu4e.
 
         ;; Blank spaces in the margin (for nice hl-line-mode)
         (propertize " " 'face '(nano-strong nano-salient)
-                        'display `((margin left-margin) "  "))
+                    'display `((margin left-margin) "  "))
 
         ;; Indentation (to compensate for the virtual "\n" we introduced before)
         (propertize "  ")
 
         ;; Align subject and sender when this is a child
         (when (and one-line child)
-            (propertize "  " 'face 'nano-faded))
+          (propertize "  " 'face 'nano-faded))
 
         ;; Subject
         (propertize subject 'face face-subject)
@@ -4165,10 +4293,10 @@ We retrict the hack to mu4e-header-mode
 
 #+begin_src emacs-lisp
 
- (defun my-mu4e-headers-mode-hl-line-move ()
-     (setq-local hl-line-range-function #'my-mu4e-hl-line-move))
+(defun my-mu4e-headers-mode-hl-line-move ()
+  (setq-local hl-line-range-function #'my-mu4e-hl-line-move))
 
- (add-hook 'mu4e-headers-mode-hook  #'my-mu4e-headers-mode-hl-line-move)
+(add-hook 'mu4e-headers-mode-hook  #'my-mu4e-headers-mode-hl-line-move)
 
 #+end_src
 
@@ -4205,15 +4333,15 @@ into account & insert the number of children at the root level (replacing "" 
 #+begin_src emacs-lisp
 
 (defun my-mu4e-move-mark-overlay ()
-   (interactive)
-   (let* ((beg (line-beginning-position))
-          (end (line-beginning-position 2))
-          (overlays (overlays-in beg end)))
-     (dolist (overlay overlays)
-       (when (overlay-get overlay 'mu4e-mark)
-         (move-overlay overlay
-                       (overlay-start overlay)
-                       (+ (overlay-start overlay) 2))))))
+  (interactive)
+  (let* ((beg (line-beginning-position))
+         (end (line-beginning-position 2))
+         (overlays (overlays-in beg end)))
+    (dolist (overlay overlays)
+      (when (overlay-get overlay 'mu4e-mark)
+        (move-overlay overlay
+                      (overlay-start overlay)
+                      (+ (overlay-start overlay) 2))))))
 
 #+end_src
 
@@ -4279,11 +4407,11 @@ Writing long LaTeX documents is painful. In the following, we define some faces 
                                   :weight 'semilight
                                   :foreground nil)
 
-          (set-face-attribute 'font-latex-italic-face nil
-                              :family "Helvetica Now Text"
-                              :weight 'semilight
-                              :slant 'italic
-                              :foreground nil)))
+              (set-face-attribute 'font-latex-italic-face nil
+                                  :family "Helvetica Now Text"
+                                  :weight 'semilight
+                                  :slant 'italic
+                                  :foreground nil)))
 
 
 ;; (defface serif-font
@@ -4328,17 +4456,17 @@ Dedicated header line for org-bib-mode
 
   (with-current-buffer "*Ilist*"
     (setq header-line-format
-        '(:eval
-          (nano-modeline-render nil
-                                (buffer-name imenu-list--displayed-buffer)
-                                (format "(view mode: %s, filter: %s)"
-                                        (if (eq org-bib--view-mode-current 'none)
-                                            "-"
-                                          org-bib--view-mode-current)
-                                        (if (eq org-imenu-filter-string "*")
-                                            "-"
-                                          org-imenu-filter-string))
-                                "")))
+          '(:eval
+            (nano-modeline-render nil
+                                  (buffer-name imenu-list--displayed-buffer)
+                                  (format "(view mode: %s, filter: %s)"
+                                          (if (eq org-bib--view-mode-current 'none)
+                                              "-"
+                                            org-bib--view-mode-current)
+                                          (if (eq org-imenu-filter-string "*")
+                                              "-"
+                                            org-imenu-filter-string))
+                                  "")))
     (face-remap-add-relative 'hl-line :inherit 'nano-strong-i)))
 
 (add-hook 'org-bib-mode-hook #'my-org-bib-mode-hook)
@@ -4429,29 +4557,29 @@ We adapt fill functions according to the indent level.
 
 #+begin_src emacs-lisp
 
- (defun my-calc-offset-on-org-level ()
-   "Calculate offset (in chars) on current level in org mode file."
+(defun my-calc-offset-on-org-level ()
+  "Calculate offset (in chars) on current level in org mode file."
 
-   (* (or (org-current-level) 0) org-indent-indentation-per-level))
+  (* (or (org-current-level) 0) org-indent-indentation-per-level))
 
- (defun my-org-fill-paragraph (&optional justify region)
-   "Calculate apt fill-column value and fill paragraph."
+(defun my-org-fill-paragraph (&optional justify region)
+  "Calculate apt fill-column value and fill paragraph."
 
-   (let* ((fill-column (- fill-column (my-calc-offset-on-org-level))))
-     (org-fill-paragraph justify region)))
+  (let* ((fill-column (- fill-column (my-calc-offset-on-org-level))))
+    (org-fill-paragraph justify region)))
 
- (defun my-org-auto-fill-function ()
-   "Calculate apt fill-column value and do auto-fill"
+(defun my-org-auto-fill-function ()
+  "Calculate apt fill-column value and do auto-fill"
 
-   (let* ((fill-column (- fill-column (my-calc-offset-on-org-level))))
-     (org-auto-fill-function)))
+  (let* ((fill-column (- fill-column (my-calc-offset-on-org-level))))
+    (org-auto-fill-function)))
 
- (defun my-org-mode-hook ()
-   (setq fill-paragraph-function #'my-org-fill-paragraph
-         normal-auto-fill-function #'my-org-auto-fill-function))
+(defun my-org-mode-hook ()
+  (setq fill-paragraph-function #'my-org-fill-paragraph
+        normal-auto-fill-function #'my-org-auto-fill-function))
 
- (add-hook 'org-load-hook 'my-org-mode-hook)
- (add-hook 'org-mode-hook 'my-org-mode-hook)
+(add-hook 'org-load-hook 'my-org-mode-hook)
+(add-hook 'org-mode-hook 'my-org-mode-hook)
 
 #+end_src
 
@@ -4541,9 +4669,9 @@ Settings
       org-agenda-start-on-weekday 1
       org-agenda-span 7
       org-agenda-hide-tags-regexp "." ; No tags
-    ; org-agenda-hide-tags-regexp nil) ; All tags
+                                        ; org-agenda-hide-tags-regexp nil) ; All tags
       org-agenda-tags-column 0
-    ; org-agenda-tags-column -79)      ; Left aling
+                                        ; org-agenda-tags-column -79)      ; Left aling
       org-agenda-block-separator nil
       org-agenda-category-icon-alist nil
       org-agenda-skip-deadline-if-done t
@@ -4634,11 +4762,12 @@ A small function to cancel a meeting
          "Mother's Day")))
 
 (setq calendar-holidays french-holidays     ; French holidays
-      calendar-week-start-day 1             ; Week starts on Monday
+      calendar-date-style 'european         ; European style calenders
+      calendar-week-start-day '1            ; The week starts on Monday
       calendar-mark-diary-entries-flag nil) ; Do not show diary entries
 
-; Mark today in calendar
-(add-hook 'calendar-today-visible-hook  #'calendar-mark-today)
+
+(add-hook 'calendar-today-visible-hook  #'calendar-mark-today); Mark today in calendar
 
 #+end_src
 
@@ -4710,7 +4839,7 @@ Timestamp tags for the agenda (bold means inverse video below):
 now        -> *now*
 9:00       -> *9h00*
 9:30-10:00 -> 9h30 | *30mn*
-           -> ANYTIME
+-> ANYTIME
 
 #+name: svg-tag-timestamp
 #+begin_src emacs-lisp
@@ -4727,30 +4856,30 @@ now        -> *now*
     (goto-char (point-min))
     (while (search-forward-regexp
             "\\(\([0-9]/[0-9]\):\\)" nil t)
-              (set-text-properties (match-beginning 1) (match-end 1)
-                             `(display ,(svg-tag-make "ANYTIME"
-                                                      :face 'nano-faded
-                                                      :inverse nil
-                                                      :padding 3 :alignment 0))))
+      (set-text-properties (match-beginning 1) (match-end 1)
+                           `(display ,(svg-tag-make "ANYTIME"
+                                                    :face 'nano-faded
+                                                    :inverse nil
+                                                    :padding 3 :alignment 0))))
 
     (goto-char (point-min))
     (while (search-forward-regexp
             "\\([0-9]+:[0-9]+\\)\\(\\.+\\)" nil t)
 
-              (set-text-properties (match-beginning 1) (match-end 2)
-                             `(display ,(svg-tag-make (match-string 1)
-                                                       :face 'nano-faded
-                                                       :margin 4 :alignment 0))))
+      (set-text-properties (match-beginning 1) (match-end 2)
+                           `(display ,(svg-tag-make (match-string 1)
+                                                    :face 'nano-faded
+                                                    :margin 4 :alignment 0))))
 
     (goto-char (point-min))
     (while (search-forward-regexp
             "\\([0-9]+:[0-9]+\\)\\(\\.*\\)" nil t)
 
-              (set-text-properties (match-beginning 1) (match-end 2)
-                             `(display ,(svg-tag-make (match-string 1)
-                                                      :face 'nano-default
-                                                      :inverse t
-                                                      :margin 4 :alignment 0))))
+      (set-text-properties (match-beginning 1) (match-end 2)
+                           `(display ,(svg-tag-make (match-string 1)
+                                                    :face 'nano-default
+                                                    :inverse t
+                                                    :margin 4 :alignment 0))))
     (goto-char (point-min))
     (while (search-forward-regexp
             "\\([0-9]+:[0-9]+\\)\\(-[0-9]+:[0-9]+\\)" nil t)
@@ -4761,20 +4890,20 @@ now        -> *now*
              (d  (- t2 t1)))
 
         (set-text-properties (match-beginning 1) (match-end 1)
-                                `(display ,(svg-tag-make (match-string 1)
-                                                         :face 'nano-faded
-                                                         :crop-right t)))
+                             `(display ,(svg-tag-make (match-string 1)
+                                                      :face 'nano-faded
+                                                      :crop-right t)))
         ;; 15m: ¼, 30m:½, 45m:¾
         (if (< d 60)
-             (set-text-properties (match-beginning 2) (match-end 2)
-                                  `(display ,(svg-tag-make (format "%2dm" d)
-                                                           :face 'nano-faded
-                                                           :crop-left t :inverse t)))
-           (set-text-properties (match-beginning 2) (match-end 2)
-                                `(display ,(svg-tag-make (format "%1dH" (/ d 60))
-                                                         :face 'nano-faded
-                                                         :crop-left t :inverse t
-                                                         :padding 2 :alignment 0))))))))
+            (set-text-properties (match-beginning 2) (match-end 2)
+                                 `(display ,(svg-tag-make (format "%2dm" d)
+                                                          :face 'nano-faded
+                                                          :crop-left t :inverse t)))
+          (set-text-properties (match-beginning 2) (match-end 2)
+                               `(display ,(svg-tag-make (format "%1dH" (/ d 60))
+                                                        :face 'nano-faded
+                                                        :crop-left t :inverse t
+                                                        :padding 2 :alignment 0))))))))
 
 #+end_src
 
@@ -4802,9 +4931,9 @@ A custom date format function using svg tags (progress pies) for the task agenda
                          (org-time-string-to-absolute (org-read-date nil nil ""))))
                (delta (/ (+ 1 delta) 30.0))
                (face (cond ;; ((< delta 0.25) 'nano-popout)
-                           ;; ((< delta 0.50) 'nano-salient)
-                           ((< delta 1.00) 'nano-default)
-                           (t 'nano-faded))))
+                      ;; ((< delta 0.50) 'nano-salient)
+                      ((< delta 1.00) 'nano-default)
+                      (t 'nano-faded))))
           (concat
            (propertize " " 'face nil
                        'display (svg-lib-progress-pie
@@ -4825,36 +4954,36 @@ The task agenda
 #+begin_src emacs-lisp
 
 (add-to-list 'org-agenda-custom-commands
-        '("x" "Tasks"
-          ((todo "TODO" ;; "PROJECT"
-                 ( (org-agenda-todo-keyword-format ":%s:")
-                   (org-agenda-prefix-format '((todo   . " ")))
-                   (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))
-                   (org-agenda-overriding-header (propertize " Todo \n" 'face 'nano-strong))))
+             '("x" "Tasks"
+               ((todo "TODO" ;; "PROJECT"
+                      ( (org-agenda-todo-keyword-format ":%s:")
+                        (org-agenda-prefix-format '((todo   . " ")))
+                        (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))
+                        (org-agenda-overriding-header (propertize " Todo \n" 'face 'nano-strong))))
 
-           (tags "+TALK+TIMESTAMP>=\"<now>\""
-                 ((org-agenda-span 90)
-                  (org-agenda-max-tags 5)
-                  (org-agenda-prefix-format '((tags   . " %(my-org-agenda-custom-date) ")))
-                  (org-agenda-overriding-header "\n Upcoming talks\n")))
+                (tags "+TALK+TIMESTAMP>=\"<now>\""
+                      ((org-agenda-span 90)
+                       (org-agenda-max-tags 5)
+                       (org-agenda-prefix-format '((tags   . " %(my-org-agenda-custom-date) ")))
+                       (org-agenda-overriding-header "\n Upcoming talks\n")))
 
-           (tags "TEACHING+TIMESTAMP>=\"<now>\""
-                 ((org-agenda-span 90)
-                  (org-agenda-max-tags 5)
-                  (org-agenda-prefix-format '((tags   . " %(my-org-agenda-custom-date) ")))
-                  (org-agenda-overriding-header "\n Upcoming lessons\n")))
+                (tags "TEACHING+TIMESTAMP>=\"<now>\""
+                      ((org-agenda-span 90)
+                       (org-agenda-max-tags 5)
+                       (org-agenda-prefix-format '((tags   . " %(my-org-agenda-custom-date) ")))
+                       (org-agenda-overriding-header "\n Upcoming lessons\n")))
 
-           (tags "TRAVEL+TIMESTAMP>=\"<now>\""
-                 ((org-agenda-span 90)
-                  (org-agenda-max-tags 5)
-                  (org-agenda-prefix-format '((tags .  " %(my-org-agenda-custom-date) ")))
-                  (org-agenda-overriding-header "\n Upcoming travels\n")))
+                (tags "TRAVEL+TIMESTAMP>=\"<now>\""
+                      ((org-agenda-span 90)
+                       (org-agenda-max-tags 5)
+                       (org-agenda-prefix-format '((tags .  " %(my-org-agenda-custom-date) ")))
+                       (org-agenda-overriding-header "\n Upcoming travels\n")))
 
-           (tags "DEADLINE>=\"<today>\""
-                  ((org-agenda-span 90)
-                   (org-agenda-max-tags 5)
-                   (org-agenda-prefix-format '((tags .  " %(my-org-agenda-custom-date) ")))
-                   (org-agenda-overriding-header "\n Upcoming deadlines\n"))))))
+                (tags "DEADLINE>=\"<today>\""
+                      ((org-agenda-span 90)
+                       (org-agenda-max-tags 5)
+                       (org-agenda-prefix-format '((tags .  " %(my-org-agenda-custom-date) ")))
+                       (org-agenda-overriding-header "\n Upcoming deadlines\n"))))))
 
 #+end_src
 
@@ -4880,10 +5009,10 @@ We install a time to refresh the daily agenda (a) at regular intervals such that
           (org-agenda-redo)))))
 
   (setq my-org-agenda-update-timer
-    (run-with-idle-timer
-     (time-add (current-idle-time) my-org-agenda-update-delay)
-     nil
-     'my-org-agenda-update)))
+        (run-with-idle-timer
+         (time-add (current-idle-time) my-org-agenda-update-delay)
+         nil
+         'my-org-agenda-update)))
 
 (run-with-idle-timer my-org-agenda-update-delay t 'my-org-agenda-update)
 
@@ -4900,10 +5029,10 @@ Set refile targets according to my setup
       '(
         ("~/Documents/org/agenda.org"    :maxlevel . 2)
         ("~/Documents/org/inbox.org"     :maxlevel . 1)
-;;        ("~/Documents/org/organizer.org" :tag      . "tasks")
-;;        ("~/Documents/org/organizer.org" :tag      . "notes")
-;;        ("~/Documents/org/organizer.org" :tag      . "mails")
-;;        ("~/Documents/org/organizer.org" :tag      . "meetings")
+        ;;        ("~/Documents/org/organizer.org" :tag      . "tasks")
+        ;;        ("~/Documents/org/organizer.org" :tag      . "notes")
+        ;;        ("~/Documents/org/organizer.org" :tag      . "mails")
+        ;;        ("~/Documents/org/organizer.org" :tag      . "meetings")
         ;;("~/Documents/org/archives.org" :maxlevel . 1)
         ))
 
@@ -5001,16 +5130,16 @@ may have been stored before."
                                      'display '(raise -0.30))
                          (propertize (org-capture-get :description)
                                      'face 'nano-default)))
-                 (right (propertize "C-c C-c: capture, C-c C-k: abort "
-                                    'face '(:inherit (nano-faded nano-subtle)
-                                            :weight light)))
-         (spacer (propertize (make-string (- (window-width)
-                                             (length left)
-                                             (length right)
-                                             0) ?\ )
-                             'face 'nano-subtle))
-         (header (concat left spacer right " ")))
-    (setq-local header-line-format header))
+           (right (propertize "C-c C-c: capture, C-c C-k: abort "
+                              'face '(:inherit (nano-faded nano-subtle)
+                                               :weight light)))
+           (spacer (propertize (make-string (- (window-width)
+                                               (length left)
+                                               (length right)
+                                               0) ?\ )
+                               'face 'nano-subtle))
+           (header (concat left spacer right " ")))
+      (setq-local header-line-format header))
 
     (set-window-dedicated-p nil t)
     (set-frame-parameter (selected-frame) 'height 5)
@@ -5215,12 +5344,12 @@ Elfeed setup.
       elfeed-search-title-min-width 40    ; Minimum titles width
       elfeed-search-trailing-width 24     ; Space reserved for feed & tag
       elfeed-search-filter                ; Default filter
-          "@1-weeks-ago +unread"
+      "@1-weeks-ago +unread"
       elfeed-search-print-entry-function  ; Alternative print function
-           #'my-elfeed-search-print-entry)
+      #'my-elfeed-search-print-entry)
 
 
-; Bind "U" to update feeds on main screen
+                                        ; Bind "U" to update feeds on main screen
 (bind-key "U" #'elfeed-update elfeed-search-mode-map)
 
 #+end_src
@@ -5247,7 +5376,7 @@ Hook on elfeed post screen (visual mode).
 
 (defun my-elfeed-show-mode-hook ()
   (visual-line-mode)
-;;  (setq truncate-lines t)
+  ;;  (setq truncate-lines t)
 
   (let ((inhibit-read-only t)
         (inhibit-modification-hooks t))
@@ -5643,146 +5772,851 @@ Open an iterm (OSX) and go to the curent directory
   (message "---------------------------------------------------------------")
   (message "Initialisation time:                 %.2fs (+ %.2f system time)"
            init-time (- total-time init-time)))
-  (message "---------------------------------------------------------------")
+(message "---------------------------------------------------------------")
 
 #+end_src
 
 * NOT YET INTEGRATED
 
- #+begin_src emacs-lisp
-    (setq create-lockfiles t) ; Create lockfiles to interact nicely with different editors operating on the same file.
-    (defun unwords (&rest words)        ;;unwords seems to be missing this function takes care of it.
-      (mapconcat #'identity words " ")) ;; it joins a list of strings with a blank space as seperator.
+#+begin_src emacs-lisp
+(use-package emacs
+  :init (column-number-mode)
+  )
 
-  (require 'flyspell)
-  (require 'guess-language)
-  (require 'flyspell-correct-popup)
+(global-visual-line-mode 1); Proper line wrapping
+(setq visible-bell t); Flashes on error
 
-  ;; Automatically detect language for Flyspell
-  (with-eval-after-load 'guess-language
-    (add-hook 'text-mode-hook #'guess-language-mode)
-    (setq guess-language-langcodes '((en . ("en_GB" "English"))
-                                     (de . ("de_DE" "German")))
-          guess-language-languages '(en de)
-          guess-language-min-paragraph-length 45))
+(savehist-mode 1)
+(setq save-interprogram-paste-before-kill t
+      apropos-do-all t
+      ediff-window-setup-function 'ediff-setup-windows-plain)
 
-  (use-package emacs
-    :init (column-number-mode)
-    )
+(define-key key-translation-map (kbd "<AltGr>") (kbd "<menu>")) ;; To allow for menu modifier on laptops
+(bind-key (kbd "C-)") nil 'ergoemacs-override-keymap)
+(bind-key (kbd "M-<right>") nil 'ergoemacs-override-keymap)
+(bind-key (kbd "M-<left>") nil 'ergoemacs-override-keymap)
 
-  (use-package fira-code-mode
-    :custom (fira-code-mode-disabled-ligatures '("[]" "#{" "#(" "#_" "#_(" "x" "{-" "-}" )) ;; List of ligatures to turn off
-    :hook latex-mode
-    ;; :config (global-fira-code-mode)
-    )
+(require 'all-the-icons)      ;; Better handeling of icons
+(require 'projectile)         ;; Projectile offers a 'project-based' logic
 
-     ;; https://www.emacswiki.org/emacs/SavePlace
-      (save-place-mode 1)
-
-      (global-set-key (kbd "M-/") 'hippie-expand)
-      (global-set-key (kbd "C-x C-b") 'ibuffer)
-      (global-set-key (kbd "M-z") 'zap-up-to-char)
-
-      (show-paren-mode 1)
-      (setq-default indent-tabs-mode nil)
-      (savehist-mode 1)
-      (setq save-interprogram-paste-before-kill t
-            apropos-do-all t
-            mouse-yank-at-point t
-            require-final-newline t
-            visible-bell t
-            load-prefer-newer t
-            backup-by-copying t
-            ediff-window-setup-function 'ediff-setup-windows-plain
-            custom-file (expand-file-name "custom.el" user-emacs-directory))
-
-      (unless backup-directory-alist
-        (setq backup-directory-alist `(("." . ,(concat user-emacs-directory
-                                                       "backups")))))
+;; Where the projects are to be searched
+(setq projectile-project-search-path '(("~/Documents/mathematics/research/" . 3)))
 
 
 
-    ;; Language checking with flyspell
-    (use-package flyspell-lazy
-      :config
-      (flyspell-lazy-mode 1)
+;; We don't want auto-fill mode; we don't need auto-fill mode
+(auto-fill-mode -1)
+(remove-hook 'text-mode-hook 'turn-on-auto-fill)
+(remove-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+
+(use-package fira-code-mode
+  :custom (fira-code-mode-disabled-ligatures '("[]" "#{" "#(" "#_" "#_(" "x" "{-" "-}" )) ;; List of ligatures to turn off
+  :hook latex-mode
+  ;; :config (global-fira-code-mode)
+  )
+
+
+(defconst default-math-env '("$" "$" t nil)
+  "The default math environment.
+     This defines the fall-back option for the math environment insertion."
+  )
+
+(defconst custom-env-plist'(
+                            :ams-env: (("definition" nil nil "def")
+                                       ("lemma" nil nil "lem")
+                                       ("corollary" nil nil "cor")
+                                       ("theorem" nil nil "thm"))
+                            :math: (("$" "$" t nil)
+                                    ("equation" nil nil "eq")
+                                    ("align" nil nil "eq")
+                                    ("gather" nil nil "eq")
+                                    ("equation*" nil nil nil)
+                                    ("align*" nil nil nil)
+                                    ("gather*" nil nil nil)
+                                    )
+                            :parens:  (("(" ")" t nil ))
+                            )
+  "A plist with environment-type as key and a list of such environments as value.
+     Every entry in such a list consists of 4 elements:
+     i)  the name of the environment, e.g. `equation' or `$'.
+     ii) the reprenstation of the ending delimitier of the environment.
+         If the environment is bounded by `\begin{...}' and `\end{...}',
+         its value is nil. Otherwise it could be for example`$'.
+     iii)A boolean variable indicating wether the environment is an inline environment.
+         That is t=`inline' and `nil' otherwise.
+     iv) A representation of the label-tag used for this environment, e.g. `eq'.
+         If the environment has no label, the value is nil."
+  )
+
+;; Global variables that allow us to
+(setq custom-env-starting-delimiters '())
+(setq custom-env-ending-delimiters '())
+(setq number-envs-of-type '())
+
+(setq env-at-point-name nil)
+(setq env-at-point-start nil)
+
+
+(defun generate-expanded-delimiters-lists()
+
+  (dotimes (i (length custom-env-plist))
+    (when(cl-oddp i)
+      (progn
+        (setq hierarchy (/ (- i 1) 2))
+        (setq environments (nth i custom-env-plist))
+        ;; Generate some statistics about the saved environments
+        (add-to-list 'number-envs-of-type (nth (- i 1) custom-env-plist) t)
+        (add-to-list 'number-envs-of-type (length environments) t)
+        (dotimes (j (length environments))
+          (progn
+            (setq starting-del (nth 0 (nth j environments)))
+            (setq ending-del (nth 1 (nth j environments)))
+            (setq starting-del-exp (expand-delimiters starting-del ending-del -1))
+            (setq ending-del-exp (expand-delimiters starting-del ending-del 1))
+            (add-to-list 'custom-env-starting-delimiters starting-del t)
+            (add-to-list 'custom-env-starting-delimiters (list starting-del-exp hierarchy) t)
+            (add-to-list 'custom-env-ending-delimiters starting-del t)
+            (add-to-list 'custom-env-ending-delimiters (list ending-del-exp hierarchy) t)
+            )))))
+  )
+
+(defun cycle-texmath()
+  "This function cycles through the math environments defined in custom-env-plist"
+  (interactive)
+  (cycle-env :math:)
+  )
+
+(defun cycle-env(type)
+  (get-env-at-point type)
+  (if env-number
+      (if ending-pos
+          (if (and (> (- ending-pos-wrapped-text starting-pos-wrapped-text) 0)
+                   (looking-at-p (concat "[[:blank:]\n]*" (regexp-quote ending-del-expanded))))
+              (cdlatex-tab)
+            (next-environment type))
+        (progn
+          (save-excursion (end-env (nth 0 current-env) (nth 1 current-env) inline))
+          (LaTeX-indent-line))
+        )
+    (progn
+      (apply 'build-env  (insert-after (insert-after default-math-env 0 starting-pos-wrapped-text) 1 ending-pos-wrapped-text)) ;; TODO make this non math specific
+      ))
+  )
+
+(defun next-environment (type)
+  (setq next-env-number (mod (1+ env-number) (plist-get number-envs-of-type type)))
+  (setq next-env (nth next-env-number (plist-get custom-env-plist type)))
+  (setq label-begin (+ starting-pos (length starting-del-expanded)))
+
+  (goto-char starting-pos)
+  (delete-region starting-pos label-begin)
+  (start-env (nth 0 next-env) (nth 1 next-env) (nth 2 next-env))
+
+  (delete-region (point) (+ (point) (- starting-pos-wrapped-text label-begin)))
+  (setq label-pos (generate-label (nth 3 next-env) label-text (nth 2 next-env)))
+  ;; TODO globally update the label if it is changed
+
+  (setq new-starting-pos (point))
+  (setq wrap-offset (- new-starting-pos starting-pos-wrapped-text))
+  (goto-char (+ ending-pos-wrapped-text wrap-offset))
+  (delete-region (point) (+ ending-pos wrap-offset))
+  (save-excursion (end-env (nth 0 next-env) (nth 1 next-env) (nth 2 next-env)))
+  (LaTeX-indent-line)
+  (if point-relative-to-start
+      (goto-char (+ new-starting-pos point-relative-to-start))
+    (goto-char new-starting-pos))
+  )
+
+(defun get-env-at-point (type)
+  " Produces all relevant-information about the current environment."
+
+  (is-pt-in-env type)
+  (setq current-env (get-env-by-name type env-at-point-name))
+  (setq starting-del-expanded (nth 0 (plist-get custom-env-starting-delimiters (nth 0 current-env))))
+  (setq ending-del-expanded (nth 0 (plist-get custom-env-ending-delimiters (nth 0 current-env))))
+  (setq inline (nth 2 current-env))
+  (setq label-tag (nth 3 current-env))
+  (setq env-number (nth 4 current-env))
+  (setq starting-pos env-at-point-start)
+
+  (if starting-pos
+      (save-excursion
+        (setq ending-pos (environment-balanced current-env (1+ starting-pos)));; We do not want to start at the left boarder of the env as this might cause some problems
+        (goto-char (+ starting-pos (length starting-del-expanded)))
+        (skip-chars-forward "[:blank:]\n")
+        (if (looking-at-p "\\\\label{")
+            (progn
+              (skip-chars-forward "^:")
+              (skip-chars-forward "[:blank:]:")
+              (if (looking-at "[^}]+")
+                  (progn
+                    (setq label-text (match-string 0))
+                    (goto-char (match-end 0)))
+                (progn
+                  (setq label-text nil)
+                  (forward-char)))
+              (skip-chars-forward "}[:blank:]\n")
+              )
+          (setq label-text nil))
+        (setq starting-pos-wrapped-text (point))
+        )
+    (progn
+      (setq ending-pos nil)
+      (setq label-text nil)
+      (if (use-region-p)
+          (setq starting-pos-wrapped-text (region-beginning))
+        (setq starting-pos-wrapped-text nil))
       )
+    )
 
-    ;; We don't want auto-fill mode; we don't need auto-fill mode
-    (auto-fill-mode -1)
-    (remove-hook 'text-mode-hook 'turn-on-auto-fill)
-    (remove-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+  (if ending-pos
+      (save-excursion
+        (goto-char (- ending-pos (length ending-del-expanded)))
+        (skip-chars-backward "[:blank:]\n")
+        (setq ending-pos-wrapped-text (max (point) starting-pos-wrapped-text))
+        )
+    (progn
+      (if (use-region-p)
+          (setq ending-pos-wrapped-text (region-end))
+        (setq ending-pos-wrapped-text nil))
+      )
+    )
+  (if (and ending-pos-wrapped-text
+           (< starting-pos-wrapped-text ending-pos-wrapped-text )
+           (< (point) ending-pos-wrapped-text ) )
+      (setq point-relative-to-start (- (point) starting-pos-wrapped-text))
+    (setq point-relative-to-start nil))
+  )
 
-    (global-visual-line-mode 1); Proper line wrapping
-    (setq visible-bell t); Flashes on error
-    (setq calendar-week-start-day 1); Calendar starts on Monday
+(defun environment-balanced (current-env starting-pos &optional hierarchy)
+  (when (and current-env starting-pos)
+    (save-excursion
+      (setq hierarchy (nth 1 (plist-get custom-env-starting-delimiters (car current-env))))
+      (goto-char starting-pos)
+      (setq ending-pos (re-search-forward (regexp-quote (nth 0 (plist-get custom-env-ending-delimiters (car current-env)))) nil  t))
+      (if ending-pos
+          (progn
+            ;; TODO search between start and end if there is a starting delimiter of same or lower hierarchy
+            ending-pos
+            )
+        nil)
+      ))
+  )
 
-    ;; Keybindings
-    ;; Overwriten rules:
-    (define-key key-translation-map (kbd "<AltGr>") (kbd "<menu>")) ;; To allow for menu modifier on laptops
-    (bind-key (kbd "C-)") nil 'ergoemacs-override-keymap)
-    (bind-key (kbd "M-<right>") nil 'ergoemacs-override-keymap)
-    (bind-key (kbd "M-<left>") nil 'ergoemacs-override-keymap)
-    (bind-key (kbd "M-T") nil 'ergoemacs-override-keymap)
-    (global-set-key (kbd "M-T") 'flyspell-correct-wrapper)
+(defun get-env-by-name (type starting-del)
+  (when starting-del
+    (setq environments (plist-get custom-env-plist type))
+    (setq position 0)
+    (setq return-env (car environments))
+    (while (and (> (length environments) 0)(not (string= (car return-env) starting-del)))
+      (setq environments (cdr environments))
+      (setq position (1+ position))
+      (setq return-env (car environments))
+      )
+    (when return-env (insert-after return-env 3 position)))
+  )
 
-    ;; Startup window
+(defun build-env (starting-del &optional starting-pos-wrapped-text ending-pos-wrapped-text ending-del inline label-tag label-text)
+  "This function build an environment with 'starting-del' and 'ending-del' delemiters,
+     a possible label with a tag and a text and some text in the middle."
 
-    (require 'all-the-icons)      ;; Better handeling of icons
-    (require 'projectile)         ;; Projectile offers a 'project-based' logic
+  (setq start (point))
+  (setq distance 0)
 
-    ;; Where the projects are to be searched
-    (setq projectile-project-search-path '(("~/Documents/mathematics/research/" . 3)))
+  (when starting-pos-wrapped-text
+    (setq start starting-pos-wrapped-text)
+    (when ending-pos-wrapped-text
+      (setq distance (- ending-pos-wrapped-text start)))
+    )
 
-    ;; Paranthesis
+  (goto-char start)
+  (start-env starting-del ending-del inline)
+  (setq pointer-pos (generate-label label-tag label-text inline))
+  (forward-char distance)
+  (save-excursion (end-env starting-del ending-del inline))
 
-    ;; Org-Agenda
+  (unless inline (LaTeX-indent-line))
+  (when (and (= distance 0) pointer-pos)
+    (goto-char pointer-pos))
+  )
 
-    (use-package org
-      :pin gnu
-      :commands (org-capture org-agenda)
-      :config
-      (setq org-ellipsis " ▾")
+(defun start-env (starting-del ending-del inline)
+  (deactivate-mark)
+  (unless (current-line-empty -1)
+    (if inline (just-one-space) (TeX-newline)))
+  (insert (expand-delimiters starting-del ending-del -1))
+  )
 
-      (setq org-agenda-start-with-log-mode t)
-      (setq org-log-done 'time)
-      (setq org-log-into-drawer t)
+(defun generate-label (&optional label-tag label-text inline)
+  (setq point-pos nil)
+  (when label-tag
+    (just-one-space)
+    (insert (concat "\\label{" label-tag ":" label-text "}"))
+    (unless label-text (setq point-pos (- (point) 1)))
+    )
+  (unless inline
+    (save-excursion
+      (forward-line)
+      (setq next-line-empty (current-line-empty)))
+    (unless next-line-empty (TeX-newline)))
+  (or point-pos nil)
+  )
 
-      (setq org-agenda-files '("~/Documents/org-files/agenda"))
+(defun end-env (starting-del ending-del inline)
+  (deactivate-mark)
+  (unless inline
+    (if (current-line-empty)
+        (progn
+          (save-excursion
+            (previous-line)
+            (setq need-line-break (current-line-empty)))
+          (unless need-line-break (TeX-newline)))
+      (TeX-newline))
+    )
+  (insert (expand-delimiters starting-del ending-del 1))
+  (LaTeX-indent-line)
+  (unless (current-line-empty 1)
+    (if inline (just-one-space) (TeX-newline)))
+  )
 
-      (setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
-      (setq org-use-fast-todo-selection t)
+(defun current-line-empty (&optional direction)
+  "This function checks wether the current line is empty.
+     The optional variable 'direction' takes values +1 and -1.
+     In the first case only the line from the point onward is considered.
+     If 'direction' is -1, the line up until the point is checked:
+     ,*'direction =-1' "
+  (if direction
+      (if (eq direction -1)
+          (looking-back "^[[:blank:]]*" ) (looking-at-p "[[:blank:]]*$"))
+    (progn
+      (save-excursion
+        (beginning-of-line)
+        (looking-at-p "[[:blank:]]*$")))))
 
-      (setq org-todo-keywords
-            '((sequence "TODO(t)" "WAITING(w)" "|" "DONE(d)")
-             (sequence "PENDING(p)" "DEFERRED(D)" "OCCURING (o)" "|" "COMPLETED(c)")
-             (sequence "REPORT(r)" "BUG(b)" "KNOWNCAUSE(k)" "|" "FIXED(f)")
-             (sequence "|" "CANCELED(C)")))
+(defun insert-after (input-list index val)
+  "This function produces a copy of the input list with the given value `val' at the position `index'."
+  (setq output-list (copy-sequence input-list))
+  (push val (cdr (nthcdr index output-list)))
+  output-list)
+
+(defun expand-delimiters (starting-del ending-del se-flag)
+  "This function produces an output string of the environment determined by the starting and ending-delimiters.
+  The staring delimiter is produced if se-flag= -1, if se-flag = 1 the function returns the ending delimiter."
+  (if (eq se-flag -1)
+      (if ending-del (progn starting-del)(progn (concat "\\begin{" starting-del "}")))
+    (if ending-del (progn ending-del)(progn (concat "\\end{" starting-del "}")))
+    )
+  )
+
+(defun is-pt-in-env (type)
+  (cond
+   ((eq type :math:)
+    (if (texmathp)
+        (progn
+          (setq env-at-point-name (car texmathp-why))
+          (setq env-at-point-start (cdr texmathp-why)))
+      (progn
+        (setq env-at-point-name nil)
+        (setq env-at-point-start nil))))
+   )
+  )
+
+(defun smart-enter ()
+  (interactive)
+  (if (texmathp)
+      (progn
+        (if (current-line-empty)
+            (progn
+              (insert "\\\\")
+              )
+          )
+        (progn
+          (TeX-newline))
+        )
+    ;; (if = LaTeX-current-environment =
+    ;; )
+    (progn
+      (TeX-newline)
+      ))
+  )
+
+;; (add-hook 'cdlatex-mode-hook  #'(lambda() (bind-key (kbd "$") nil 'cdlatex-mode-map)))
+
+(use-package cdlatex
+  :config
+  (bind-key (kbd "$") nil 'cdlatex-mode-map)
+  )
+(eval-after-load 'latex
+  '(bind-key (kbd "$") #'cycle-texmath 'LaTeX-mode-map))
+(eval-after-load 'latex
+  '(bind-key (kbd "RET") #'smart-enter 'LaTeX-mode-map))
+
+;; (bind-key (kbd "$") #'cycle-texmath 'LaTeX-mode-map)
+;; (bind-key (kbd "RET") #'smart-enter 'LaTeX-mode-map)
+
+(generate-expanded-delimiters-lists)
+
+;; Latex expansions
+
+(defun latex-regexp-prettify ()
+  (highlight-regexp "{" 'custom-comment)
+  (highlight-regexp "}" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\quad[[:space:]]+" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\qquad[[:space:]]+" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\,[[:space:]]+" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\;[[:space:]]+" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\enspace[[:space:]]+" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\emspace[[:space:]]+" 'custom-comment)
+  )
+
+(defun latex-symbols-prettify ()
+  (mapc (lambda (pair) (add-to-list 'prettify-symbols-alist pair))
+        ;; ARROWS
+        '(("\\to"                  32 (Br . Bl) 32 (Br . Br) 57620)
+          ("\\rightarrow"          32 (Br . Bl) 32 (Br . Br) 57620)
+          ("\\mapsto"              8870 (cr  cl 16 0) 57620)
+          ("\\longmapsto"          32 (Br . Bl)  8866 (cr . cl) 32 (Br . Bl)  32 (Br . Br)  57619)
+          ("\\inj"                 5308 (tl  tl 20 0) 32 (tr  tl 0 -5) 57620)
+          ("\\emb"                 5308 (tl  tl 20 0) 32 (tr  tl 0 5) 57620)
+          ("\\hookrightarrow"      5354 (tl . tl) 32 (tr . tl) 57620)
+          ("\\surj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
+          ("\\proj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
+          ("\\twoheadrightarrow"   32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
+          ("\\twoheadleftarrow"    32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57693)
+          ("\\longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57619)
+          ("\\rightsquigarrow"     32 (Br . Bl) 32 (Br . Br) 57703)
+          ("\\leftarrow"           32 (Br . Bl) 32 (Br . Br) 57682)
+          ("\\longleftarrow"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57683)
+          ("\\leftrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57684)
+          ("\\leftsquigarrow"      32 (Br . Bl) 32 (Br . Br) 57696)
+          ("\\Rightarrow"          32 (Br . Bl) 32 (Br . Br) 57663)
+          ("\\Longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57662)
+          ("\\implies"             32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57662)
+          ("\\Leftarrow"           32 (Br . Bl) 32 (Br . Br) 57688)
+          ("\\Longleftarrow"       32 (Br . Bl) 32 (Br . Br) 57688)
+          ("\\impliedby"           32 (Br . Bl) 32 (Br . Br) 57688)
+          ("\\Leftrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57689)
+          ("\\upharpoonleft"       ?↿)
+          ("\\upharpoonright"      ?↾)
+          ("\\downharpoonleft"     ?⇃)
+          ("\\downharpoonright"    ?⇂)
+          ("\\hookleftarrow"       ?↩)
+          ("\\looparrowleft"       ?↫)
+          ("\\looparrowright"      ?↬)
+          ("\\leftrightsquigarrow" ?↭)
+          ("\\leftleftarrows"      ?⇇)
+          ("\\rightrightarrows"    ?⇉)
+          ("\\leftrightarrows"     ?⇆)
+          ("\\rightleftarrows"     ?⇄)
+          ("\\Lleftarrow"         ?⇚)
+          ("\\Rrightarrow"        ?⇛)
+          ;; ENVIRONMENTS
+          ("\\part"                ?#)
+          ("\\section"             32 (Br . Bl) 32 (Br . Br) 57627)
+          ("\\subsection"          32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57628)
+          ("\\subsubsection"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57629)
+          ("\\begin"               32 (Br . Bl) 32 (Br . Br) 57653)
+          ("\\end"                 32 (Br . Bl) 32 (Br . Br) 57677)
+          ("\\item"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57686)
+          ;; SPACING
+          ("\\,"                  8194 (Bc . Bc) 8231)
+          ("\\:"                  8194 (Bc . Bc) 8231)
+          ("\\;"                  8194 (Bc . Bc) 8231)
+          ("\\enspace"            8194 (Bc . Bc) 8231)
+          ("\\emspace"            8195 (Bc . Bc) 8231)
+          ("\\quad"               8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195)
+          ("\\qquad"              8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195)
+          ;; SETS
+          ("\\mathbb{N}"           ?\u2115)
+          ("\\mathbb{R}"           ?\u211D)
+          ("\\mathbb{C}"           8450)
+          ("\\mathbb{P}"           8473)
+          ("\\mathcal{C}"          120018)
+          ("\\cat{C}"              120018)
+          ("\\mathcal{D}"          120019)
+          ("\\cat{D}"              120019)
+          ("\\cat{E}"              120020)
+          ("\\cat{M}"              120028)
+          ("\\cat{N}"              120029)
+          ("\\mathfrak{C}"         120174)
+          ("\\mathfrak{D}"         120175)
+          ("\\ZCat"                120041)
+          ;; OPERATORS
+          ("\\defeq"               32 (Br . Bl) 32 (Br . Br) 57612)
+          ("\\eq"                  ?=)
+          ("\\neq"                 32 (Br . Bl) 32 (Br . Br) 57614)
+          ("\\blank"               8212)
+          ("\\from"                32 (Br . Br) 57708)
+          ("\\colon"               32 (Br . Br) 57708)
+          ("\\lact"                9655)
+          ("\\blact"               9654)
+          ("\\ract"                9665)
+          ("\\bract"               9664)
+          ("\\unlhd"               ?⊴)
+          ("\\unrhd"               ?⊵)
+          ("\\cdot "               8226)
+          (" \\cdot "              8226)
+          ("\\times "              215)
+          (" \\times "             215)
+          ("\\parallel"            ?∥)
+          ("\\notni"               8260 (cc . cc) ?∋)
+          ("\\sqcup"               ?⊔)
+          ("\\bigsqcup"            ?⊔)
+          ("\\sqcap"               ?⊓)
+          ("\\bigsqcap"            ?⊓)
+          ("\\biguplus"            ?⨄)
+          ("\\land"                ?∧)
+          ("\\lor"                 ?∨)
+          ("\\odot"                ?⊙)
+          ("\\bigodot"             ?⊙)
+          ("\\otimes"              ?⊗)
+          ("\\bigotimes"           ?⊗)
+          ("\\oplus"               ?⊕)
+          ("\\bigoplus"            ?⊕)
+          ("\\sqrt"                ?√)
+          ("\\iint"                ?∬)
+          ("\\iiint"               ?∭)
+          ("\\iiiint"              ?⨌)
+          ("\\oiint"               ?∯)
+          ("\\oiiint"              ?∰)
+          ("\\ointclockwise"       ?∲)
+          ("\\ointctrclockwise"    ?∳)
+          ;; BETTER SUB AND SUPERSCRIPTS
+          ("^0"                    8304)
+          ("^1"                    185)
+          ("^2"                    178)
+          ("^3"                    179)
+          ("^4"                    8308)
+          ("^5"                    8309)
+          ("^6"                    8310)
+          ("^7"                    8311)
+          ("^8"                    8312)
+          ("^9"                    8313)
+          ("^l"                    ?\u02E1)
+          ("^r"                    ?\u02B3)
+          ("^T"                    ?\u1d40)
+          ("_0"                    8320)
+          ("_1"                    8321)
+          ("_2"                    8322)
+          ("_3"                    8323)
+          ("_4"                    8324)
+          ("_5"                    8325)
+          ("_6"                    8326)
+          ("_7"                    8327)
+          ("_8"                    8328)
+          ("_9"                    8329)
+          ;; GREEK UPPER CASES
+          ("\\Alpha"               ?Α)
+          ("\\Beta"                ?Β)
+          ("\\Gamma"               ?Γ)
+          ("\\Delta"               ?Δ)
+          ("\\Epsilon"             ?Ε)
+          ("\\Zeta"                ?Ζ)
+          ("\\Eta"                 ?Η)
+          ("\\Theta"               ?Θ)
+          ("\\Iota"                ?Ι)
+          ("\\Kappa"               ?Κ)
+          ("\\Lambda"              ?Λ)
+          ("\\Mu"                  ?Μ)
+          ("\\Nu"                  ?Ν)
+          ("\\Xi"                  ?Ξ)
+          ("\\Omicron"             ?Ο)
+          ("\\Pi"                  ?Π)
+          ("\\Rho"                 ?Ρ)
+          ("\\Sigma"               ?Σ)
+          ("\\Tau"                 ?Τ)
+          ("\\Upsilon"             ?Υ)
+          ("\\Phi"                 ?Φ)
+          ("\\Chi"                 ?Χ)
+          ("\\Psi"                 ?Ψ)
+          ("\\Omega"               ?Ω)
+          ;; SPECIAL SYMBOLS
+          ("\\ss"                  ?ß)
+          ("\\aa"                  ?å)
+          ("\\AA"                  ?Å)
+          ("\\ae"                  ?æ)
+          ("\\oe"                  ?œ)
+          ("\\AE"                  ?Æ)
+          ("\\OE"                  ?Œ)
+          ("\\o"                   ?ø)
+          ("\\O"                   ?Ø)
+          ("\\l"                   ?ł)
+          ("\\L"                   ?Ł)
+          ("\\S"                   ?§)
+          ;; ESCAPED SYMBOLS
+          ("\\$"                   ?＄)
+          ("\\%"                   ?％)
+          ("\\#"                   ?＃)
+          ("\\_"                   ?＿)
+          ("\\&"                   ?& (Bc . Bc) ?|)
+          ;;REFERECING
+          ("\\ref"                 ?☞)
+          ("\\cite"                ?†)
+          ("\\footnote"            ?‡)
+          ("\\label"               43 (cc . cc) ?‡)
+          ("\\TeX"                 ?T (cr cl -20 -45) ?E (cr cl -20 24) ?X)
+          ("\\LaTeX"               ?L (cr cl -60 35) ?A (cr cl -18 -20) ?T (cr cl -18 -60) ?E (cr cl -20 5) ?X)
+          ;; PARENTHESES
+          ("{"                     ?⎨)
+          ("}"                     ?⎬)
+          ("\\{"                   ?{)
+          ("\\}"                   ?})
+          ("\\lbrace"              ?{)
+          ("\\rbrace"              ?})
+          ("\\{"                   ?{)
+          ("\\}"                   ?})
+          ("\\|" .                 ?║)
+          ;; Misc
+          ("\\dots"                ?…)
+          ("\\textbackslash"       ?＼)
+          ("\\backslash"           ?＼)
+          ("\\qed"                 ?□)
+          ("\\lightning"           ?Ϟ)
+          ("\\copyright"           ?©)
+          ("\\texistregistered"    ?®)
+          ("\\texttrademark"       ?™)
+          ("\\euro"                8364)
+          ("\\pounds"              ?£)
+          ("\\lvert"               ?|)
+          ("\\rvert"               ?|)
+          ("\\lVert"               ?ǁ)
+          ("\\rVert"               ?ǁ)
+          )))
 
 
 
-      (setq org-todo-keyword-faces
-          '(("TODO" :foreground "tomato4" :weight bold)
-            ("DONE" :foreground "PaleGreen4" :weight bold)
-            ("REVIEW" :foreground "LightGoldenrod3" :weight bold)
-            ("WAITING" :foreground "peru" :weight bold)
-            ("INACTIVE" :foreground "coral" :weight bold)
-            ("CANCELLED" :foreground "sienna" :weight bold)))
+;; This is like the best thing ever.  It defines all kinds of
+;; abbreviations, key shortcuts etc.
+(use-package cdlatex
+  :bind (:map cdlatex-mode-map ("$" . nil))
+  :hook
+  (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
+  (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
+  :custom
+  ;; Pair (almost) all the things.
+  (cdlatex-paired-parens "$([{")
+  ;; Custom bindings for the math modify list, accessed with '
+  (cdlatex-math-modify-alist
+   '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
+     (?b "\\mathbb"   "\\textbf" t   nil   nil)
+     (?f "\\mathbf"   "\\textsf" t   nil   nil)
+     (?l "\\ld"       "\\textsl" t   nil   nil)
+     (?k "\\mathfrak" nil        t   nil   nil)
+     (?t "\\text"     nil        t   nil   nil)
+     (?u "\\lld"      ""         t   nil   nil)
+     ))
+  ;; Custom bindings for the symbol list, accessed with `.  You may add
+  ;; additional layers here.  Also, some of these are user-defined
+  ;; commands.
+  (cdlatex-math-symbol-alist
+   '(;;    LAYER 1        LAYER 2      LAYER 3
+     (?c  ("\\circ"       ""           "\\cos"   ))
+     (?C  ("\\coprod"     ""           "\\arccos"))
+     (?e  ("\\varepsilon" "\\epsilon"  "\\exp"   ))
+     (?f  ("\\varphi"     "\\phi"      ""        ))
+     (?F  ("\\Phi"        ""           ""        ))
+     (?R  ("\\real"       "\\Re"       ""        ))
+     (?N  ("\\nat"        "\\nabla"    "\\exp"   ))
+     (?Z  ("\\integer"    ""           ""        ))
+     (?Q  ("\\rat"        "\\Theta"    ""        ))
+     (?0  ("\\varnothing" ""           ""        ))
+     (?{  ("\\subseteq"   "\\subset"   ""        ))
+     (?}  ("\\supseteq"   "\\supset"   ""        ))
+     (?.  ("\\cdot"       "\\dots"     ""        ))
+     (?^  ("\\otimes"     ""           ""        ))
+     (?ö  ("\\odot"       ""           ""        ))
+     )))
 
-    ;;  Auto-update tags whenever the state is changed
-    (setq org-todo-state-tags-triggers
-          '(("CANCELLED" ("CANCELLED" . t))
-       ("WAITING" ("SOMEDAY") ("INACTIVE") ("WAITING" . t))
-       ("INACTIVE" ("WAITING") ("SOMEDAY") ("INACTIVE" . t))
-       ("SOMEDAY" ("WAITING") ("INACTIVE") ("SOMEDAY" . t))
-       (done ("WAITING") ("INACTIVE") ("SOMEDAY"))
-       ("TODO" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
-            ("REVIEW" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
-       ("DONE" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))))
 
-      (setq org-tag-alist
+(require 'dash)
+
+  ;;; `aas': sane auto-expanding snippets
+(use-package aas
+  :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
+  :config
+  (--each '(latex-mode org-mode)
+    (aas-set-snippets it
+      :cond #'texmathp
+      ":"      "\\from "
+      "**"     "\\star"
+      "mm"     "\\mid "
+      "->"     "\\to "
+      "mt"     "\\mapsto "
+      "=>"     "\\implies "
+      "..."    "\\dots"
+      "bln"    "\\blank"
+      "def"    "\\defeq"
+      "~"      "\\sim"
+      "=="     "\\cong"
+      "ot"     "\otimes"
+      "bz"     "\\mathbb{Z}"
+      "bq"     "\\mathbb{Q}"
+      "br"     "\\mathbb{R}"
+      "bc"     "\\mathbb{C}"
+      "bf"     "\\mathbb{F}"
+      "bp"     "\\mathbb{P}"
+      "fg"     "\\mathfrak{g}"
+      "fh"     "\\mathfrak{h}"
+      "cc"     "\\cat{C}"
+      "cd"     "\\cat{D}"
+      "cm"     "\\cat{M}"
+      "zc"     "\\ZCat{C}"
+      "subset" "\\subset"
+      "supset" "\\supset"
+      "<>"    (lambda () (interactive)
+                (yas-expand-snippet "\\langle $0 \\rangle"))
+      "adj"   (lambda () (interactive)
+                (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
+      "hom"  (lambda () (interactive)
+               (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
+      "coend" (lambda () (interactive)
+                (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
+      "end"   (lambda () (interactive)
+                (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
+      "set"   (lambda () (interactive)
+                (yas-expand-snippet "\\\\{$0"))
+      "sum"   (lambda () (interactive)
+                (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
+      ;;"gl"    (lambda () (interactive)
+      ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
+      ;;"//"    (lambda () (interactive)
+      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
+      "cat"   (lambda () (interactive)
+                (yas-expand-snippet "\\cat{$1}$0")))))
+
+;; LaTeX- customisation
+
+(require 'auctex-latexmk)     ;; LatexMk integration into auctex
+(require 'cdlatex)            ;; Makes (La)TeX editing much better
+(require 'adaptive-wrap)      ;; Wrapping without introducing linebreaks.
+(require 'laas)               ;; LaTeX snipets
+(require 'tex-site)
+(require 'latex)
+(require 'reftex)             ;; sane referencing tool
+
+
+;; LaTeX settings
+(setq TeX-auto-save t
+      TeX-parse-self t
+      TeX-PDF-mode t
+      TeX-source-correlate-mode t
+      TeX-source-correlate-start-server nil
+      font-latex-fontify-sectioning 1.0)
+
+(setq-default TeX-master nil)
+
+;; Auctex settings
+(setq TeX-view-program-selection '((output-pdf "PDF Tools")))
+(add-to-list 'TeX-command-list '("LatexMk" "latexmk %(-PDF)%S%(mode) -pv -view=pdf  -interaction=nonstopmode -synctex=1 %(file-line-error) %(extraopts) %t"
+                                 TeX-run-latexmk nil
+                                 (plain-tex-mode latex-mode doctex-mode) :help "Run LatexMk"))
+
+(add-hook 'TeX-after-compilation-finished-functions
+          #'TeX-revert-document-buffer)
+
+;; for single quotation marks
+
+(setq TeX-open-quote "`")
+(setq TeX-close-quote "'")
+
+(auctex-latexmk-setup)
+(setq reftex-plug-into-AUCTeX t)
+
+(add-hook 'LaTeX-mode-hook
+          #'(lambda()
+              (setq ispell-dictionary "british")
+              (yas-minor-mode 1)
+              (laas-mode 1)
+              (cdlatex-mode 1)
+              (reftex-mode 1)
+              (reftex-set-cite-format "\\cite[][]{%l}")
+              (setq reftex-ref-macro-prompt nil
+                    reftex-label-alist                  ; tell reftex about some environments
+                    '(("section"     ?s "sec:"  "~\\ref{%s}" t (regexp "[Ss]ection\\(s\\)?"       ))
+                      ("definition"  ?d "def:"  "~\\ref{%s}" t (regexp "[Dd]efinition\\(s\\)?"    ))
+                      ("example"     ?x "ex:"   "~\\ref{%s}" t (regexp "[Ee]xample\\(s\\)?"       ))
+                      ("lemma"       ?l "lem:"  "~\\ref{%s}" t (regexp "[Ll]emma\\(s\\|ta\\)?"    ))
+                      ("proposition" ?p "prop:" "~\\ref{%s}" t (regexp "[Pp]roposition\\(s\\)?"   ))
+                      ("theorem"     ?h "thm:"  "~\\ref{%s}" t (regexp "[Tt]heorem\\(s\\)?"       ))
+                      ("remark"      ?r "rem:"  "~\\ref{%s}" t (regexp "[Rr]emark\\(s\\)?"        ))
+                      ("corollary"   ?c "cor:"  "~\\ref{%s}" t (regexp "[Cc]orollar\\(y\\|ies\\)?"))))
+              (flyspell-mode 1)
+              (auto-fill-mode -1)
+              (latex-symbols-prettify)
+              (latex-regexp-prettify)
+              (TeX-fold-mode)
+              (TeX-fold-region-comment (point-min) (point-max))
+              (setq-local TeX-fold-env-spec-list-internal
+                          '(("≪commutative diagram≫" ("tikzcd"))))
+              (TeX-fold-region-macro-or-env (point-min) (point-max) 'env)
+              ))
+
+(eval-after-load 'latex
+  '(define-key LaTeX-mode-map (kbd "<f5>") 'latex-compile))
+
+(setq cdlatex-tab-hook '(yas-expand
+                         pabbrev-expand))
+
+
+(add-hook 'cdlatex-mode-hook
+          #'(lambda()
+              (bind-key (kbd "$") nil 'cdlatex-mode-map)
+              ))
+
+(defun latex-compile ()
+  (interactive)
+  (save-buffer)
+  (TeX-command "LatexMk" 'TeX-master-file)
+  )
+
+
+;; Modern org mode
+
+(use-package org
+  :pin gnu
+  :commands (org-capture org-agenda)
+  :config
+  (setq org-ellipsis " ▾")
+
+  (setq org-agenda-start-with-log-mode t)
+  (setq org-log-done 'time)
+  (setq org-log-into-drawer t)
+
+  (setq org-agenda-files '("~/Documents/org-files/agenda"))
+
+  (setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
+  (setq org-use-fast-todo-selection t)
+
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "WAITING(w)" "|" "DONE(d)")
+          (sequence "PENDING(p)" "DEFERRED(D)" "OCCURING (o)" "|" "COMPLETED(c)")
+          (sequence "REPORT(r)" "BUG(b)" "KNOWNCAUSE(k)" "|" "FIXED(f)")
+          (sequence "|" "CANCELED(C)")))
+
+
+
+  (setq org-todo-keyword-faces
+        '(("TODO" :foreground "tomato4" :weight bold)
+          ("DONE" :foreground "PaleGreen4" :weight bold)
+          ("REVIEW" :foreground "LightGoldenrod3" :weight bold)
+          ("WAITING" :foreground "peru" :weight bold)
+          ("INACTIVE" :foreground "coral" :weight bold)
+          ("CANCELLED" :foreground "sienna" :weight bold)))
+
+  ;;  Auto-update tags whenever the state is changed
+  (setq org-todo-state-tags-triggers
+        '(("CANCELLED" ("CANCELLED" . t))
+          ("WAITING" ("SOMEDAY") ("INACTIVE") ("WAITING" . t))
+          ("INACTIVE" ("WAITING") ("SOMEDAY") ("INACTIVE" . t))
+          ("SOMEDAY" ("WAITING") ("INACTIVE") ("SOMEDAY" . t))
+          (done ("WAITING") ("INACTIVE") ("SOMEDAY"))
+          ("TODO" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
+          ("REVIEW" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
+          ("DONE" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))))
+
+  (setq org-tag-alist
         '((:startgroup)
-           ; Put mutually exclusive tags here
+                                        ; Put mutually exclusive tags here
           (:endgroup)
           ("short"        . ?s)
           ("necessary"    . ?n)
@@ -5796,946 +6630,190 @@ Open an iterm (OSX) and go to the curent directory
           ("regularly"    . ?r)
           ))
 
-      (setq org-capture-templates
-            `(
-              ("t" "Tasks / Projects")
-              ("tt" "Task" entry (file+olp "~/Documents/org-files/agenda" "Tasks")
-               "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
+  (setq org-capture-templates
+        `(
+          ("t" "Tasks / Projects")
+          ("tt" "Task" entry (file+olp "~/Documents/org-files/agenda" "Tasks")
+           "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
 
           ("j" "Journal Entries")
           ("jj" "Journal" entry
-               (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
-               "\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
-               ;; ,(dw/read-file-as-string "~/Notes/Templates/Daily.org")
-               :clock-in :clock-resume
-               :empty-lines 1)
+           (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
+           "\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
+           ;; ,(dw/read-file-as-string "~/Notes/Templates/Daily.org")
+           :clock-in :clock-resume
+           :empty-lines 1)
           ("jm" "Meeting" entry
-               (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
-               "* %<%I:%M %p> - %a :meetings:\n\n%?\n\n"
-               :clock-in :clock-resume
-               :empty-lines 1)
+           (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
+           "* %<%I:%M %p> - %a :meetings:\n\n%?\n\n"
+           :clock-in :clock-resume
+           :empty-lines 1)
 
           ("w" "Workflows")
           ("we" "Checking Email" entry (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
-               "* Checking Email :email:\n\n%?" :clock-in :clock-resume :empty-lines 1)
+           "* Checking Email :email:\n\n%?" :clock-in :clock-resume :empty-lines 1)
 
           ("m" "Metrics Capture")
           ("mw" "Weight" table-line (file+headline "~/Projects/Code/emacs-from-scratch/OrgFiles/Metrics.org" "Weight")
            "| %U | %^{Weight} | %^{Notes} |" :kill-buffer t)))
 
-      (define-key global-map (kbd "C-c j")
-        (lambda () (interactive) (org-capture nil "jj")))
-    )
-
-
-    (require 'org-super-agenda)
-
-    (setq org-agenda-skip-scheduled-if-done t
-          org-agenda-skip-deadline-if-done t
-          org-agenda-include-deadlines t
-          org-agenda-block-separator #x2501
-          org-agenda-compact-blocks t
-          org-agenda-start-with-log-mode t)
-    (setq org-agenda-deadline-faces
-          '((1.0001 . org-warning)              ; due yesterday or before
-            (0.0    . org-upcoming-deadline)))  ; due today or later
-
-
-
-    (defun style-org-agenda()
-      (set-face-attribute 'org-agenda-date nil :height 1.1)
-      (set-face-attribute 'org-agenda-date-today nil :height 1.1 :weight 'bold)
-      (set-face-attribute 'org-agenda-date-weekend nil :height 1.1))
-
-    (add-hook 'org-agenda-mode-hook 'style-org-agenda)
-
-    (setq org-agenda-breadcrumbs-separator " ❱ "
-          org-agenda-current-time-string " ┈┈┈┈┈┈┈┈┈┈┈┈┈ now"
-          org-agenda-time-grid '((weekly today require-timed)
-                                 (800 1000 1200 1400 1600 1800 2000)
-                                 "---" "┈┈┈┈┈┈┈┈┈┈┈┈┈")
-          org-agenda-prefix-format '((agenda . "%i %-12:c%?-12t%b% s")
-                                     (todo . " %i %-12:c")
-                                     (tags . " %i %-12:c")
-                                     (search . " %i %-12:c")))
-
-    (setq org-agenda-format-date (lambda (date) (concat "\n" (make-string (window-width) 9472)
-                                                        "\n"
-                                                        (org-agenda-format-date-aligned date))))
-    (setq org-cycle-separator-lines 2)
-
-
-
-
-    (setq org-agenda-custom-commands
-          '(("o" "Overview"
-             ((agenda "" ((org-agenda-span 'day)
-                          (org-super-agenda-groups
-                           '((:name "Today"
-                              :time-grid t
-                              :date today
-                              :todo "TODAY"
-                              :scheduled today
-                              :deadline today
-                              :order 1)))))
-              (alltodo "" ((org-agenda-overriding-header "")
-                           (org-super-agenda-groups
-                            '(;; Each group has an implicit boolean OR operator between its selectors.
-                              (:name "Today"
-                               :face (:weight "semi-bold"))
-                              (:name "Behind deadline"
-                               :and (:deadline past :todo ("TODO" "WAITING" "HOLD" "NEXT"))
-                               :face (:background "#7f1b19"))
-                              (:name "Work important"
-                               :and (:priority>= "B" :category "Work" :todo ("TODO" "NEXT")))
-                              (:name "Work other"
-                               :and (:category "Work" :todo ("TODO" "NEXT")))
-                              (:name "Important"
-                               :priority "A")
-                              (:priority<= "B"
-                               ;; Show this section after "Today" and "Important", because
-                               ;; their order is unspecified, defaulting to 0. Sections
-                               ;; are displayed lowest-number-first.
-                               :order 1)
-                              (:name "Papers"
-                               :file-path "org/roam/notes")
-                              (:name "Waiting"
-                               :todo "WAITING"
-                               :order 9)
-                              (:name "On hold"
-                               :todo "HOLD"
-                               :order 10)))))))))
-    (add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
-
-
-    (defconst default-math-env '("$" "$" t nil)
-      "The default math environment.
-       This defines the fall-back option for the math environment insertion."
-      )
-
-    (defconst custom-env-plist'(
-        :ams-env: (("definition" nil nil "def")
-                   ("lemma" nil nil "lem")
-                   ("corollary" nil nil "cor")
-                   ("theorem" nil nil "thm"))
-        :math: (("$" "$" t nil)
-                ("equation" nil nil "eq")
-                ("align" nil nil "eq")
-                ("gather" nil nil "eq")
-                ("equation*" nil nil nil)
-                ("align*" nil nil nil)
-                ("gather*" nil nil nil)
-                )
-        :parens:  (("(" ")" t nil ))
-        )
-      "A plist with environment-type as key and a list of such environments as value.
-       Every entry in such a list consists of 4 elements:
-       i)  the name of the environment, e.g. `equation' or `$'.
-       ii) the reprenstation of the ending delimitier of the environment.
-           If the environment is bounded by `\begin{...}' and `\end{...}',
-           its value is nil. Otherwise it could be for example`$'.
-       iii)A boolean variable indicating wether the environment is an inline environment.
-           That is t=`inline' and `nil' otherwise.
-       iv) A representation of the label-tag used for this environment, e.g. `eq'.
-           If the environment has no label, the value is nil."
-      )
-
-    ;; Global variables that allow us to
-    (setq custom-env-starting-delimiters '())
-    (setq custom-env-ending-delimiters '())
-    (setq number-envs-of-type '())
-
-    (setq env-at-point-name nil)
-    (setq env-at-point-start nil)
-
-
-    (defun generate-expanded-delimiters-lists()
-
-      (dotimes (i (length custom-env-plist))
-        (when(cl-oddp i)
-          (progn
-            (setq hierarchy (/ (- i 1) 2))
-            (setq environments (nth i custom-env-plist))
-            ;; Generate some statistics about the saved environments
-            (add-to-list 'number-envs-of-type (nth (- i 1) custom-env-plist) t)
-            (add-to-list 'number-envs-of-type (length environments) t)
-            (dotimes (j (length environments))
-              (progn
-                (setq starting-del (nth 0 (nth j environments)))
-                (setq ending-del (nth 1 (nth j environments)))
-                (setq starting-del-exp (expand-delimiters starting-del ending-del -1))
-                (setq ending-del-exp (expand-delimiters starting-del ending-del 1))
-                (add-to-list 'custom-env-starting-delimiters starting-del t)
-                (add-to-list 'custom-env-starting-delimiters (list starting-del-exp hierarchy) t)
-                (add-to-list 'custom-env-ending-delimiters starting-del t)
-                (add-to-list 'custom-env-ending-delimiters (list ending-del-exp hierarchy) t)
-                )))))
-      )
-
-    (defun cycle-texmath()
-      "This function cycles through the math environments defined in custom-env-plist"
-      (interactive)
-      (cycle-env :math:)
-      )
-
-    (defun cycle-env(type)
-      (get-env-at-point type)
-      (if env-number
-          (if ending-pos
-              (if (and (> (- ending-pos-wrapped-text starting-pos-wrapped-text) 0)
-                          (looking-at-p (concat "[[:blank:]\n]*" (regexp-quote ending-del-expanded))))
-                  (cdlatex-tab)
-                (next-environment type))
-            (progn
-              (save-excursion (end-env (nth 0 current-env) (nth 1 current-env) inline))
-              (LaTeX-indent-line))
-          )
-        (progn
-            (apply 'build-env  (insert-after (insert-after default-math-env 0 starting-pos-wrapped-text) 1 ending-pos-wrapped-text)) ;; TODO make this non math specific
-            ))
-      )
-
-    (defun next-environment (type)
-      (setq next-env-number (mod (1+ env-number) (plist-get number-envs-of-type type)))
-      (setq next-env (nth next-env-number (plist-get custom-env-plist type)))
-      (setq label-begin (+ starting-pos (length starting-del-expanded)))
-
-      (goto-char starting-pos)
-      (delete-region starting-pos label-begin)
-      (start-env (nth 0 next-env) (nth 1 next-env) (nth 2 next-env))
-
-      (delete-region (point) (+ (point) (- starting-pos-wrapped-text label-begin)))
-      (setq label-pos (generate-label (nth 3 next-env) label-text (nth 2 next-env)))
-      ;; TODO globally update the label if it is changed
-
-      (setq new-starting-pos (point))
-      (setq wrap-offset (- new-starting-pos starting-pos-wrapped-text))
-      (goto-char (+ ending-pos-wrapped-text wrap-offset))
-      (delete-region (point) (+ ending-pos wrap-offset))
-      (save-excursion (end-env (nth 0 next-env) (nth 1 next-env) (nth 2 next-env)))
-      (LaTeX-indent-line)
-      (if point-relative-to-start
-          (goto-char (+ new-starting-pos point-relative-to-start))
-        (goto-char new-starting-pos))
-      )
-
-    (defun get-env-at-point (type)
-      " Produces all relevant-information about the current environment."
-
-      (is-pt-in-env type)
-      (setq current-env (get-env-by-name type env-at-point-name))
-      (setq starting-del-expanded (nth 0 (plist-get custom-env-starting-delimiters (nth 0 current-env))))
-      (setq ending-del-expanded (nth 0 (plist-get custom-env-ending-delimiters (nth 0 current-env))))
-      (setq inline (nth 2 current-env))
-      (setq label-tag (nth 3 current-env))
-      (setq env-number (nth 4 current-env))
-      (setq starting-pos env-at-point-start)
-
-      (if starting-pos
-          (save-excursion
-            (setq ending-pos (environment-balanced current-env (1+ starting-pos)));; We do not want to start at the left boarder of the env as this might cause some problems
-            (goto-char (+ starting-pos (length starting-del-expanded)))
-            (skip-chars-forward "[:blank:]\n")
-            (if (looking-at-p "\\\\label{")
-                (progn
-                  (skip-chars-forward "^:")
-                  (skip-chars-forward "[:blank:]:")
-                  (if (looking-at "[^}]+")
-                      (progn
-                        (setq label-text (match-string 0))
-                        (goto-char (match-end 0)))
-                    (progn
-                      (setq label-text nil)
-                      (forward-char)))
-                  (skip-chars-forward "}[:blank:]\n")
-                  )
-              (setq label-text nil))
-            (setq starting-pos-wrapped-text (point))
-            )
-        (progn
-          (setq ending-pos nil)
-          (setq label-text nil)
-          (if (use-region-p)
-              (setq starting-pos-wrapped-text (region-beginning))
-            (setq starting-pos-wrapped-text nil))
-          )
-        )
-
-      (if ending-pos
-          (save-excursion
-            (goto-char (- ending-pos (length ending-del-expanded)))
-            (skip-chars-backward "[:blank:]\n")
-            (setq ending-pos-wrapped-text (max (point) starting-pos-wrapped-text))
-            )
-        (progn
-          (if (use-region-p)
-              (setq ending-pos-wrapped-text (region-end))
-            (setq ending-pos-wrapped-text nil))
-          )
-        )
-      (if (and ending-pos-wrapped-text
-               (< starting-pos-wrapped-text ending-pos-wrapped-text )
-               (< (point) ending-pos-wrapped-text ) )
-          (setq point-relative-to-start (- (point) starting-pos-wrapped-text))
-        (setq point-relative-to-start nil))
-      )
-
-    (defun environment-balanced (current-env starting-pos &optional hierarchy)
-      (when (and current-env starting-pos)
-        (save-excursion
-          (setq hierarchy (nth 1 (plist-get custom-env-starting-delimiters (car current-env))))
-          (goto-char starting-pos)
-          (setq ending-pos (re-search-forward (regexp-quote (nth 0 (plist-get custom-env-ending-delimiters (car current-env)))) nil  t))
-          (if ending-pos
-              (progn
-                ;; TODO search between start and end if there is a starting delimiter of same or lower hierarchy
-                ending-pos
-                )
-            nil)
-          ))
-      )
-
-    (defun get-env-by-name (type starting-del)
-      (when starting-del
-        (setq environments (plist-get custom-env-plist type))
-        (setq position 0)
-        (setq return-env (car environments))
-        (while (and (> (length environments) 0)(not (string= (car return-env) starting-del)))
-          (setq environments (cdr environments))
-          (setq position (1+ position))
-          (setq return-env (car environments))
-          )
-        (when return-env (insert-after return-env 3 position)))
-      )
-
-    (defun build-env (starting-del &optional starting-pos-wrapped-text ending-pos-wrapped-text ending-del inline label-tag label-text)
-      "This function build an environment with 'starting-del' and 'ending-del' delemiters,
-       a possible label with a tag and a text and some text in the middle."
-
-      (setq start (point))
-      (setq distance 0)
-
-      (when starting-pos-wrapped-text
-        (setq start starting-pos-wrapped-text)
-        (when ending-pos-wrapped-text
-          (setq distance (- ending-pos-wrapped-text start)))
-        )
-
-      (goto-char start)
-      (start-env starting-del ending-del inline)
-      (setq pointer-pos (generate-label label-tag label-text inline))
-      (forward-char distance)
-      (save-excursion (end-env starting-del ending-del inline))
-
-      (unless inline (LaTeX-indent-line))
-      (when (and (= distance 0) pointer-pos)
-        (goto-char pointer-pos))
-      )
-
-    (defun start-env (starting-del ending-del inline)
-      (deactivate-mark)
-      (unless (current-line-empty -1)
-        (if inline (just-one-space) (TeX-newline)))
-      (insert (expand-delimiters starting-del ending-del -1))
-      )
-
-    (defun generate-label (&optional label-tag label-text inline)
-      (setq point-pos nil)
-      (when label-tag
-        (just-one-space)
-        (insert (concat "\\label{" label-tag ":" label-text "}"))
-        (unless label-text (setq point-pos (- (point) 1)))
-        )
-      (unless inline
-        (save-excursion
-          (forward-line)
-          (setq next-line-empty (current-line-empty)))
-          (unless next-line-empty (TeX-newline)))
-      (or point-pos nil)
-      )
-
-    (defun end-env (starting-del ending-del inline)
-      (deactivate-mark)
-      (unless inline
-        (if (current-line-empty)
-            (progn
-              (save-excursion
-               (previous-line)
-               (setq need-line-break (current-line-empty)))
-              (unless need-line-break (TeX-newline)))
-          (TeX-newline))
-        )
-      (insert (expand-delimiters starting-del ending-del 1))
-      (LaTeX-indent-line)
-      (unless (current-line-empty 1)
-        (if inline (just-one-space) (TeX-newline)))
-      )
-
-    (defun current-line-empty (&optional direction)
-      "This function checks wether the current line is empty.
-       The optional variable 'direction' takes values +1 and -1.
-       In the first case only the line from the point onward is considered.
-       If 'direction' is -1, the line up until the point is checked:
-       ,*'direction =-1' "
-      (if direction
-          (if (eq direction -1)
-              (looking-back "^[[:blank:]]*" ) (looking-at-p "[[:blank:]]*$"))
-        (progn
-          (save-excursion
-        (beginning-of-line)
-        (looking-at-p "[[:blank:]]*$")))))
-
-    (defun insert-after (input-list index val)
-      "This function produces a copy of the input list with the given value `val' at the position `index'."
-      (setq output-list (copy-sequence input-list))
-      (push val (cdr (nthcdr index output-list)))
-      output-list)
-
-    (defun expand-delimiters (starting-del ending-del se-flag)
-      "This function produces an output string of the environment determined by the starting and ending-delimiters.
-    The staring delimiter is produced if se-flag= -1, if se-flag = 1 the function returns the ending delimiter."
-      (if (eq se-flag -1)
-          (if ending-del (progn starting-del)(progn (concat "\\begin{" starting-del "}")))
-        (if ending-del (progn ending-del)(progn (concat "\\end{" starting-del "}")))
-        )
-      )
-
-    (defun is-pt-in-env (type)
-      (cond
-       ((eq type :math:)
-        (if (texmathp)
-            (progn
-              (setq env-at-point-name (car texmathp-why))
-              (setq env-at-point-start (cdr texmathp-why)))
-          (progn
-            (setq env-at-point-name nil)
-            (setq env-at-point-start nil))))
-       )
-      )
-
-    (defun smart-enter ()
-      (interactive)
-      (if (texmathp)
-          (progn
-            (if (current-line-empty)
-                (progn
-                  (insert "\\\\")
-                  )
-              )
-            (progn
-              (TeX-newline))
-            )
-        ;; (if = LaTeX-current-environment =
-        ;; )
-        (progn
-          (TeX-newline)
-          ))
-      )
-
-    ;; (add-hook 'cdlatex-mode-hook  #'(lambda() (bind-key (kbd "$") nil 'cdlatex-mode-map)))
-
-    (use-package cdlatex
-      :config
-      (bind-key (kbd "$") nil 'cdlatex-mode-map)
-      )
-    (eval-after-load 'latex
-      '(bind-key (kbd "$") #'cycle-texmath 'LaTeX-mode-map))
-    (eval-after-load 'latex
-      '(bind-key (kbd "RET") #'smart-enter 'LaTeX-mode-map))
-
-    ;; (bind-key (kbd "$") #'cycle-texmath 'LaTeX-mode-map)
-    ;; (bind-key (kbd "RET") #'smart-enter 'LaTeX-mode-map)
-
-    (generate-expanded-delimiters-lists)
-
-    ;; Latex expansions
-
-    (defun latex-regexp-prettify ()
-      (highlight-regexp "{" 'custom-comment)
-      (highlight-regexp "}" 'custom-comment)
-      (highlight-regexp "[[:space:]]*\\\\quad[[:space:]]+" 'custom-comment)
-      (highlight-regexp "[[:space:]]*\\\\qquad[[:space:]]+" 'custom-comment)
-      (highlight-regexp "[[:space:]]*\\\\,[[:space:]]+" 'custom-comment)
-      (highlight-regexp "[[:space:]]*\\\\;[[:space:]]+" 'custom-comment)
-      (highlight-regexp "[[:space:]]*\\\\enspace[[:space:]]+" 'custom-comment)
-      (highlight-regexp "[[:space:]]*\\\\emspace[[:space:]]+" 'custom-comment)
-    )
-
-    (defun latex-symbols-prettify ()
-      (mapc (lambda (pair) (add-to-list 'prettify-symbols-alist pair))
-            ;; ARROWS
-            '(("\\to"                  32 (Br . Bl) 32 (Br . Br) 57620)
-              ("\\rightarrow"          32 (Br . Bl) 32 (Br . Br) 57620)
-              ("\\mapsto"              8870 (cr  cl 16 0) 57620)
-              ("\\longmapsto"          32 (Br . Bl)  8866 (cr . cl) 32 (Br . Bl)  32 (Br . Br)  57619)
-              ("\\inj"                 5308 (tl  tl 20 0) 32 (tr  tl 0 -5) 57620)
-              ("\\emb"                 5308 (tl  tl 20 0) 32 (tr  tl 0 5) 57620)
-              ("\\hookrightarrow"      5354 (tl . tl) 32 (tr . tl) 57620)
-              ("\\surj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
-              ("\\proj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
-              ("\\twoheadrightarrow"   32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
-              ("\\twoheadleftarrow"    32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57693)
-              ("\\longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57619)
-              ("\\rightsquigarrow"     32 (Br . Bl) 32 (Br . Br) 57703)
-              ("\\leftarrow"           32 (Br . Bl) 32 (Br . Br) 57682)
-              ("\\longleftarrow"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57683)
-              ("\\leftrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57684)
-              ("\\leftsquigarrow"      32 (Br . Bl) 32 (Br . Br) 57696)
-              ("\\Rightarrow"          32 (Br . Bl) 32 (Br . Br) 57663)
-              ("\\Longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57662)
-              ("\\implies"             32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57662)
-              ("\\Leftarrow"           32 (Br . Bl) 32 (Br . Br) 57688)
-              ("\\Longleftarrow"       32 (Br . Bl) 32 (Br . Br) 57688)
-              ("\\impliedby"           32 (Br . Bl) 32 (Br . Br) 57688)
-              ("\\Leftrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57689)
-              ("\\upharpoonleft"       ?↿)
-              ("\\upharpoonright"      ?↾)
-              ("\\downharpoonleft"     ?⇃)
-              ("\\downharpoonright"    ?⇂)
-              ("\\hookleftarrow"       ?↩)
-              ("\\looparrowleft"       ?↫)
-              ("\\looparrowright"      ?↬)
-              ("\\leftrightsquigarrow" ?↭)
-              ("\\leftleftarrows"      ?⇇)
-              ("\\rightrightarrows"    ?⇉)
-              ("\\leftrightarrows"     ?⇆)
-              ("\\rightleftarrows"     ?⇄)
-              ("\\Lleftarrow"         ?⇚)
-              ("\\Rrightarrow"        ?⇛)
-              ;; ENVIRONMENTS
-              ("\\part"                ?#)
-              ("\\section"             32 (Br . Bl) 32 (Br . Br) 57627)
-              ("\\subsection"          32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57628)
-              ("\\subsubsection"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57629)
-              ("\\begin"               32 (Br . Bl) 32 (Br . Br) 57653)
-              ("\\end"                 32 (Br . Bl) 32 (Br . Br) 57677)
-              ("\\item"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57686)
-              ;; SPACING
-              ("\\,"                  8194 (Bc . Bc) 8231)
-              ("\\:"                  8194 (Bc . Bc) 8231)
-              ("\\;"                  8194 (Bc . Bc) 8231)
-              ("\\enspace"            8194 (Bc . Bc) 8231)
-              ("\\emspace"            8195 (Bc . Bc) 8231)
-              ("\\quad"               8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195)
-              ("\\qquad"              8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195)
-              ;; SETS
-              ("\\mathbb{N}"           ?\u2115)
-              ("\\mathbb{R}"           ?\u211D)
-              ("\\mathbb{C}"           8450)
-              ("\\mathbb{P}"           8473)
-              ("\\mathcal{C}"          120018)
-              ("\\cat{C}"              120018)
-              ("\\mathcal{D}"          120019)
-              ("\\cat{D}"              120019)
-              ("\\cat{E}"              120020)
-              ("\\cat{M}"              120028)
-              ("\\cat{N}"              120029)
-              ("\\mathfrak{C}"         120174)
-              ("\\mathfrak{D}"         120175)
-              ("\\ZCat"                120041)
-              ;; OPERATORS
-              ("\\defeq"               32 (Br . Bl) 32 (Br . Br) 57612)
-              ("\\eq"                  ?=)
-              ("\\neq"                 32 (Br . Bl) 32 (Br . Br) 57614)
-              ("\\blank"               8212)
-              ("\\from"                32 (Br . Br) 57708)
-              ("\\colon"               32 (Br . Br) 57708)
-              ("\\lact"                9655)
-              ("\\blact"               9654)
-              ("\\ract"                9665)
-              ("\\bract"               9664)
-              ("\\unlhd"               ?⊴)
-              ("\\unrhd"               ?⊵)
-              ("\\cdot "               8226)
-              (" \\cdot "              8226)
-              ("\\times "              215)
-              (" \\times "             215)
-              ("\\parallel"            ?∥)
-              ("\\notni"               8260 (cc . cc) ?∋)
-              ("\\sqcup"               ?⊔)
-              ("\\bigsqcup"            ?⊔)
-              ("\\sqcap"               ?⊓)
-              ("\\bigsqcap"            ?⊓)
-              ("\\biguplus"            ?⨄)
-              ("\\land"                ?∧)
-              ("\\lor"                 ?∨)
-              ("\\odot"                ?⊙)
-              ("\\bigodot"             ?⊙)
-              ("\\otimes"              ?⊗)
-              ("\\bigotimes"           ?⊗)
-              ("\\oplus"               ?⊕)
-              ("\\bigoplus"            ?⊕)
-              ("\\sqrt"                ?√)
-              ("\\iint"                ?∬)
-              ("\\iiint"               ?∭)
-              ("\\iiiint"              ?⨌)
-              ("\\oiint"               ?∯)
-              ("\\oiiint"              ?∰)
-              ("\\ointclockwise"       ?∲)
-              ("\\ointctrclockwise"    ?∳)
-              ;; BETTER SUB AND SUPERSCRIPTS
-              ("^0"                    8304)
-              ("^1"                    185)
-              ("^2"                    178)
-              ("^3"                    179)
-              ("^4"                    8308)
-              ("^5"                    8309)
-              ("^6"                    8310)
-              ("^7"                    8311)
-              ("^8"                    8312)
-              ("^9"                    8313)
-              ("^l"                    ?\u02E1)
-              ("^r"                    ?\u02B3)
-              ("^T"                    ?\u1d40)
-              ("_0"                    8320)
-              ("_1"                    8321)
-              ("_2"                    8322)
-              ("_3"                    8323)
-              ("_4"                    8324)
-              ("_5"                    8325)
-              ("_6"                    8326)
-              ("_7"                    8327)
-              ("_8"                    8328)
-              ("_9"                    8329)
-              ;; GREEK UPPER CASES
-              ("\\Alpha"               ?Α)
-              ("\\Beta"                ?Β)
-              ("\\Gamma"               ?Γ)
-              ("\\Delta"               ?Δ)
-              ("\\Epsilon"             ?Ε)
-              ("\\Zeta"                ?Ζ)
-              ("\\Eta"                 ?Η)
-              ("\\Theta"               ?Θ)
-              ("\\Iota"                ?Ι)
-              ("\\Kappa"               ?Κ)
-              ("\\Lambda"              ?Λ)
-              ("\\Mu"                  ?Μ)
-              ("\\Nu"                  ?Ν)
-              ("\\Xi"                  ?Ξ)
-              ("\\Omicron"             ?Ο)
-              ("\\Pi"                  ?Π)
-              ("\\Rho"                 ?Ρ)
-              ("\\Sigma"               ?Σ)
-              ("\\Tau"                 ?Τ)
-              ("\\Upsilon"             ?Υ)
-              ("\\Phi"                 ?Φ)
-              ("\\Chi"                 ?Χ)
-              ("\\Psi"                 ?Ψ)
-              ("\\Omega"               ?Ω)
-              ;; SPECIAL SYMBOLS
-              ("\\ss"                  ?ß)
-              ("\\aa"                  ?å)
-              ("\\AA"                  ?Å)
-              ("\\ae"                  ?æ)
-              ("\\oe"                  ?œ)
-              ("\\AE"                  ?Æ)
-              ("\\OE"                  ?Œ)
-              ("\\o"                   ?ø)
-              ("\\O"                   ?Ø)
-              ("\\l"                   ?ł)
-              ("\\L"                   ?Ł)
-              ("\\S"                   ?§)
-              ;; ESCAPED SYMBOLS
-              ("\\$"                   ?＄)
-              ("\\%"                   ?％)
-              ("\\#"                   ?＃)
-              ("\\_"                   ?＿)
-              ("\\&"                   ?& (Bc . Bc) ?|)
-              ;;REFERECING
-              ("\\ref"                 ?☞)
-              ("\\cite"                ?†)
-              ("\\footnote"            ?‡)
-              ("\\label"               43 (cc . cc) ?‡)
-              ("\\TeX"                 ?T (cr cl -20 -45) ?E (cr cl -20 24) ?X)
-              ("\\LaTeX"               ?L (cr cl -60 35) ?A (cr cl -18 -20) ?T (cr cl -18 -60) ?E (cr cl -20 5) ?X)
-              ;; PARENTHESES
-              ("{"                     ?⎨)
-              ("}"                     ?⎬)
-              ("\\{"                   ?{)
-              ("\\}"                   ?})
-              ("\\lbrace"              ?{)
-              ("\\rbrace"              ?})
-              ("\\{"                   ?{)
-              ("\\}"                   ?})
-              ("\\|" .                 ?║)
-              ;; Misc
-              ("\\dots"                ?…)
-              ("\\textbackslash"       ?＼)
-              ("\\backslash"           ?＼)
-              ("\\qed"                 ?□)
-              ("\\lightning"           ?Ϟ)
-              ("\\copyright"           ?©)
-              ("\\texistregistered"    ?®)
-              ("\\texttrademark"       ?™)
-              ("\\euro"                8364)
-              ("\\pounds"              ?£)
-              ("\\lvert"               ?|)
-              ("\\rvert"               ?|)
-              ("\\lVert"               ?ǁ)
-              ("\\rVert"               ?ǁ)
-              )))
-
-
-
-    ;; This is like the best thing ever.  It defines all kinds of
-    ;; abbreviations, key shortcuts etc.
-    (use-package cdlatex
-      :bind (:map cdlatex-mode-map ("$" . nil))
-      :hook
-      (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
-      (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
-      :custom
-      ;; Pair (almost) all the things.
-      (cdlatex-paired-parens "$([{")
-      ;; Custom bindings for the math modify list, accessed with '
-      (cdlatex-math-modify-alist
-       '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
-         (?b "\\mathbb"   "\\textbf" t   nil   nil)
-         (?f "\\mathbf"   "\\textsf" t   nil   nil)
-         (?l "\\ld"       "\\textsl" t   nil   nil)
-         (?k "\\mathfrak" nil        t   nil   nil)
-         (?t "\\text"     nil        t   nil   nil)
-         (?u "\\lld"      ""         t   nil   nil)
-         ))
-      ;; Custom bindings for the symbol list, accessed with `.  You may add
-      ;; additional layers here.  Also, some of these are user-defined
-      ;; commands.
-      (cdlatex-math-symbol-alist
-       '(;;    LAYER 1        LAYER 2      LAYER 3
-         (?c  ("\\circ"       ""           "\\cos"   ))
-         (?C  ("\\coprod"     ""           "\\arccos"))
-         (?e  ("\\varepsilon" "\\epsilon"  "\\exp"   ))
-         (?f  ("\\varphi"     "\\phi"      ""        ))
-         (?F  ("\\Phi"        ""           ""        ))
-         (?R  ("\\real"       "\\Re"       ""        ))
-         (?N  ("\\nat"        "\\nabla"    "\\exp"   ))
-         (?Z  ("\\integer"    ""           ""        ))
-         (?Q  ("\\rat"        "\\Theta"    ""        ))
-         (?0  ("\\varnothing" ""           ""        ))
-         (?{  ("\\subseteq"   "\\subset"   ""        ))
-         (?}  ("\\supseteq"   "\\supset"   ""        ))
-         (?.  ("\\cdot"       "\\dots"     ""        ))
-         (?^  ("\\otimes"     ""           ""        ))
-         (?ö  ("\\odot"       ""           ""        ))
-         )))
-
-
-    (require 'dash)
-
-    ;;; `aas': sane auto-expanding snippets
-    (use-package aas
-      :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
-      :config
-      (--each '(latex-mode org-mode)
-        (aas-set-snippets it
-          :cond #'texmathp
-          ":"      "\\from "
-          "**"     "\\star"
-          "mm"     "\\mid "
-          "->"     "\\to "
-          "mt"     "\\mapsto "
-          "=>"     "\\implies "
-          "..."    "\\dots"
-          "bln"    "\\blank"
-          "def"    "\\defeq"
-          "~"      "\\sim"
-          "=="     "\\cong"
-          "ot"     "\otimes"
-          "bz"     "\\mathbb{Z}"
-          "bq"     "\\mathbb{Q}"
-          "br"     "\\mathbb{R}"
-          "bc"     "\\mathbb{C}"
-          "bf"     "\\mathbb{F}"
-          "bp"     "\\mathbb{P}"
-          "fg"     "\\mathfrak{g}"
-          "fh"     "\\mathfrak{h}"
-          "cc"     "\\cat{C}"
-          "cd"     "\\cat{D}"
-          "cm"     "\\cat{M}"
-          "zc"     "\\ZCat{C}"
-          "subset" "\\subset"
-          "supset" "\\supset"
-          "<>"    (lambda () (interactive)
-                    (yas-expand-snippet "\\langle $0 \\rangle"))
-          "adj"   (lambda () (interactive)
-                    (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
-          "hom"  (lambda () (interactive)
-                   (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
-          "coend" (lambda () (interactive)
-                    (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
-          "end"   (lambda () (interactive)
-                    (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
-          "set"   (lambda () (interactive)
-                    (yas-expand-snippet "\\\\{$0"))
-          "sum"   (lambda () (interactive)
-                    (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
-          ;;"gl"    (lambda () (interactive)
-          ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
-          ;;"//"    (lambda () (interactive)
-          ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
-          "cat"   (lambda () (interactive)
-                    (yas-expand-snippet "\\cat{$1}$0")))))
-
-    ;; LaTeX- customisation
-
-    (require 'auctex-latexmk)     ;; LatexMk integration into auctex
-    (require 'cdlatex)            ;; Makes (La)TeX editing much better
-    (require 'adaptive-wrap)      ;; Wrapping without introducing linebreaks.
-    (require 'laas)               ;; LaTeX snipets
-    (require 'tex-site)
-    (require 'latex)
-    (require 'reftex)             ;; sane referencing tool
-
-
-    ;; LaTeX settings
-    (setq TeX-auto-save t
-          TeX-parse-self t
-          TeX-PDF-mode t
-          TeX-source-correlate-mode t
-          TeX-source-correlate-start-server nil
-          font-latex-fontify-sectioning 1.0)
-
-    (setq-default TeX-master nil)
-
-    ;; Auctex settings
-    (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-    (add-to-list 'TeX-command-list '("LatexMk" "latexmk %(-PDF)%S%(mode) -pv -view=pdf  -interaction=nonstopmode -synctex=1 %(file-line-error) %(extraopts) %t"
-             TeX-run-latexmk nil
-             (plain-tex-mode latex-mode doctex-mode) :help "Run LatexMk"))
-
-    (add-hook 'TeX-after-compilation-finished-functions
-               #'TeX-revert-document-buffer)
-
-    ;; for single quotation marks
-
-    (setq TeX-open-quote "`")
-    (setq TeX-close-quote "'")
-
-    (auctex-latexmk-setup)
-    (setq reftex-plug-into-AUCTeX t)
-
-    (add-hook 'LaTeX-mode-hook
-      #'(lambda()
-        (setq ispell-dictionary "british")
-        (yas-minor-mode 1)
-        (laas-mode 1)
-        (cdlatex-mode 1)
-        (reftex-mode 1)
-        (reftex-set-cite-format "\\cite[][]{%l}")
-        (setq reftex-ref-macro-prompt nil
-              reftex-label-alist                  ; tell reftex about some environments
-              '(("section"     ?s "sec:"  "~\\ref{%s}" t (regexp "[Ss]ection\\(s\\)?"       ))
-                ("definition"  ?d "def:"  "~\\ref{%s}" t (regexp "[Dd]efinition\\(s\\)?"    ))
-                ("example"     ?x "ex:"   "~\\ref{%s}" t (regexp "[Ee]xample\\(s\\)?"       ))
-                ("lemma"       ?l "lem:"  "~\\ref{%s}" t (regexp "[Ll]emma\\(s\\|ta\\)?"    ))
-                ("proposition" ?p "prop:" "~\\ref{%s}" t (regexp "[Pp]roposition\\(s\\)?"   ))
-                ("theorem"     ?h "thm:"  "~\\ref{%s}" t (regexp "[Tt]heorem\\(s\\)?"       ))
-                ("remark"      ?r "rem:"  "~\\ref{%s}" t (regexp "[Rr]emark\\(s\\)?"        ))
-                ("corollary"   ?c "cor:"  "~\\ref{%s}" t (regexp "[Cc]orollar\\(y\\|ies\\)?"))))
-        (flyspell-mode 1)
-        (auto-fill-mode -1)
-        (latex-symbols-prettify)
-        (latex-regexp-prettify)
-        (TeX-fold-mode)
-        (TeX-fold-region-comment (point-min) (point-max))
-        (setq-local TeX-fold-env-spec-list-internal
-                    '(("≪commutative diagram≫" ("tikzcd"))))
-        (TeX-fold-region-macro-or-env (point-min) (point-max) 'env)
-        ))
-
-    (eval-after-load 'latex
-      '(define-key LaTeX-mode-map (kbd "<f5>") 'latex-compile))
-
-    (setq cdlatex-tab-hook '(yas-expand
-                             pabbrev-expand))
-
-
-    (add-hook 'cdlatex-mode-hook
-        #'(lambda()
-        (bind-key (kbd "$") nil 'cdlatex-mode-map)
-        ))
-
-    (defun latex-compile ()
-      (interactive)
-      (save-buffer)
-      (TeX-command "LatexMk" 'TeX-master-file)
-     )
-
-
-    ;; Modern org mode
-
-    ;; Minimal UI
-    (menu-bar-mode -1)
-    (tool-bar-mode -1)
-    (scroll-bar-mode -1)
-
-    (setq
-     ;; Edit settings
-     ;; org-auto-align-tags nil
-     org-tags-column 0
-     org-catch-invisible-edits 'show-and-error
-     org-special-ctrl-a/e t
-     org-insert-heading-respect-content t
-
-     ;; Org styling, hide markup etc.
-     org-hide-emphasis-markers t
-     org-pretty-entities t
-     org-ellipsis "…"
-
-     ;; Agenda styling
-     org-agenda-tags-column 0
-     org-agenda-block-separator ?─
-     org-agenda-time-grid
-     '((daily today require-timed)
-       (800 1000 1200 1400 1600 1800 2000)
-       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-     org-agenda-current-time-string
-     "⭠ now ─────────────────────")
-
-    (global-org-modern-mode)
-
-
-    (use-package org-recur
-     :hook ((org-mode . org-recur-mode)
-            (org-agenda-mode . org-recur-agenda-mode))
-     :demand t
-     :config
-     (define-key org-recur-mode-map (kbd "C-c d") 'org-recur-finish)
-
-     ;; Rebind the 'd' key in org-agenda (default: `org-agenda-day-view').
-     (define-key org-recur-agenda-mode-map (kbd "d") 'org-recur-finish)
-     (define-key org-recur-agenda-mode-map (kbd "C-c d") 'org-recur-finish)
-
-     (setq org-recur-finish-done t
-           org-recur-finish-archive t))
-
-   ;; Refresh org-agenda after rescheduling a task.
-   (defun org-agenda-refresh ()
-     "Refresh all `org-agenda' buffers."
-     (dolist (buffer (buffer-list))
-       (with-current-buffer buffer
-         (when (derived-mode-p 'org-agenda-mode)
-           (org-agenda-maybe-redo)))))
-
-   (defadvice org-schedule (after refresh-agenda activate)
-     "Refresh org-agenda."
-     (org-agenda-refresh))
-
-   ;; Log time a task was set to Done.
-  (setq org-log-done (quote time))
-
-  ;; Don't log the time a task was rescheduled or redeadlined.
-  (setq org-log-redeadline nil)
-  (setq org-log-reschedule nil)
-
-  (setq org-read-date-prefer-future 'time)
-
-
-  (let ((init-time (float-time (time-subtract (current-time) my-init-start-time)))
-       (total-time (string-to-number (emacs-init-time "%f"))))
-
-   (message "---------------------------------------------------------------")
-   (message "Final initialisation time:             %.2fs (+ %.2f system time)"
-            init-time (- total-time init-time)))
-   (message "---------------------------------------------------------------")
+  (define-key global-map (kbd "C-c j")
+              (lambda () (interactive) (org-capture nil "jj")))
+  )
+
+
+(require 'org-super-agenda)
+
+(setq org-agenda-skip-scheduled-if-done t
+      org-agenda-skip-deadline-if-done t
+      org-agenda-include-deadlines t
+      org-agenda-block-separator #x2501
+      org-agenda-compact-blocks t
+      org-agenda-start-with-log-mode t)
+(setq org-agenda-deadline-faces
+      '((1.0001 . org-warning)              ; due yesterday or before
+        (0.0    . org-upcoming-deadline)))  ; due today or later
+
+
+
+(defun style-org-agenda()
+  (set-face-attribute 'org-agenda-date nil :height 1.1)
+  (set-face-attribute 'org-agenda-date-today nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-agenda-date-weekend nil :height 1.1))
+
+(add-hook 'org-agenda-mode-hook 'style-org-agenda)
+
+(setq org-agenda-breadcrumbs-separator " ❱ "
+      org-agenda-current-time-string " ┈┈┈┈┈┈┈┈┈┈┈┈┈ now"
+      org-agenda-time-grid '((weekly today require-timed)
+                             (800 1000 1200 1400 1600 1800 2000)
+                             "---" "┈┈┈┈┈┈┈┈┈┈┈┈┈")
+      org-agenda-prefix-format '((agenda . "%i %-12:c%?-12t%b% s")
+                                 (todo . " %i %-12:c")
+                                 (tags . " %i %-12:c")
+                                 (search . " %i %-12:c")))
+
+(setq org-agenda-format-date (lambda (date) (concat "\n" (make-string (window-width) 9472)
+                                                    "\n"
+                                                    (org-agenda-format-date-aligned date))))
+(setq org-cycle-separator-lines 2)
+
+
+
+
+(setq org-agenda-custom-commands
+      '(("o" "Overview"
+         ((agenda "" ((org-agenda-span 'day)
+                      (org-super-agenda-groups
+                       '((:name "Today"
+                                :time-grid t
+                                :date today
+                                :todo "TODAY"
+                                :scheduled today
+                                :deadline today
+                                :order 1)))))
+          (alltodo "" ((org-agenda-overriding-header "")
+                       (org-super-agenda-groups
+                        '(;; Each group has an implicit boolean OR operator between its selectors.
+                          (:name "Today"
+                                 :face (:weight "semi-bold"))
+                          (:name "Behind deadline"
+                                 :and (:deadline past :todo ("TODO" "WAITING" "HOLD" "NEXT"))
+                                 :face (:background "#7f1b19"))
+                          (:name "Work important"
+                                 :and (:priority>= "B" :category "Work" :todo ("TODO" "NEXT")))
+                          (:name "Work other"
+                                 :and (:category "Work" :todo ("TODO" "NEXT")))
+                          (:name "Important"
+                                 :priority "A")
+                          (:priority<= "B"
+                                       ;; Show this section after "Today" and "Important", because
+                                       ;; their order is unspecified, defaulting to 0. Sections
+                                       ;; are displayed lowest-number-first.
+                                       :order 1)
+                          (:name "Papers"
+                                 :file-path "org/roam/notes")
+                          (:name "Waiting"
+                                 :todo "WAITING"
+                                 :order 9)
+                          (:name "On hold"
+                                 :todo "HOLD"
+                                 :order 10)))))))))
+(add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
+
+
+;; Minimal UI
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+
+(setq
+ ;; Edit settings
+ ;; org-auto-align-tags nil
+ org-tags-column 0
+ org-catch-invisible-edits 'show-and-error
+ org-special-ctrl-a/e t
+ org-insert-heading-respect-content t
+
+ ;; Org styling, hide markup etc.
+ org-hide-emphasis-markers t
+ org-pretty-entities t
+ org-ellipsis "…"
+
+ ;; Agenda styling
+ org-agenda-tags-column 0
+ org-agenda-block-separator ?─
+ org-agenda-time-grid
+ '((daily today require-timed)
+   (800 1000 1200 1400 1600 1800 2000)
+   " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+ org-agenda-current-time-string
+ "⭠ now ─────────────────────")
+
+(global-org-modern-mode)
+
+
+(use-package org-recur
+  :hook ((org-mode . org-recur-mode)
+         (org-agenda-mode . org-recur-agenda-mode))
+  :demand t
+  :config
+  (define-key org-recur-mode-map (kbd "C-c d") 'org-recur-finish)
+
+  ;; Rebind the 'd' key in org-agenda (default: `org-agenda-day-view').
+  (define-key org-recur-agenda-mode-map (kbd "d") 'org-recur-finish)
+  (define-key org-recur-agenda-mode-map (kbd "C-c d") 'org-recur-finish)
+
+  (setq org-recur-finish-done t
+        org-recur-finish-archive t))
+
+;; Refresh org-agenda after rescheduling a task.
+(defun org-agenda-refresh ()
+  "Refresh all `org-agenda' buffers."
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (when (derived-mode-p 'org-agenda-mode)
+        (org-agenda-maybe-redo)))))
+
+(defadvice org-schedule (after refresh-agenda activate)
+  "Refresh org-agenda."
+  (org-agenda-refresh))
+
+;; Log time a task was set to Done.
+(setq org-log-done (quote time))
+
+;; Don't log the time a task was rescheduled or redeadlined.
+(setq org-log-redeadline nil)
+(setq org-log-reschedule nil)
+
+(setq org-read-date-prefer-future 'time)
+
+
+(let ((init-time (float-time (time-subtract (current-time) my-init-start-time)))
+      (total-time (string-to-number (emacs-init-time "%f"))))
+
+  (message "---------------------------------------------------------------")
+  (message "Final initialisation time:             %.2fs (+ %.2f system time)"
+           init-time (- total-time init-time)))
+(message "---------------------------------------------------------------")
 #+end_src
