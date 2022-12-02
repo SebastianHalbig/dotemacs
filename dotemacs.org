@@ -2210,9 +2210,8 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 
 (use-package visual-fill-column
   :ensure adaptive-wrap
-  :config
-  (setq visual-fill-column-center-text t)
-  :hook  (((LaTeX-mode org-mode) . visual-fill-column)
+  :custom (visual-fill-column-center-text t)
+  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
           ((LaTeX-mode org-mode) . adaptive-wrap-prefix-mode)
           )
   )
