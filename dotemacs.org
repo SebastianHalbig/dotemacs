@@ -180,8 +180,8 @@ Packages used in this specific configuration. You may want to adapt this list. T
         fira-code-mode      ; Fira code ligatures
         oauth               ; Oauth library
         offlineimap         ; OfflineIMAP from Emacs
-        ;;org-bullets         ; Bullet points for org mode
         no-littering
+        org-msg             ; Write mails with org mode.
         org-modern          ; Nicer org mode
         org-super-agenda    ; TODO ???
         org-recur           ; For recurring tasks
@@ -334,6 +334,17 @@ Emacs does a lot of things at startup and here, we disable pretty much everythin
 
 (add-hook 'after-init-hook (lambda () (org-agenda nil "a")))
 (setq org-agenda-window-setup 'current-window)
+
+#+end_src
+
+All fancy clickable things are unnecessary so we remove them
+#+begin_src emacs-lisp
+(add-hook 'emacs-startup-hook #'(lambda()
+                                  (when window-system
+                                    (menu-bar-mode -1)
+                                    (scroll-bar-mode -1)
+                                    (tool-bar-mode -1)
+                                    (tooltip-mode -1))))
 
 #+end_src
 
@@ -3259,6 +3270,12 @@ Some bindings to avoid confirmation for execution (headers and message view)
 
 *** General
 
+We will rely on mu4e as our mail user agent.
+
+#+begin_src emacs-lisp
+(setq mail-user-agent 'mu4e-user-agent)
+#+end_src
+
 General information about me.
 
 #+begin_src emacs-lisp
@@ -3486,6 +3503,16 @@ Move emails to the relative spam folder.
                       (smtpmail-smtp-service . 587))))
 
 #+end_src
+** TODO Contacts :INACTIVE:
+
+In the future we will use org-contacts and based on them individual greetings and signatures.
+
+#+begin_src emacs-lisp
+(use-package org
+  :ensure org-contacts
+  :after org
+  :custom (org-contacts-files '("~/Documents/org-files/contacts.org")))
+#+end_src
 ** Encryption
 
 See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
@@ -3570,7 +3597,7 @@ We try to sign all mails. Encryption should also be managed automatically
 
 #+end_src
 
-Setting up mail composition.
+Setting up mail composition with org mode.
 
 #+name: my-mu4e-compose-hook
 #+begin_src emacs-lisp
@@ -3580,13 +3607,31 @@ Setting up mail composition.
 
   (auto-save-mode -1)
   (set-fill-column 79)
-  (auto-fill-mode)
+  ;;(auto-fill-mode)
   (setq flyspell-generic-check-word-predicate
         'mail-mode-flyspell-verify))
 
 (add-hook 'mu4e-compose-mode-hook #'my-mu4e-compose-hook)
 
 #+end_src
+
+
+#+begin_src emacs-lisp
+(use-package org-msg
+  :config
+  (setq org-msg-startup "content"
+        org-msg-options "toc:nil author:nil email:nil \\n:t"
+	    org-msg-greeting-fmt "\nHi%s,\n\n"
+	    org-msg-greeting-name-limit 3
+	    org-msg-default-alternatives '((new		      . (text))
+				                       (reply-to-html . (text))
+				                       (reply-to-text . (text)))
+	    org-msg-convert-citation t
+	    org-msg-signature "" )
+ )
+
+#+end_src
+
 
 ** Bookmarks
 
@@ -5059,9 +5104,6 @@ We treat ~code~ and =verbatim= faces differently among export
 
 ;; Minimal UI
 
-;; (menu-bar-mode -1)
-;; (tool-bar-mode -1)
-;; (scroll-bar-mode -1)
 
 (setq
  ;; Edit settings
