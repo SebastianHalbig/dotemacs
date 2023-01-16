@@ -591,18 +591,20 @@ Server start.
 
 #+end_src
 
-** Keybindings
+** Keybindings :BUGFIX:
 
 A "modern" keyboard layout is provided by ergoemacs.
+Sadly it does things quite noisily.
+We suppress this with a bit of "hacking".
 
 #+begin_src emacs-lisp
+(let ((message-log-max nil))             ; We suppress the output to *messages*
+  (use-package ergoemacs-mode
+    :config
+    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
+    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
+    (ergoemacs-mode 1)))                  ; Globally enables ergoemacs-mode
 
-(use-package ergoemacs-mode
-  :config
-  (setq ergoemacs-theme nil)            ;; Uses Standard Ergoemacs keyboard theme
-  (setq ergoemacs-keyboard-layout "us") ;; Assumes QWERTY keyboard layout
-  (ergoemacs-mode 1)                    ;; Globally enables ergoemacs-mode
-  )
 #+end_src
 
 ** Benchmark
