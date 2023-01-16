@@ -1,0 +1,6 @@
+* Arxiv :elfeed:
+** [[http://export.arxiv.org/api/query?search_query=cat:math.CT&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending][Enriched categories, topoi, abelian categories, monoidal categories, homological algebra]]
+** [[http://export.arxiv.org/api/query?search_query=cat:math.AT&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending][Homotopy theory, homological algebra, algebraic treatments of manifolds]]
+** [[http://export.arxiv.org/api/query?search_query=cat:math.QA&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending][Quantum groups, skein theories, operadic and diagrammatic algebra, quantum field theory]]
+** [[http://export.arxiv.org/api/query?search_query=cat:math.RA&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending][Non-commutative rings and algebras, non-associative algebras, universal algebra and lattice theory, linear algebra, semigroups]]
+** [[http://export.arxiv.org/api/query?search_query=cat:math.RT&start=0&max_results=300&sortBy=submittedDate&sortOrder=descending][Quantum groups, skein theories, operadic and diagrammatic algebra, quantum field theory]]
