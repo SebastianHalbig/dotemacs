@@ -4603,14 +4603,13 @@ Our setup follows Tony Zorman.
 
 ** Editing and Autocompletion
 
-CdLaTeX makes a lot of editing work easier. We initialise it here.
+CdLaTeX makes a lot of editing work easier.
+We initialise it here and sprinkle it with a few of our own features.
+
 
 #+begin_src emacs-lisp
 
 (use-package cdlatex
-  :bind (:map cdlatex-mode-map
-              ("$"     . nil)
-              ("<tab>" . nil))
   :hook
   (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
   (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
@@ -4646,31 +4645,180 @@ CdLaTeX makes a lot of editing work easier. We initialise it here.
      (?.  ("\\cdot"           "\\dots"          ""        ))
      (?^  ("\\otimes"          ""            ""        ))
      (?ö  ("\\odot"           ""            ""        ))
-     )))
-
-(setq cdlatex-tab-hook '(yas-expand indent-for-tab-command))
+     ))
+  :config
+  (setq cdlatex-tab-hook '(yas-expand indent-for-tab-command)))
 
 #+end_src
 
-We set up autocompletions and smart way of dealing with inputs of "$" and "<tab>"
+We set try to be clever about our uses of <return> and <$>.
 
 #+begin_src emacs-lisp
-
-(use-package latex-goodies-for-emacs
+(use-package smart-keys-for-latex
   :ensure reftex
-  :init
-  (yas-minor-mode 1) ; We use yas and laas auto-completion
-  (laas-mode 1)      ; We use laas features (for now)
-  :config
-    (generate-expanded-delimiters-lists) ; Setup all environments.
-  :bind (:map LaTeX-mode-map
-              ("$" . cycle-texmath)
-              ("<return>" . smart-return)))
+  :after cdlatex
+  :config (setup-smart-keys)
+  :bind (:map cdlatex-mode-map
+         ("$" . cycle-texmath)
+         :map TeX-mode-map
+         ("RET" . smart-return)
+              )
+  )
+#+end_src
+
+Some latex-commands that are auto-expanded by aas.
+
+#+begin_src emacs-lisp
+  (use-package aas
+    :after dash
+    :init
+    (yas-minor-mode 1)
+    (laas-mode 1)
+    :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
+    :config
+    (--each '(latex-mode org-mode)
+      (aas-set-snippets it
+        :cond #'texmathp
+        " :"      "\\from "
+        " **"     "\\star"
+        " mm"     "\\mid "
+        " ->"     "\\to "
+        " mt"     "\\mapsto "
+        " =>"     "\\implies "
+        " ..."    "\\dots"
+        " bln"    "\\blank"
+        " def"    "\\defeq"
+        " ~"      "\\sim"
+        " =="     "\\cong"
+        " ot"     "\otimes"
+        " bz"     "\\mathbb{Z}"
+        " bq"     "\\mathbb{Q}"
+        " br"     "\\mathbb{R}"
+        " bc"     "\\mathbb{C}"
+        " bf"     "\\mathbb{F}"
+        " bp"     "\\mathbb{P}"
+        " fg"     "\\mathfrak{g}"
+        " fh"     "\\mathfrak{h}"
+        " cc"     "\\cat{C}"
+        " cd"     "\\cat{D}"
+        " cm"     "\\cat{M}"
+        " zc"     "\\ZCat{C}"
+        " subset" "\\subset"
+        " supset" "\\supset"
+        " <>"    (lambda () (interactive)
+                   (yas-expand-snippet "\\langle $0 \\rangle"))
+        " adj"   (lambda () (interactive)
+                   (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
+        " hom"  (lambda () (interactive)
+                  (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
+        " coend" (lambda () (interactive)
+                   (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
+        " end"   (lambda () (interactive)
+                   (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
+        " set"   (lambda () (interactive)
+                   (yas-expand-snippet "\\\\{$0"))
+        " sum"   (lambda () (interactive)
+                   (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
+        ;;" gl"    (lambda () (interactive)
+        ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
+        ;;" //"    (lambda () (interactive)
+        ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
+        " cat"   (lambda () (interactive)
+                   (yas-expand-snippet "\\cat{$1}$0")))))
 
 #+end_src
-** TODO Fontification
+
+** TODO Visuals
 
 It just makes more fun to write latex if it already looks nice while writing.
+As a preventive measure to eye-cancer we change most of the auctex defaults to something humans can bare.
+
+#+begin_src emacs-lisp
+(defun my-LaTeX-better-fonts()
+  (set-face-attribute 'font-latex-bold-face nil
+                      :foreground 'unspecified
+                      :weight 'bold
+                      :inherit 'unspecified)
+
+  (set-face-attribute 'font-latex-italic-face nil
+                      :family "Victor Mono"
+                      :foreground 'unspecified
+                      :slant 'oblique
+                      :inherit 'unspecified)
+
+  (set-face-attribute 'font-latex-math-face nil
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :weight 'semilight
+                      :inherit 'nano-strong)
+
+  (set-face-attribute 'font-latex-script-char-face nil
+                      :foreground 'unspecified)
+
+  (set-face-attribute 'font-latex-warning-face nil
+                      :foreground 'unspecified
+                      :inherit 'nano-faded)
+
+  (set-face-attribute 'font-latex-sectioning-0-face nil
+                      :height 'unspecified
+                      :weight 'bold
+                      :foreground 'unspecified
+                      :underline t
+                      :inherit 'nano-salient)
+
+  (set-face-attribute 'font-latex-sectioning-1-face nil
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :inherit 'font-latex-sectioning-0-face)
+
+  (set-face-attribute 'font-latex-sectioning-2-face nil
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :inherit 'font-latex-sectioning-1-face)
+
+  (set-face-attribute 'font-latex-sectioning-3-face nil
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :inherit 'font-latex-sectioning-2-face)
+
+  (set-face-attribute 'font-latex-sectioning-4-face nil
+                      :weight 'normal
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :underline nil
+                      :inherit 'font-latex-sectioning-3-face)
+
+  (set-face-attribute 'font-latex-sectioning-5-face nil
+                      :weight 'normal
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :inherit 'font-latex-sectioning-4-face)
+
+  (set-face-attribute 'font-latex-slide-title-face nil
+                      :height 'unspecified
+                      :inherit 'font-latex-sectioning-0-face)
+
+  (set-face-attribute 'font-latex-underline-face nil
+                      :height 'unspecified
+                      :foreground 'unspecified
+                      :underline t)
+
+  (set-face-attribute 'font-lock-keyword-face nil
+                      :inherit 'nano-faded)
+
+  (set-face-attribute 'font-lock-constant-face nil
+                      :inherit 'nano-faded)
+
+  (set-face-attribute 'font-lock-comment-face nil
+                      :inherit 'nano-subtle)
+  )
+
+(use-package font-latex
+  :hook (LaTeX-mode . my-LaTeX-better-fonts)
+  :config
+  )
+
+#+end_src
 First, we fold away annoying parts like comments or commuting diagrams.
 The code for this function is due to Tony Zorman.
 
@@ -4690,42 +4838,257 @@ commutative diagrams, as well as comments."
 
 #+end_src
 
-In order to prettify symbols, we use fira code.
+Some symbols we want to display differently. Font-locking allows us to do so.
 
 #+begin_src emacs-lisp
-(defun my-LaTeX-variable-pitch ()
+(defun latex-regexp-prettify ()
+  "We use an unobtrusive font for certain latex-internal formating rules such as `{...}'"
+  (highlight-regexp "{" 'custom-comment)
+  (highlight-regexp "}" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\quad[[:space:]]*" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\qquad[[:space:]]*" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\,[[:space:]]*" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\;[[:space:]]*" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\enspace[[:space:]]*" 'custom-comment)
+  (highlight-regexp "[[:space:]]*\\\\emspace[[:space:]]*" 'custom-comment)
+  )
 
+(add-hook 'LaTeX-mode-hook 'latex-regexp-prettify)
+#+end_src
 
-  ;; (set-face-attribute 'default nil
-  ;;                     :family "Helvetica Now Text"
-  ;;                     :weight 'normal
-  ;;                     :height 140)
-  ;; (set-face-attribute 'font-latex-italic-face nil
-  ;;                     :family "Helvetica Now Text"
-  ;;                     :weight 'normal
-  ;;                     :slant  'italic
-  ;;                     :height 140)
+In order to prettify symbols, we use fira code and a long list of symbols which are replaced.
+
+#+begin_src emacs-lisp
+(defun my-LaTeX-fira-pitch ()
   (set-face-attribute 'font-latex-math-face nil
                       :family "Fira Code"
                       :weight 'semilight
                       :height 140)
   )
 
+(defun latex-symbols-prettify ()
+  "A long list of symbols to display nicely in latex-mode"
+  (mapc (lambda (pair) (add-to-list 'prettify-symbols-alist pair))
+        ;; ARROWS
+        '(("\\to"                  32 (Br . Bl) 32 (Br . Br) 57620)
+          ("\\rightarrow"          32 (Br . Bl) 32 (Br . Br) 57620)
+          ("\\mapsto"              8870 (cr  cl 16 0) 57620)
+          ("\\longmapsto"          32 (Br . Bl)  8866 (cr . cl) 32 (Br . Bl)  32 (Br . Br)  57619)
+          ("\\inj"                 5308 (tl  tl 20 0) 32 (tr  tl 0 -5) 57620)
+          ("\\emb"                 5308 (tl  tl 20 0) 32 (tr  tl 0 5) 57620)
+          ("\\hookrightarrow"      5354 (tl . tl) 32 (tr . tl) 57620)
+          ("\\surj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
+          ("\\proj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
+          ("\\twoheadrightarrow"   32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
+          ("\\twoheadleftarrow"    32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57693)
+          ("\\longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57619)
+          ("\\rightsquigarrow"     32 (Br . Bl) 32 (Br . Br) 57703)
+          ("\\leftarrow"           32 (Br . Bl) 32 (Br . Br) 57682)
+          ("\\longleftarrow"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57683)
+          ("\\leftrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57684)
+          ("\\leftsquigarrow"      32 (Br . Bl) 32 (Br . Br) 57696)
+          ("\\Rightarrow"          32 (Br . Bl) 32 (Br . Br) 57663)
+          ("\\Longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57662)
+          ("\\implies"             32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57662)
+          ("\\Leftarrow"           32 (Br . Bl) 32 (Br . Br) 57688)
+          ("\\Longleftarrow"       32 (Br . Bl) 32 (Br . Br) 57688)
+          ("\\impliedby"           32 (Br . Bl) 32 (Br . Br) 57688)
+          ("\\Leftrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57689)
+          ("\\upharpoonleft"       ?↿)
+          ("\\upharpoonright"      ?↾)
+          ("\\downharpoonleft"     ?⇃)
+          ("\\downharpoonright"    ?⇂)
+          ("\\hookleftarrow"       ?↩)
+          ("\\looparrowleft"       ?↫)
+          ("\\looparrowright"      ?↬)
+          ("\\leftrightsquigarrow" ?↭)
+          ("\\leftleftarrows"      ?⇇)
+          ("\\rightrightarrows"    ?⇉)
+          ("\\leftrightarrows"     ?⇆)
+          ("\\rightleftarrows"     ?⇄)
+          ("\\Lleftarrow"         ?⇚)
+          ("\\Rrightarrow"        ?⇛)
+          ;; ENVIRONMENTS
+          ("\\part"                ?#)
+          ("\\section"             32 (Br . Bl) 32 (Br . Br) 57627)
+          ("\\subsection"          32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57628)
+          ("\\subsubsection"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57629)
+          ("\\begin"               32 (Br . Bl) 32 (Br . Br) 57653)
+          ("\\end"                 32 (Br . Bl) 32 (Br . Br) 57677)
+          ("\\item"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57686)
+          ;; SPACING
+          ("\\,"                  8194 (Bc . Bc) 8231)
+          ("\\:"                  8194 (Bc . Bc) 8231)
+          ("\\;"                  8194 (Bc . Bc) 8231)
+          ("\\enspace"            8194 (Bc . Bc) 8231)
+          ("\\emspace"            8195 (Bc . Bc) 8231)
+          ("\\quad"               8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195)
+          ("\\qquad"              8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195 (Br . Bl) 8231 (Bc . Bc) 8195)
+          ;; SETS
+          ("\\mathbb{N}"           ?\u2115)
+          ("\\mathbb{R}"           ?\u211D)
+          ("\\mathbb{C}"           8450)
+          ("\\mathbb{P}"           8473)
+          ("\\mathcal{C}"          120018)
+          ("\\cat{C}"              120018)
+          ("\\mathcal{D}"          120019)
+          ("\\cat{D}"              120019)
+          ("\\cat{E}"              120020)
+          ("\\cat{M}"              120028)
+          ("\\cat{N}"              120029)
+          ("\\mathfrak{C}"         120174)
+          ("\\mathfrak{D}"         120175)
+          ("\\ZCat"                120041)
+          ;; OPERATORS
+          ("\\defeq"               32 (Br . Bl) 32 (Br . Br) 57612)
+          ("\\eq"                  ?=)
+          ("\\neq"                 32 (Br . Bl) 32 (Br . Br) 57614)
+          ("\\blank"               8212)
+          ("\\from"                32 (Br . Br) 57708)
+          ("\\colon"               32 (Br . Br) 57708)
+          ("\\lact"                9655)
+          ("\\blact"               9654)
+          ("\\ract"                9665)
+          ("\\bract"               9664)
+          ("\\unlhd"               ?⊴)
+          ("\\unrhd"               ?⊵)
+          ("\\cdot "               8226)
+          (" \\cdot "              8226)
+          ("\\times "              215)
+          (" \\times "             215)
+          ("\\parallel"            ?∥)
+          ("\\notni"               8260 (cc . cc) ?∋)
+          ("\\sqcup"               ?⊔)
+          ("\\bigsqcup"            ?⊔)
+          ("\\sqcap"               ?⊓)
+          ("\\bigsqcap"            ?⊓)
+          ("\\biguplus"            ?⨄)
+          ("\\land"                ?∧)
+          ("\\lor"                 ?∨)
+          ("\\odot"                ?⊙)
+          ("\\bigodot"             ?⊙)
+          ("\\otimes"              ?⊗)
+          ("\\bigotimes"           ?⊗)
+          ("\\oplus"               ?⊕)
+          ("\\bigoplus"            ?⊕)
+          ("\\sqrt"                ?√)
+          ("\\iint"                ?∬)
+          ("\\iiint"               ?∭)
+          ("\\iiiint"              ?⨌)
+          ("\\oiint"               ?∯)
+          ("\\oiiint"              ?∰)
+          ("\\ointclockwise"       ?∲)
+          ("\\ointctrclockwise"    ?∳)
+          ;; BETTER SUB AND SUPERSCRIPTS
+          ("^0"                    8304)
+          ("^1"                    185)
+          ("^2"                    178)
+          ("^3"                    179)
+          ("^4"                    8308)
+          ("^5"                    8309)
+          ("^6"                    8310)
+          ("^7"                    8311)
+          ("^8"                    8312)
+          ("^9"                    8313)
+          ("^l"                    ?\u02E1)
+          ("^r"                    ?\u02B3)
+          ("^T"                    ?\u1d40)
+          ("_0"                    8320)
+          ("_1"                    8321)
+          ("_2"                    8322)
+          ("_3"                    8323)
+          ("_4"                    8324)
+          ("_5"                    8325)
+          ("_6"                    8326)
+          ("_7"                    8327)
+          ("_8"                    8328)
+          ("_9"                    8329)
+          ;; GREEK UPPER CASES
+          ("\\Alpha"               ?Α)
+          ("\\Beta"                ?Β)
+          ("\\Gamma"               ?Γ)
+          ("\\Delta"               ?Δ)
+          ("\\Epsilon"             ?Ε)
+          ("\\Zeta"                ?Ζ)
+          ("\\Eta"                 ?Η)
+          ("\\Theta"               ?Θ)
+          ("\\Iota"                ?Ι)
+          ("\\Kappa"               ?Κ)
+          ("\\Lambda"              ?Λ)
+          ("\\Mu"                  ?Μ)
+          ("\\Nu"                  ?Ν)
+          ("\\Xi"                  ?Ξ)
+          ("\\Omicron"             ?Ο)
+          ("\\Pi"                  ?Π)
+          ("\\Rho"                 ?Ρ)
+          ("\\Sigma"               ?Σ)
+          ("\\Tau"                 ?Τ)
+          ("\\Upsilon"             ?Υ)
+          ("\\Phi"                 ?Φ)
+          ("\\Chi"                 ?Χ)
+          ("\\Psi"                 ?Ψ)
+          ("\\Omega"               ?Ω)
+          ;; SPECIAL SYMBOLS
+          ("\\ss"                  ?ß)
+          ("\\aa"                  ?å)
+          ("\\AA"                  ?Å)
+          ("\\ae"                  ?æ)
+          ("\\oe"                  ?œ)
+          ("\\AE"                  ?Æ)
+          ("\\OE"                  ?Œ)
+          ("\\o"                   ?ø)
+          ("\\O"                   ?Ø)
+          ("\\l"                   ?ł)
+          ("\\L"                   ?Ł)
+          ("\\S"                   ?§)
+          ;; ESCAPED SYMBOLS
+          ("\\$"                   ?＄)
+          ("\\%"                   ?％)
+          ("\\#"                   ?＃)
+          ("\\_"                   ?＿)
+          ("\\&"                   ?& (Bc . Bc) ?|)
+          ;;REFERECING
+          ("\\ref"                 ?☞)
+          ("\\cite"                ?†)
+          ("\\footnote"            ?‡)
+          ("\\label"               43 (cc . cc) ?‡)
+          ("\\TeX"                 ?T (cr cl -20 -45) ?E (cr cl -20 24) ?X)
+          ("\\LaTeX"               ?L (cr cl -60 35) ?A (cr cl -18 -20) ?T (cr cl -18 -60) ?E (cr cl -20 5) ?X)
+          ;; PARENTHESES
+          ("{"                     ?⎨)
+          ("}"                     ?⎬)
+          ("\\{"                   ?{)
+          ("\\}"                   ?})
+          ("\\lbrace"              ?{)
+          ("\\rbrace"              ?})
+          ("\\{"                   ?{)
+          ("\\}"                   ?})
+          ("\\|"                   ?║)
+          ;; Misc
+          ("\\dots"                ?…)
+          ("\\textbackslash"       ?＼)
+          ("\\backslash"           ?＼)
+          ("\\qed"                 ?□)
+          ("\\lightning"           ?Ϟ)
+          ("\\copyright"           ?©)
+          ("\\texistregistered"    ?®)
+          ("\\texttrademark"       ?™)
+          ("\\euro"                8364)
+          ("\\pounds"              ?£)
+          ("\\lvert"               ?|)
+          ("\\rvert"               ?|)
+          ("\\lVert"               ?ǁ)
+          ("\\rVert"               ?ǁ)
+          )))
 
 (use-package fira-code-mode
   :custom (fira-code-mode-disabled-ligatures '("[]" "#{" "#(" "#_" "#_(" "x" "{-" "-}" )) ;; List of ligatures to turn off
   :hook
-  (LaTeX-mode . my-LaTeX-variable-pitch)
+  (LaTeX-mode . my-LaTeX-fira-pitch)
   (LaTeX-mode . fira-code-mode)
   :config
-  (fira-code-mode-set-font)
-  (require 'latex-goodies-for-emacs)
-  (latex-symbols-prettify) ;; this should not be part of the package.
-  (latex-regexp-prettify) ;; as well as this function.
-  )
-
-;; (require 'tex-site)
-
+  (latex-symbols-prettify)
+   )
 #+end_src
 
 ** Benchmark
