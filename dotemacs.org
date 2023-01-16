@@ -2495,74 +2495,195 @@ For retina display (OSX)
 
 #+end_src
 
-** TODO Corfu :MODE:
+** Cape :MODE:
+
+A completion framework on steroids.
+It will need some tweaking in the future.
+Starting point is from [[https://kristofferbalintona.me/posts/202203130102/]]
+#+begin_src emacs-lisp
+(use-package cape
+  ;; Bind dedicated completion commands
+  ;; Alternative prefix keys: C-c p, M-p, M-+, ...
+  :bind (("C-c p p" . completion-at-point) ;; capf
+         ("C-c p t" . complete-tag)        ;; etags
+         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+         ("C-c p h" . cape-history)
+         ("C-c p f" . cape-file)
+         ("C-c p k" . cape-keyword)
+         ("C-c p s" . cape-symbol)
+         ("C-c p a" . cape-abbrev)
+         ("C-c p i" . cape-ispell)
+         ("C-c p l" . cape-line)
+         ("C-c p w" . cape-dict)
+         ("C-c p \\" . cape-tex)
+         ("C-c p _" . cape-tex)
+         ("C-c p ^" . cape-tex)
+         ("C-c p &" . cape-sgml)
+         ("C-c p r" . cape-rfc1345))
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-history)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  (add-to-list 'completion-at-point-functions #'cape-dict)
+  (add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  :hook (LaTeX-mode . my-cape-capf-setup-latex)
+  :custom
+  (cape-dabbrev-min-length 3)
+  ;; LaTeX
+  (defun my-cape-capf-setup-latex ()
+    (require 'company-auctex)
+    (require 'company-reftex)
+    (let ((result))
+      (dolist (element (list
+                        ;; First add `company-yasnippet'
+                        (cape-company-to-capf #'company-yasnippet)
+                        ;; Then add `cape-tex'
+                        #'cape-tex
+                        ;; Then add `company-auctex' in the order it adds its
+                        ;; backends.
+                        (cape-company-to-capf #'company-auctex-bibs)
+                        (cape-company-to-capf #'company-auctex-labels)
+                        (cape-company-to-capf #'company-reftex-citations)
+                        (cape-company-to-capf #'company-reftex-labels)
+                        (cape-company-to-capf
+                        (apply-partially #'company--multi-backend-adapter
+                                          '(company-auctex-macros
+                                            company-auctex-symbols
+                                            company-auctex-environments
+                                            company-reftex-citations
+                                            company-reftex-labels))))
+                       result)
+        (add-to-list 'completion-at-point-functions element))))
+  )
+
+
+#+end_src
+
+** Corfu :MODE:BINDING:
 
 [[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
+The following code is inspired by [[https://kristofferbalintona.me/posts/202202270056/]]
+
 
 #+begin_src emacs-lisp
+(use-package corfu
+  :straight (corfu :files (:defaults "extensions/*")
+                   :includes (corfu-info corfu-history corfu-popupinfo))
+  ;; :hook (lsp-completion-mode . my-corfu-setup-lsp) ; Use corfu for lsp completion
+  :bind (:map corfu-map
+              ("<escape>" . corfu-quit)
+              ("<return>" . corfu-insert)
+              ("M-d" . corfu-show-documentation)
+              ("M-l" . corfu-show-location))
+  :custom
+  ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
+  ;; want to perform completion
+  (tab-always-indent 'complete)       ; Allows for indetation AND completion on <tab>.
+  (completion-cycle-threshold nil)    ; Always show candidates in menu
+  (corfu-auto t)                      ; Enable autocompletion
+  (corfu-auto-prefix 2)               ; Minimum length of prefix before completion.
+  (corfu-auto-delay 20)               ; Delay before auto-completion shows up
+  (corfu-min-width 80)                ; Minimal width of corfu popup.
+  (corfu-max-width corfu-min-width)   ; Always have the same width
+  (corfu-count 10)                    ; Maximal number of candidates.
+  (corfu-scroll-margin 5)             ; Use scroll margins
+  (read-extended-command-predicate
+ #'command-completion-default-include-p) ; Hide corfu commands from  being used via M-x
 
-(require 'corfu)
-
-(setq corfu-cycle t                ; Enable cycling for `corfu-next/previous'
-      corfu-auto t                 ; Enable auto completion
-      corfu-auto-delay 20.0        ; Delay before auto-completion shows up
-      corfu-separator ?\s          ; Orderless field separator
-      corfu-quit-at-boundary nil   ; Never quit at completion boundary
-      corfu-quit-no-match t        ; Quit when no match
-      corfu-preview-current nil    ; Disable current candidate preview
-      corfu-preselect-first nil    ; Disable candidate preselection
-      corfu-on-exact-match nil     ; Configure handling of exact matches
-      corfu-echo-documentation nil ; Disable documentation in the echo area
-      corfu-scroll-margin 5)       ; Use scroll margin
-
-(global-corfu-mode)
-
+  (corfu-cycle t)
+  (completion-cycle-threshold 3)      ; If there are only 3 candidates, no poup is shown.
+  (corfu-quit-at-boundary 'seperator) ; Quits at boundary unless a seperator is used.
+  (corfu-separator ?\s)               ; Use space
+  (corfu-quit-no-match 'separator)    ; Don't quit if there is `corfu-separator' inserted
+  (corfu-preview-current 'insert)     ; Preview first candidate. Insert on input if only one
+  (corfu-preselect-first t)           ; Preselect first candidate
+  (corfu-popupinfo-delay 0.1)           ; Show some documentation about the candidates.
+  (add-to-list 'savehist-additional-variables 'corfu-history)
+  ;; Other
+  (corfu-echo-documentation nil)      ; Already use corfu-doc
+  (lsp-completion-provider :none)     ; Use corfu instead for lsp completions
+  :init
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  (corfu-history-mode)
+  :hook (lsp-completion-mode . my-corfu-setup-lsp)
+  :config
+  ;; Setup lsp to use corfu for lsp completion
+  (defun my-corfu-setup-lsp ()
+    "Use orderless completion style with lsp-capf instead of the
+default lsp-passthrough."
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless)))
+  )
 #+end_src
 
-A few more useful configurations...
-
-#+begin_src emacs-lisp
-
-;; TAB cycle if there are only few candidates
-(setq completion-cycle-threshold 3)
-
-;; Emacs 28: Hide commands in M-x which do not apply to the current mode.
-;; Corfu commands are hidden, since they are not supposed to be used via M-x.
-(setq read-extended-command-predicate
-      #'command-completion-default-include-p)
-
-;; Enable indentation+completion using the TAB key.
-;; completion-at-point is often bound to M-TAB.
-(setq tab-always-indent 'complete)
-
-;; Completion in source blocks
-(require 'cape)
-
-(add-to-list 'completion-at-point-functions 'cape-symbol)
-
-#+end_src
-
-** TODO Orderless
+** Orderless :MODE:
 
 Allow completion based on space-separated tokens, out of order.
+Config inspired by [[https://kristofferbalintona.me/posts/202202211546/][https://kristofferbalintona.me/posts/202202211546/]]
 
 #+begin_src emacs-lisp
-
-(require 'orderless)
-
-(setq completion-styles '(substring orderless basic)
-      orderless-component-separator 'orderless-escapable-split-on-space
-      read-file-name-completion-ignore-case t
-      read-buffer-completion-ignore-case t
-      completion-ignore-case t)
-
 (use-package orderless
-  :ensure t
+  :custom
+  (completion-styles '(orderless))
+  (completion-category-defaults nil) ; I want to be in control!
+  (orderless-component-separator 'orderless-escapable-split-on-space)
+  (orderless-matching-styles
+   '(orderless-prefixes
+     orderless-literal
+     orderless-regexp
+     orderless-initialism
+     ;; orderless-flex
+     ;; orderless-strict-leading-initialism
+     ;; orderless-strict-initialism
+     ;; orderless-strict-full-initialism
+     ;; orderless-without-literal          ; Recommended for dispatches instead
+     ))
+  (orderless-style-dispatchers
+   '(initialism-if-hash
+     ;;first-prefixes
+     flex-if-twiddle
+     without-if-bang))
+  (read-file-name-completion-ignore-case t)
+  (read-buffer-completion-ignore-case t)
+  (completion-ignore-case t)
+  (completion-category-overrides '((file (styles . (partial-completion)))))
   :init
-  (setq completion-styles '(orderless)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles . (partial-completion))))))
+  (defun first-prefixes (pattern index _total)
+    "The first input is treated as a prefix"
+    (if (= index 0) 'orderless-prefixes))
 
+  (defun initialism-if-hash (pattern _index _total)
+    "Strings starting in # are matched wrt the initialism style"
+    (cond
+     ((equal "#" pattern)
+      '(orderless-literal . ""))
+     ((string-prefix-p "#" pattern)
+      `(orderless-initialism . ,(substring pattern 1)))))
+
+  (defun flex-if-twiddle (pattern _index _total)
+    "Strings starting in ~ are matched wrt the flex style"
+    (cond
+     ((equal "~" pattern)
+      '(orderless-literal . ""))
+     ((string-prefix-p "~" pattern)
+      `(orderless-flex . ,(substring pattern 1)))))
+
+  (defun without-if-bang (pattern _index _total)
+    "Matches  of strings starting with ! are excluded from the results"
+    (cond
+     ((equal "!" pattern)
+      '(orderless-literal . ""))
+     ((string-prefix-p "!" pattern)
+      `(orderless-without-literal . ,(substring pattern 1))))))
 #+end_src
 
 ** LSP-Mode
@@ -2696,88 +2817,103 @@ For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ command
 (bind-key "M-g M-g" #'my-consult-goto-line)
 
 #+end_src
-
-** Vertico :ADVICE:HOOK:BINDING:MODE:FACE:
+** TODO Vertico :ADVICE:HOOK:BINDING:MODE:FACE:
 
 [[https://github.com/minad/vertico][Vertico]] provides a performant and minimalistic vertical completion UI based on the default completion system but aims to be highly flexible, extensible and modular.
 
-#+begin_src emacs-lisp
+For informations on completion-at-point and completion-in-region see:
+https://github.com/minad/vertico#completion-at-point-and-completion-in-region
+The pointer for the currrent line is derived from: [[
+https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
 
-(require 'vertico)
-
-;; (setq completion-styles '(basic substring partial-completion flex))
-
-(setq vertico-resize nil        ; How to resize the Vertico minibuffer window.
-      vertico-count 8           ; Maximal number of candidates to show.
-      vertico-count-format nil) ; No prefix with number of entries
-
-(vertico-mode)
-
-#+end_src
-
-Tweaking settings
+There is a hacky code which replaces the numbers in front of the matches with white spaces.
+However this assumes as of now that these are one-digit numbers.
 
 #+begin_src emacs-lisp
-
-(setq vertico-grid-separator
-      #("  |  " 2 3 (display (space :width (1))
-                             face (:background "#ECEFF1")))
-
-      vertico-group-format
-      (concat #(" " 0 1 (face vertico-group-title))
-              #(" " 0 1 (face vertico-group-separator))
-              #(" %s " 0 4 (face vertico-group-title))
-              #(" " 0 1 (face vertico-group-separator
-                              display (space :align-to (- right (-1 . right-margin) (- +1)))))))
-
-(set-face-attribute 'vertico-group-separator nil
-                    :strike-through t)
-(set-face-attribute 'vertico-current nil
-                    :inherit '(nano-strong nano-subtle))
-(set-face-attribute 'completions-first-difference nil
-                    :inherit '(nano-default))
-
+(use-package vertico
+  :demand t                             ; Otherwise won't get loaded immediately
+  :straight (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
+                     :includes (vertico-indexed
+                                vertico-flat
+                                vertico-grid
+                                vertico-mouse
+                                vertico-quick
+                                vertico-buffer
+                                vertico-repeat
+                                vertico-reverse
+                                vertico-directory
+                                vertico-multiform
+                                vertico-unobtrusive
+                                ))
+  :bind (("C-c t" . term)
+         ("M-." . vertico-repeat)
+         :map vertico-map
+         ("<tab>" . vertico-insert)
+         ("<escape>" . minibuffer-keyboard-quit)
+         ("?" . minibuffer-completion-help)
+         ( "<backtab>" . minibuffer-complete)
+         )
+  :hook ((rfn-eshadow-update-overlay . vertico-directory-tidy) ; Clean up file path when typing
+         (minibuffer-setup . vertico-repeat-save) ; Make sure vertico state is saved
+         )
+  :custom
+  (vertico-count 10)             ; At most 10 entries are shown
+  (vertico-count-format nil)     ; But we do not count them
+  (vertico-resize nil)           ; The size of the minbuffer is fixed
+  (vertico-cycle t)
+  (vertico-count-format nil)
+  ;; Extensions
+  (vertico-grid-separator "       ")
+  (vertico-grid-lookahead 50)
+  (vertico-buffer-display-action '(display-buffer-reuse-window))
+  (vertico-multiform-categories
+   '((file indexed)
+     (consult-grep buffer)
+     (consult-location)
+     (imenu buffer)
+     (library indexed)
+     (org-roam-node indexed)
+     (t indexed)
+     )
+   )
+  (completion-in-region-function
+   (lambda (&rest args)
+     (apply (if vertico-mode
+                #'consult-completion-in-region
+              #'completion--in-region)
+            args)))
+  :init
+  :config
+  (vertico-mode)
+  ;; Extensions
+  (vertico-multiform-mode)
+  ;; Prefix the current candidate with “ ”. From
+  ;; https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow
+  (advice-add #'vertico--format-candidate :around
+              (lambda (orig cand prefix suffix index _start)
+                (setq cand (funcall orig cand prefix suffix index _start))
+                (string-match "[[:digit:]]+" cand)
+                ;; We replace (for now) one digit with a properly styled white space.
+                (setq cand (replace-match (if (= vertico--index index)
+                     (propertize " " 'face 'vertico-current)
+                   t" ") nil t cand)) ; Change to multi-digit numbers
+                (concat
+                 (if (= vertico--index index)
+                     (propertize " " 'face 'vertico-current)
+                   t"  ")
+                 cand)))
+  :custom-face
+  (vertico-group-separator ((t (:strike-through t))))
+  (vertico-current ((t (:inherit 'nano-strong 'nano-subtle))))
+  (completions-first-difference ((t (:inherit 'nano-default))))
+  )
 #+end_src
 
-Bind =shift-tab= for completion
 
-#+begin_src emacs-lisp
-
-(bind-key "<backtab>" #'minibuffer-complete vertico-map)
-
-#+end_src
-
-Completion-at-point and completion-in-region (see
-https://github.com/minad/vertico#completion-at-point-and-completion-in-region)
-
-#+begin_src emacs-lisp
-
-(setq completion-in-region-function
-      (lambda (&rest args)
-        (apply (if vertico-mode
-                   #'consult-completion-in-region
-                 #'completion--in-region)
-               args)))
-
-#+end_src
-
-Prefix the current candidate
-(See https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow)
-
-#+begin_src emacs-lisp
-
-(defun minibuffer-format-candidate (orig cand prefix suffix index _start)
-  (let ((prefix (if (= vertico--index index)
-                    "  "
-                  "   ")))
-    (funcall orig cand prefix suffix index _start)))
-
-(advice-add #'vertico--format-candidate
-            :around #'minibuffer-format-candidate)
-
-#+end_src
+** Marginalia :MODE:
 
 See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-completion-and-orderless/#vertico
+We do not configure marginalia to much. Text on the right. Trying to not show file ages. That's it.
 
 #+begin_src emacs-lisp
 
@@ -2788,9 +2924,20 @@ See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-comple
     (set-text-properties (minibuffer-prompt-end) (point-max)
                          '(face (nano-strong nano-salient)))))
 
+(use-package marginalia
+  :init (marginalia-mode)
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle))
+  :custom
+  (marginalia--ellipsis "…")      ; Nicer ellipsis
+  (marginalia-align 'right)       ; right alignment
+  (marginalia-align-offset -1)    ; one space on the right
+  (marginalia-max-relative-age 0) ; Supresses showing the file age
+  )
 #+end_src
 
 See https://github.com/minad/vertico/issues/145
+To enhance the visuals, we integrate all the icons into marginalia
 
 #+begin_src emacs-lisp
 
@@ -2805,22 +2952,13 @@ See https://github.com/minad/vertico/issues/145
 (add-hook 'vertico-mode-hook #'minibuffer-vertico-setup)
 (add-hook 'minibuffer-setup-hook #'minibuffer-vertico-setup)
 
+(use-package all-the-icons-completion
+  :after (marginalia all-the-icons)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+  :init
+  (all-the-icons-completion-mode))
 #+end_src
-** Marginalia :MODE:
 
-Pretty straightforward.
-
-#+begin_src emacs-lisp
-
-(require 'marginalia)
-
-(setq-default marginalia--ellipsis "…"    ; Nicer ellipsis
-              marginalia-align 'right     ; right alignment
-              marginalia-align-offset -1) ; one space on the right
-
-(marginalia-mode)
-
-#+end_src
 ** Modeline :HOOK:MODE:FACE:
 
 We're using [[https://github.com/rougier/nano-modeline][nano-modeline]] and modify some settings here.
