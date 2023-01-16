@@ -161,6 +161,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
 (setq package-list
       '(all-the-icons       ; ICONS
         projectile          ; TODO
+        dash                ; Better list handling
         adaptive-wrap       ; A version of adaptive-line-wrap that does not alter the text.
         visual-fill-column  ; Visual line wrapping according to fill-column.
         dirvish             ; A modern file manager
@@ -180,7 +181,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         fira-code-mode      ; Fira code ligatures
         oauth               ; Oauth library
         offlineimap         ; OfflineIMAP from Emacs
-        no-littering
+        no-littering        ;
         org-msg             ; Write mails with org mode.
         org-modern          ; Nicer org mode
         org-super-agenda    ; TODO ???
@@ -191,14 +192,22 @@ Packages used in this specific configuration. You may want to adapt this list. T
         undo-tree           ; Undo history presented in a tree
         cape                ; Completion At Point Extensions
         orderless           ; Completion style for matching regexps in any order
-        vertico             ; VERTical Interactive COmpletion
+        ;; vertico          ; VERTical Interactive COmpletion
+                            ; We use a customised version. Thus it is commented out here.
         marginalia          ; Enrich existing commands with completion annotations
+        embark
         consult             ; Consulting completing-read
-        corfu               ; Completion Overlay Region FUnction
+        ;; corfu            ; Completion Overlay Region FUnction.
+                            ; We use a special build. Thus its commented out.
+          company           ; We can integrate company backends into corfu...
+          company-auctex
+          company-reftex
+        all-the-icons-completion  ; All the icons for marginalia
         ;;deft                ; Quickly browse, filter, and edit plain text notes
         ;;elpher              ; A friendly gopher and gemini client
         elfeed              ; Emacs Atom/RSS feed reader
         elfeed-org          ; Configure elfeed with one or more org-mode files
+        elfeed-dashboard    ; Elfeed with a mu4e feeling
         ;;f                   ; Modern API for working with files and directories
         citar               ; Citation-related commands for org, latex, markdown
         ;;citeproc            ; A CSL 1.0.2 Citation Processor
@@ -241,6 +250,10 @@ Packages used in this specific configuration. You may want to adapt this list. T
 ;; Denote not yet on ELPA (2022-06-19)
 (straight-use-package
  '(denote :type git :host github :repo "protesilaos/denote"))
+
+;; The newes compat version is not on ELPA
+(straight-use-package
+ '(compat :type git :host github :repo "emacs-straight/compat"))
 
 #+end_src
 
@@ -313,7 +326,7 @@ My latex-specific auto-expanding-snippets and the <tab> and <return> functionali
 #+begin_src emacs-lisp
 
 (straight-use-package
-  '(latex-goodies-for-emacs :type git :host github :repo "SebastianHalbig/latex-goodies-for-emacs"))
+  '(smart-keys-for-latex :type git :host github :repo "SebastianHalbig/smart-keys-for-latex"))
 
 #+end_src
 
