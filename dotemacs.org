@@ -5961,15 +5961,27 @@ Hook on elfeed post screen (visual mode).
 
 ** Bookmarks
 
-Setup bookmarlks ([[file:elfeed.org][elfeed.org]]) using [[https://github.com/remyhonig/elfeed-org][elfeed-org]]. It is important to load it after elfeed such as to not load org immediately.
+Setup bookmarks ([[file:elfeed.org][elfeed.org]]) using [[https://github.com/remyhonig/elfeed-org][elfeed-org]]. It is important to load it after elfeed such as to not load org immediately.
 
 #+begin_src emacs-lisp
 
 (with-eval-after-load 'elfeed
   (require 'elfeed-org)
-  (setq rmh-elfeed-org-files (list (expand-file-name "elfeed.org" user-emacs-directory)))
+  (setq rmh-elfeed-org-files (list "~/.emacs.org/elfeed.org"))
   (elfeed-org))
 
+#+end_src
+** Elfeed-Dashboard
+
+We give elfeed the mu4e looks and feel.
+
+#+begin_src emacs-lisp
+(use-package elfeed-dashboard
+  :load-path "~/.emacs.d/lisp/elfeed-dashboard/"
+  :config
+  (setq elfeed-dashboard-file "~/.emacs.org/elfeed-dashboard.org")
+  ;; update feed counts on elfeed-quit
+  (advice-add 'elfeed-search-quit-window :after #'elfeed-dashboard-update-links))
 #+end_src
 
 ** Benchmark
