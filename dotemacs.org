@@ -2017,7 +2017,7 @@ A consistent theme for GNU Emacs. The light theme is based on Material colors an
 
 (require 'nano-theme)
 (setq nano-fonts-use t) ; Use theme font stack
-(nano-mode)             ; Recommended settings
+;;(nano-mode)             ; Recommended settings
 
 
 (defun my-set-face (face style)
@@ -2114,6 +2114,7 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
 
 (defun my-nano-light-muted ()
   (nano-light)
+  (my-thin-modeline)
   (set-face-attribute 'nano-critical   nil :foreground muted-rose)
   (set-face-attribute 'nano-critical-i nil :background muted-rose)
   (set-face-attribute 'nano-popout     nil :foreground vibrant-red)
@@ -2132,6 +2133,7 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
 
 (defun my-nano-dark-muted ()
   (nano-dark)
+  (my-thin-modeline)
   (set-face-attribute 'nano-critical   nil :foreground muted-rose)
   (set-face-attribute 'nano-critical-i nil :background muted-rose)
   (set-face-attribute 'nano-popout     nil :foreground vibrant-red)
@@ -2149,8 +2151,6 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
   )
 
 (setq my-current-theme-light t)
-
-(my-nano-light-muted)
 
 (defun my-toggle-theme ()
   (interactive)
@@ -2833,27 +2833,35 @@ We're using [[https://github.com/rougier/nano-modeline][nano-modeline]] and modi
 (setq nano-modeline-prefix 'icon)
 (setq nano-modeline-prefix-padding 2)
 
+(defun my-face-foreground (face &optional frame inherit)
+  (or (face-foreground face frame inherit) 'unspecified))
+
+(defun my-face-background (face &optional frame inherit)
+  (or (face-background face frame inherit) 'unspecified))
+
 (set-face-attribute 'header-line nil)
 (set-face-attribute 'mode-line nil
-                    :foreground (face-foreground 'nano-subtle-i)
-                    :background (face-foreground 'nano-subtle-i)
+                    :foreground (my-face-foreground 'nano-subtle-i)
+                    :background (my-face-foreground 'nano-subtle-i)
                     :inherit nil
                     :box nil)
+
 (set-face-attribute 'mode-line-inactive nil
-                    :foreground (face-foreground 'nano-subtle-i)
-                    :background (face-foreground 'nano-subtle-i)
+                    :foreground (my-face-foreground 'nano-subtle-i)
+                    :background (my-face-foreground 'nano-subtle-i)
                     :inherit nil
                     :box nil)
 
 (set-face-attribute 'nano-modeline-active nil
-                    :underline (face-foreground 'nano-default-i)
-                    :background (face-background 'nano-subtle)
-                    :inherit '(nano-default-)
+                    :underline (my-face-foreground 'nano-default-i)
+                    :background (my-face-background 'nano-subtle)
+                    :inherit '(nano-default-i)
                     :box nil)
+
 (set-face-attribute 'nano-modeline-inactive nil
                     :foreground 'unspecified
-                    :underline (face-foreground 'nano-default-i)
-                    :background (face-background 'nano-subtle)
+                    :underline (my-face-foreground 'nano-default-i)
+                    :background (my-face-background 'nano-subtle)
                     :box nil)
 
 (set-face-attribute 'nano-modeline-active-name nil
@@ -2902,14 +2910,14 @@ We set a thin modeline
   (set-face-attribute 'mode-line nil
                       :box nil
                       :inherit nil
-                      :foreground (face-background 'nano-subtle)
-                      :background (face-background 'nano-subtle)
+                      :foreground (my-face-background 'nano-subtle)
+                      :background (my-face-background 'nano-subtle)
                       :height 0.1)
   (set-face-attribute 'mode-line-inactive nil
                       :box nil
                       :inherit nil
-                      :foreground (face-background 'nano-subtle)
-                      :background (face-background 'nano-subtle)
+                      :foreground (my-face-background 'nano-subtle)
+                      :background (my-face-background 'nano-subtle)
                       :height 0.1))
 
 (add-hook 'nano-modeline-mode-hook #'my-thin-modeline)
@@ -6323,8 +6331,13 @@ Open an iterm (OSX) and go to the curent directory
 #+end_src
 
 
-* Profiling
-
+* Finishing up
+** Some cosmetics
+We use our customisation of the nano theme.
+#+begin_src emacs-lisp
+(nano-mode)
+(my-nano-light-muted)
+#+end_src
 ** Final report
 
 #+begin_src emacs-lisp
