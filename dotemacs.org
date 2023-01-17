@@ -2909,7 +2909,6 @@ However this assumes as of now that these are one-digit numbers.
   )
 #+end_src
 
-
 ** Marginalia :MODE:
 
 See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-completion-and-orderless/#vertico
@@ -4623,6 +4622,7 @@ We activate the dashboard in the headers view.
 #+begin_src emacs-lisp
 
 (add-hook 'mu4e-headers-mode-hook #'(lambda()(unless mu4e-dashboard-buffer-name (mu4e-dashboard))))
+(advice-add 'mu4e~headers-quit-buffer :after #'(lambda()(when mu4e-dashboard-buffer-name (mu4e-dashboard-quit))))
 #+end_src
 
 #+begin_src emacs-lisp
