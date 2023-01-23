@@ -2559,7 +2559,9 @@ Starting point is from [[https://kristofferbalintona.me/posts/202203130102/]]
                                             company-reftex-labels))))
                        result)
         (add-to-list 'completion-at-point-functions element))))
-  )
+  :hook (LaTeX-mode . my-cape-capf-setup-latex)
+  :custom
+  (cape-dabbrev-min-length 3))
 
 
 #+end_src
@@ -2842,8 +2844,7 @@ However this assumes as of now that these are one-digit numbers.
                                 vertico-multiform
                                 vertico-unobtrusive
                                 ))
-  :bind (("C-c t" . term)
-         ("M-." . vertico-repeat)
+  :bind (("M-." . vertico-repeat)
          :map vertico-map
          ("<tab>" . vertico-insert)
          ("<escape>" . minibuffer-keyboard-quit)
@@ -2858,19 +2859,13 @@ However this assumes as of now that these are one-digit numbers.
   (vertico-count-format nil)     ; But we do not count them
   (vertico-resize nil)           ; The size of the minbuffer is fixed
   (vertico-cycle t)
-  (vertico-count-format nil)
   ;; Extensions
   (vertico-grid-separator "       ")
   (vertico-grid-lookahead 50)
   (vertico-buffer-display-action '(display-buffer-reuse-window))
   (vertico-multiform-categories
-   '((file indexed)
+   '((file grid)
      (consult-grep buffer)
-     (consult-location)
-     (imenu buffer)
-     (library indexed)
-     (org-roam-node indexed)
-     (t indexed)
      )
    )
   (completion-in-region-function
@@ -2889,11 +2884,11 @@ However this assumes as of now that these are one-digit numbers.
   (advice-add #'vertico--format-candidate :around
               (lambda (orig cand prefix suffix index _start)
                 (setq cand (funcall orig cand prefix suffix index _start))
-                (string-match "[[:digit:]]+" cand)
-                ;; We replace (for now) one digit with a properly styled white space.
-                (setq cand (replace-match (if (= vertico--index index)
-                     (propertize " " 'face 'vertico-current)
-                   t" ") nil t cand)) ; Change to multi-digit numbers
+                ;; (string-match "[[:digit:]]+" cand)
+                ;; ;; We replace (for now) one digit with a properly styled white space.
+                ;; (setq cand (replace-match (if (= vertico--index index)
+                ;;      (propertize " " 'face 'vertico-current)
+                ;;    t" ") nil t cand)) ; Change to multi-digit numbers
                 (concat
                  (if (= vertico--index index)
                      (propertize " " 'face 'vertico-current)
