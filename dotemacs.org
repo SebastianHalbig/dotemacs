@@ -2413,7 +2413,9 @@ Now we can set up flyspell and guess-language.
   :hook (text-mode org-mode latex-mode mu4e-compose-mode)
   :config
   (setq ispell-program-name "aspell")
-  (setq ispell-list-command "--list"))
+  (setq ispell-list-command "--list")
+  (setq ispell-alternate-dictionary "/usr/share/dict/en_GB.txt")
+)
 
 ;; (use-package flyspell-lazy
 ;;   :after flyspell
@@ -2423,8 +2425,8 @@ Now we can set up flyspell and guess-language.
   :after flyspell
   :bind (:map ergoemacs-override-keymap ("M-t" . flyspell-correct-wrapper)))
 
-(use-package flyspell-correct-popup
-  :after flyspell-correct)
+;; (use-package flyspell-correct-popup
+;;   :after flyspell-correct)
 
 (use-package guess-language
   :hook (mu4e-compose-mode)
@@ -2437,7 +2439,6 @@ Now we can set up flyspell and guess-language.
 (use-package mu4e
   :after flyspell
   :init (setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify))
-
 #+end_src
 
 ** Imenu list
@@ -2528,16 +2529,12 @@ Starting point is from [[https://kristofferbalintona.me/posts/202203130102/]]
   (add-to-list 'completion-at-point-functions #'cape-keyword)
   (add-to-list 'completion-at-point-functions #'cape-tex)
   (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  (add-to-list 'completion-at-point-functions #'cape-dict)
+  ;; (add-to-list 'completion-at-point-functions #'cape-dict)
   (add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  (add-to-list 'completion-at-point-functions #'cape-ispell)
   ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
   ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
-  :hook (LaTeX-mode . my-cape-capf-setup-latex)
-  :custom
-  (cape-dabbrev-min-length 3)
-  ;; LaTeX
   (defun my-cape-capf-setup-latex ()
     (require 'company-auctex)
     (require 'company-reftex)
