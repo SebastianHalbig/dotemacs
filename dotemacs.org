@@ -3797,7 +3797,7 @@ Setting up mail composition with org mode.
       '((:name "Unread"
                :key ?u
                :show-unread t
-               :query "flag:unread AND NOT flag:trashed")
+               :query "flag:unread AND m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox AND NOT flag:trashed")
 
         (:name "Inbox"
                :key ?i
@@ -3809,11 +3809,6 @@ Setting up mail composition with org mode.
                :show-unread t
                :query "date:today..now")
 
-        (:name "Yesterday"
-               :key ?y
-               :show-unread t
-               :query "date:2d..today and not date:today..now")
-
         (:name "Last week"
                :key ?w
                :hide-unread t
@@ -3821,7 +3816,7 @@ Setting up mail composition with org mode.
 
         (:name "Sent"
                :key ?s
-               :hide-unread t
+               :show-unread nil
                :query "from:Sebastian.Halbig or from:halbigs or from: SebastianHalbig")
 
         (:name "Drafts"
@@ -3829,25 +3824,20 @@ Setting up mail composition with org mode.
                :hide-unread t
                :query "flag:draft")
 
-        (:name "Immediate"
-               :key ?I
-               :hide-unread t
-               :query "prio:high")
+        (:name "Next"
+               :key ?N
+               :show-unread t
+               :query "tags:NEXT")
 
-        (:name "Important"
-               :key ?I
-               :hide-unread t
-               :query "flag:flagged")
+        (:name "Todo"
+               :key ?T
+               :show-unread t
+               :query "tags:TODO")
 
-        (:name "Secondary"
-               :key ?e
-               :hide-unread t
-               :query "tags:secondary")
-
-        (:name "Action"
-               :key ?a
-               :hide-unread t
-               :query "tags:untreated")
+        (:name "Done"
+               :key ?D
+               :show-unread t
+               :query "tags:DONE")
         ))
 #+end_src
 
