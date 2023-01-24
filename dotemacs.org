@@ -3217,7 +3217,7 @@ No prompt editing and recursive minibuffer
 
 (require 'mini-frame)
 
-(defcustom my-minibuffer-position 'bottom
+(defcustom my-minibuffer-position 'top
   "Minibuffer position, one of 'top or 'bottom"
   :type '(choice (const :tag "Top"    top)
                  (const :tag "Bottom" bottom))
@@ -3294,7 +3294,7 @@ Mini-frame mode OFF
 
 #+begin_src emacs-lisp
 
-;; (mini-frame-mode 1)
+(mini-frame-mode 1)
 
 #+end_src
 
