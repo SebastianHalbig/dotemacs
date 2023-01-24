@@ -205,6 +205,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         all-the-icons-completion  ; All the icons for marginalia
         ;;deft                ; Quickly browse, filter, and edit plain text notes
         ;;elpher              ; A friendly gopher and gemini client
+        smudge              ; Spotify for emacs
         elfeed              ; Emacs Atom/RSS feed reader
         elfeed-org          ; Configure elfeed with one or more org-mode files
         elfeed-dashboard    ; Elfeed with a mu4e feeling
@@ -6838,6 +6839,25 @@ Open an iterm (OSX) and go to the curent directory
 
 #+end_src
 
+
+* TODO Miscellaneous
+For all the small additional goodies that make life a bit easier.
+** Spotify
+We use smudge to control spotify from within emacs.
+
+#+begin_src emacs-lisp
+(use-package smudge
+  :custom
+  (setq smudge-oauth2-client-secret "307ee557e2724f4c966b76cb343403a5"
+        smudge-oauth2-client-id "8af15fa300304341a0e1bcbe09165e27")
+  :bind
+  (("<f7>" . smudge-controller-toggle-play)
+   ("<f8>" . smudge-controller-next-track)
+   ;; :map smudge-command-map
+   ;; ("RET" . smudge-track-select)
+   )
+  )
+#+end_src
 
 * Finishing up
 ** Some cosmetics
