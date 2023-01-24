@@ -3797,7 +3797,7 @@ Setting up mail composition with org mode.
       '((:name "Unread"
                :key ?u
                :show-unread t
-               :query "flag:unread AND m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox AND NOT flag:trashed")
+               :query "flag:unread AND (m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox) AND NOT flag:trashed")
 
         (:name "Inbox"
                :key ?i
