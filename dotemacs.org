@@ -6901,37 +6901,46 @@ For all the small additional goodies that make life a bit easier.
 We use smudge to control spotify from within emacs.
 
 #+begin_src emacs-lisp
-(use-package smudge
-  :custom
-  (setq smudge-oauth2-client-secret "307ee557e2724f4c966b76cb343403a5"
-        smudge-oauth2-client-id "8af15fa300304341a0e1bcbe09165e27")
-  :bind
-  (("<f7>" . smudge-controller-toggle-play)
-   ("<f8>" . smudge-controller-next-track)
-   ;; :map smudge-command-map
-   ;; ("RET" . smudge-track-select)
-   )
-  )
+  (use-package smudge
+    :custom
+    (setq smudge-oauth2-client-secret "307ee557e2724f4c966b76cb343403a5"
+          smudge-oauth2-client-id "8af15fa300304341a0e1bcbe09165e27")
+    :bind
+    (("<f7>" . smudge-controller-toggle-play)
+     ("<f8>" . smudge-controller-next-track)
+     ;; :map smudge-command-map
+     ;; ("RET" . smudge-track-select)
+     )
+    )
 #+end_src
 
 * Finishing up
-** Some cosmetics
+** TODO Some cosmetics
 We use our customisation of the nano theme.
 #+begin_src emacs-lisp
-(nano-mode)
+(use-package lambda-themes
+  :straight (:type git :host github :repo "lambda-emacs/lambda-themes")
+  :custom
+  (lambda-themes-set-italic-comments t)
+  (lambda-themes-set-italic-keywords t)
+  (lambda-themes-set-variable-pitch t)
+  :config
+  ;; load preferred theme
+  (load-theme 'lambda-light))
+
 (my-nano-light-muted)
 #+end_src
 ** Final report
 
 #+begin_src emacs-lisp
 
-(let ((init-time (float-time (time-subtract (current-time) my-init-start-time)))
-      (total-time (string-to-number (emacs-init-time "%f"))))
+  (let ((init-time (float-time (time-subtract (current-time) my-init-start-time)))
+        (total-time (string-to-number (emacs-init-time "%f"))))
 
+    (message "---------------------------------------------------------------")
+    (message "Initialisation time:                 %.2fs (+ %.2f system time)"
+             init-time (- total-time init-time)))
   (message "---------------------------------------------------------------")
-  (message "Initialisation time:                 %.2fs (+ %.2f system time)"
-           init-time (- total-time init-time)))
-(message "---------------------------------------------------------------")
 
 #+end_src
 
