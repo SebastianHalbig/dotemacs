@@ -2215,11 +2215,9 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 ;;                              :size 16) nil)
 
 
-(set-fontset-font t '(#xe000 . #xffdd)
-                  (font-spec :name "RobotoMono Nerd Font"
-                             :size (if(>=(window-pixel-height) 1700)
-                                      28
-                                      14)) nil)
+(set-fontset-font t '(#xe000 . #xffdd) "RobotoMono Nerd Font")
+
+(set-fontset-font t 'emoji "Symbola")
 
 #+end_src
 
@@ -3264,11 +3262,16 @@ No prompt editing and recursive minibuffer
 
 (require 'mini-frame)
 
-(defcustom my-minibuffer-position 'top
-  "Minibuffer position, one of 'top or 'bottom"
-  :type '(choice (const :tag "Top"    top)
-                 (const :tag "Bottom" bottom))
-  :group 'nano-minibuffer)
+(defun auto-toggle-top-bottom ()
+  (if (> (count-screen-lines (window-start) (point)) (/ (count-screen-lines (window-start) (window-end)) 2))
+      'bottom
+    'top))
+
+;; (defcustom my-minibuffer-position 'top
+;;   "Minibuffer position, one of 'top or 'bottom"
+;;   :type '(choice (const :tag "Top"    top)
+;;                  (const :tag "Bottom" bottom))
+;;   :group 'nano-minibuffer)
 
 
 (defun my-minibuffer--frame-parameters ()
@@ -3306,7 +3309,7 @@ No prompt editing and recursive minibuffer
               (user-position . t)
               (foreground-color . ,(face-foreground 'highlight nil 'default))
               (background-color . ,(face-background 'highlight nil 'default)))
-            (cond ((and (eq my-minibuffer-position 'bottom))
+            (cond ((and (eq (auto-toggle-top-bottom) 'bottom))
                    `((top . -1)
                      (left . 0)
                      (width . 1.0)
@@ -3337,7 +3340,7 @@ No prompt editing and recursive minibuffer
 
 #+end_src
 
-Mini-frame mode OFF
+Mini-frame mode ON
 
 #+begin_src emacs-lisp
 
@@ -3368,7 +3371,7 @@ This function used as value for `resize-mini-frames' variable."
            nil
            'vertically)
 
-  (if (eq my-minibuffer-position 'top)
+  (if (eq auto-toggle-top-bottom 'top)
       (modify-frame-parameters  mini-frame-completions-frame `((top . 0)))
     (modify-frame-parameters  mini-frame-completions-frame `((top . (- 1))))))
 
@@ -6876,10 +6879,10 @@ Open an iterm (OSX) and go to the curent directory
 
 #+begin_src emacs-lisp
 
-(defun my-iterm-here ()
-  (interactive)
+  (defun my-iterm-here ()
+    (interactive)
 
-  (shell-command "open -a iTerm $PWD" nil nil))
+    (shell-command "open -a iTerm $PWD" nil nil))
 
 #+end_src
 
@@ -6887,7 +6890,7 @@ Open an iterm (OSX) and go to the curent directory
 
 #+begin_src emacs-lisp  :prologue "" :epilogue ""
 
-(my-report-time "System")
+  (my-report-time "System")
 
 #+end_src
 
