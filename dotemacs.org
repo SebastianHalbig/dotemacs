@@ -207,6 +207,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         ;;deft                ; Quickly browse, filter, and edit plain text notes
         ;;elpher              ; A friendly gopher and gemini client
         smudge              ; Spotify for emacs
+        elpy                ; Python in Emacs
         elfeed              ; Emacs Atom/RSS feed reader
         elfeed-org          ; Configure elfeed with one or more org-mode files
         elfeed-dashboard    ; Elfeed with a mu4e feeling
@@ -5271,6 +5272,21 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
 
 
 
+
+* TODO Python :DEFER:MODE:
+
+This is only a rough setup to be able to write python code in emacs.
+
+#+begin_src emacs-lisp
+
+(use-package elpy
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable))
+
+#+end_src
+
+#+RESULTS:
 
 * TODO Bibliography
 ** Bibtex
