@@ -3613,7 +3613,7 @@ Move emails to the relative spam folder.
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
                                                                           :to "sebastian.halbig@tu-dresden.de")))
-              :vars `((user-mail-address . "Sebastian.Halbig@tu-dresden.de"  )
+              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
                       (user-full-name . "Sebastian Halbig" )
                       (mu4e-compose-signature . nil)
                       (mu4e-sent-folder . "/TUD/sent")
@@ -3622,8 +3622,8 @@ Move emails to the relative spam folder.
                       (mu4e-maildir-shortcuts . (("/TUD/inbox" . ?i)
                                                  ("/TUD/archive" . ?a)
                                                  ("/TUD/sent" . ?s)))
-                      (smtpmail-smtp-server . "msx.tu-dresden.de")
-                      (smtpmail-stream-type . tls)
+                      (smtpmail-smtp-server . "smtp.uni-marburg.de")
+                      (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
 
 #+end_src
@@ -3654,7 +3654,9 @@ Move emails to the relative spam folder.
                       (smtpmail-smtp-service . 587))))
 
 #+end_src
-*** Marburg-Internal :PERSONAL:
+*** TODO Marburg-Internal :PERSONAL:
+
+Currently we reroute the mail to the main account to avoid a bug of the mail server.
 
 #+begin_src emacs-lisp
 
@@ -3666,7 +3668,7 @@ Move emails to the relative spam folder.
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
                                                                           :to "halbigs@mathematik.uni-marburg.de")))
-              :vars `((user-mail-address . "halbigs@mathematik.uni-marburg.de")
+              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de") ;;"halbigs@mathematik.uni-marburg.de"
                       (user-full-name . "Sebastian Halbig")
                       (mu4e-compose-signature . ,mu4e-signature)
                       (mu4e-sent-folder . "/MarburgInternal/sent")
@@ -3675,12 +3677,12 @@ Move emails to the relative spam folder.
                       (mu4e-maildir-shortcuts . (("/MarburgInternal/inbox" . ?i)
                                                  ("/MarburgInternal/archive" . ?a)
                                                  ("/MarburgInternal/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.mathematik.uni-marburg.de")
+                      (smtpmail-smtp-server . "smtp.uni-marburg.de") ;; "smtp.mathematik.uni-marburg.de"
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
 
-#+end_src
-
+#+end_sr
+c
 *** Marburg :PERSONAL:
 
 #+begin_src emacs-lisp
@@ -3693,8 +3695,8 @@ Move emails to the relative spam folder.
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches msg
                                                                           :to "Sebastian.Halbig@uni-marburg.de")))
-              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de"  )
-                      (user-full-name . "Sebastian Halbig" )
+              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
+                      (user-full-name . "Sebastian Halbig")
                       (mu4e-compose-signature . ,mu4e-signature)
                       (mu4e-sent-folder . "/Marburg/sent")
                       (mu4e-trash-folder . "/Marburg/trash")
