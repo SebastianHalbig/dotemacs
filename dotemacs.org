@@ -197,6 +197,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         marginalia          ; Enrich existing commands with completion annotations
         embark
         consult             ; Consulting completing-read
+        embark-consult      ; Consult integration into embark
         ;; corfu            ; Completion Overlay Region FUnction.
                             ; We use a special build. Thus its commented out.
           company           ; We can integrate company backends into corfu...
@@ -2817,7 +2818,52 @@ For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ command
 (bind-key "M-g M-g" #'my-consult-goto-line)
 
 #+end_src
+** TODO Embark
+The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
+
+#+begin_src emacs-lisp
+(use-package embark
+  :bind (("C-." . embark-act)
+         :map minibuffer-local-completion-map
+         ("C-." . embark-act)
+         ("C->" . embark-become)
+         :map embark-region-map
+         ("a" . align-regexp)
+         ("C" . capitalize-dwim)
+         ("SPC" . whitespace-cleanup-region)
+         ("RET" . fill-region)
+         :map embark-symbol-map
+         ("." . embark-find-definition)
+         ("k" . describe-keymap)
+         )
+  :config
+  (setq prefix-help-command #'embark-prefix-help-command)
+  (setq embark-quit-after-action t)     ; XXX: Read the doc string!
+  (setq embark-cycle-key (kbd "M-."))   ; see the `embark-act' key
+  (setq embark-confirm-act-all nil)
+  (setq embark-indicators
+        '(embark-mixed-indicator
+          embark-highlight-indicator))
+  ;; NOTE 2021-07-31: The mixed indicator starts out with a minimal view
+  ;; and then pops up the verbose buffer, so those variables matter.
+  (setq embark-verbose-indicator-excluded-actions
+        '("\\`customize-" "\\(local\\|global\\)-set-key"
+          set-variable embark-cycle embark-keymap-help embark-isearch))
+  (setq embark-verbose-indicator-buffer-sections
+        `(target "\n" shadowed-targets " " cycle "\n" bindings))
+  (setq embark-mixed-indicator-both nil)
+  (setq embark-mixed-indicator-delay 1.5)
+  ;;  NOTE 2021-07-28: This is used when `embark-indicator' is set to
+  ;;  `embark-mixed-indicator' or `embark-verbose-indicator'.  We can
+  ;;  specify the window parameters here, but I prefer to do that in my
+  ;;  `display-buffer-alist' (search this document) because it is easier
+  ;;  to keep track of all my rules in one place.
+  (setq embark-verbose-indicator-display-action nil)
+  )
+#+end_src
+
 ** TODO Vertico :ADVICE:HOOK:BINDING:MODE:FACE:
+
 
 [[https://github.com/minad/vertico][Vertico]] provides a performant and minimalistic vertical completion UI based on the default completion system but aims to be highly flexible, extensible and modular.
 
