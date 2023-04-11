@@ -344,7 +344,7 @@ Emacs does a lot of things at startup and here, we disable pretty much everythin
  inhibit-startup-message t              ; Disable startup message
  inhibit-startup-echo-area-message t    ; Disable initial echo message
  initial-scratch-message ""             ; Empty the initial *scratch* buffer
- initial-buffer-choice t                ; Open *scratch* buffer at init
+ initial-buffer-choice nil                ; Open *scratch* buffer at init
  native-comp-async-report-warnings-errors 'silent ; Do not focus the warnings buffer
  confirm-kill-processes nil) ; Emacs should not ask for confiration to kill a process.
 
@@ -1550,7 +1550,7 @@ Default frame geometry (large margin: 24 pixels).
                             (left-fringe . 0)
                             (right-fringe . 0)
                             (tool-bar-lines . 0)
-                            (menu-bar-lines . 1)))
+                            (menu-bar-lines . 0)))
 
 ;; Default frame settings
 (setq initial-frame-alist default-frame-alist)
@@ -3677,8 +3677,7 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
 
-#+end_sr
-c
+#+end_src
 *** Marburg :PERSONAL:
 
 #+begin_src emacs-lisp
@@ -5410,7 +5409,7 @@ Always indent org-files
 
 Better latex preview (see https://stackoverflow.com/questions/30151338)
 
-,#+begin_src emacs-lisp
+#+begin_src emacs-lisp
 
 (setq org-latex-create-formula-image-program 'dvisvgm)
 
@@ -6916,15 +6915,6 @@ We use smudge to control spotify from within emacs.
 ** TODO Some cosmetics
 We use our customisation of the nano theme.
 #+begin_src emacs-lisp
-(use-package lambda-themes
-  :straight (:type git :host github :repo "lambda-emacs/lambda-themes")
-  :custom
-  (lambda-themes-set-italic-comments t)
-  (lambda-themes-set-italic-keywords t)
-  (lambda-themes-set-variable-pitch t)
-  :config
-  ;; load preferred theme
-  (load-theme 'lambda-light))
 
 (my-nano-light-muted)
 #+end_src
