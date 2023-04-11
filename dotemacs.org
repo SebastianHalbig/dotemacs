@@ -387,7 +387,7 @@ We tell emacs to use UTF-8 encoding as much as possible.
 
 Furthermore, we fix English as the default language.
 
-#+begin_src
+#+begin_src emacs-lisp
 
 (set-language-environment "English")    ; Set up multilingual environment
 
@@ -532,7 +532,7 @@ Enable auto-save-visited-mode
 
 (auto-save-visited-mode)
 
-#+end_src emacs-lisp
+#+end_src
 
 A buffer can get out of sync with respect to its visited file on disk if that file is changed by another program. This is prevented by auto revert mode
 
@@ -543,7 +543,7 @@ A buffer can get out of sync with respect to its visited file on disk if that fi
 (setq auto-revert-verbose t)
 (global-auto-revert-mode))
 
-#+end_src emacs-lisp
+#+end_src
 
 ** Saving
 
@@ -1450,6 +1450,31 @@ See https://list.orgmode.org/CA+G3_PNrdhx0Ejzw8UO7DgZ+ju1B7Ar_eTch5MMViEpKGwqq3w
 
 #+RESULTS: org-babel-expand-body:emacs-lisp
 
+
+Some compat tools do not work as expected:
+
+#+begin_src emacs-lisp
+
+(defun compat-executable-find (command &optional remote)
+  "Search for COMMAND in `exec-path' and return the absolute file name.
+Return nil if COMMAND is not found anywhere in `exec-path'.  If
+REMOTE is non-nil, search on the remote host indicated by
+`default-directory' instead."
+  (if (and remote (file-remote-p default-directory))
+      (let ((res (locate-file
+	          command
+	          (mapcar
+	           (lambda (x) (concat (file-remote-p default-directory) x))
+	           (exec-path))
+	          exec-suffixes 'file-executable-p)))
+        (when (stringp res) (file-local-name res)))
+    ;; Use 1 rather than file-executable-p to better match the
+    ;; behavior of call-process.
+    (let ((default-directory (file-name-quote default-directory 'top)))
+      (locate-file command exec-path exec-suffixes 1))))
+
+#+end_src
+
 *** Auto-tangle
 
 Automatically tangle org-mode files with the option #+auto_tangle: t
@@ -1814,7 +1839,7 @@ Thanks to dirvish, navigating through files is now like dancing.
 
 Follow symlinks without prompt
 
-,#+begin_src emacs-lisp
+#+begin_src emacs-lisp
 
 (setq vc-follow-symlinks t)
 
