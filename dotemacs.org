@@ -2666,49 +2666,20 @@ Config inspired by [[https://kristofferbalintona.me/posts/202202211546/][https:/
      orderless-literal
      orderless-regexp
      orderless-initialism
-     ;; orderless-flex
-     ;; orderless-strict-leading-initialism
-     ;; orderless-strict-initialism
-     ;; orderless-strict-full-initialism
-     ;; orderless-without-literal          ; Recommended for dispatches instead
      ))
   (orderless-style-dispatchers
-   '(initialism-if-hash
-     ;;first-prefixes
-     flex-if-twiddle
-     without-if-bang))
+    '(orderless-affix-dispatch))
+  (orderless-affix-dispatch-alist
+   '((33 . orderless-without-literal) ;; "!" at start/end excludes this word from the search
+     (37 . char-fold-to-regexp)       ;; "%" at start/end ignores inflections of the word
+     (44 . orderless-initialism)      ;; "," at start/end activates initalism
+     (61 . orderless-literal)         ;; "=" at start/end makes the word match literally
+     (126 . orderless-flex)))         ;; "~" at start/end activate flexible matching.
   (read-file-name-completion-ignore-case t)
   (read-buffer-completion-ignore-case t)
   (completion-ignore-case t)
   (completion-category-overrides '((file (styles . (partial-completion)))))
-  :init
-  (defun first-prefixes (pattern index _total)
-    "The first input is treated as a prefix"
-    (if (= index 0) 'orderless-prefixes))
-
-  (defun initialism-if-hash (pattern _index _total)
-    "Strings starting in # are matched wrt the initialism style"
-    (cond
-     ((equal "#" pattern)
-      '(orderless-literal . ""))
-     ((string-prefix-p "#" pattern)
-      `(orderless-initialism . ,(substring pattern 1)))))
-
-  (defun flex-if-twiddle (pattern _index _total)
-    "Strings starting in ~ are matched wrt the flex style"
-    (cond
-     ((equal "~" pattern)
-      '(orderless-literal . ""))
-     ((string-prefix-p "~" pattern)
-      `(orderless-flex . ,(substring pattern 1)))))
-
-  (defun without-if-bang (pattern _index _total)
-    "Matches  of strings starting with ! are excluded from the results"
-    (cond
-     ((equal "!" pattern)
-      '(orderless-literal . ""))
-     ((string-prefix-p "!" pattern)
-      `(orderless-without-literal . ,(substring pattern 1))))))
+  )
 #+end_src
 
 ** LSP-Mode
