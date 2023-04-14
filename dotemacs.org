@@ -2264,7 +2264,7 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
   :ensure adaptive-wrap
   :custom (visual-fill-column-center-text t)
   :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((LaTeX-mode org-mode) . adaptive-wrap-prefix-mode)
+          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
           )
   )
 

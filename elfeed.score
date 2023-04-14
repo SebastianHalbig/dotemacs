@@ -1,0 +1,17 @@
+;;; Elfeed score file                                     -*- lisp -*-
+((version 10)
+ ("title")
+ ("content")
+ ("title-or-content"
+  (:text "monoidal" :title-value 50 :content-value 20 :type s)
+  (:text "rigid"    :title-value 50 :content-value 20 :type s)
+  (:text "tensor"   :title-value 50 :content-value 20 :type s)
+  (:text "braided"  :title-value 50 :content-value 20 :type s))
+ ("tag")
+ ("authors"
+  (:text "Ulrich Kraehmer" :value 200 :type w))
+ ("feed")
+ ("link")
+ ("udf")
+ (mark nil)
+ ("adjust-tags"))
