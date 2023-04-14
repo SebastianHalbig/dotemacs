@@ -211,6 +211,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         elfeed              ; Emacs Atom/RSS feed reader
         elfeed-org          ; Configure elfeed with one or more org-mode files
         elfeed-dashboard    ; Elfeed with a mu4e feeling
+        elfeed-score        ; A scoring tool for elfeed
         ;;f                   ; Modern API for working with files and directories
         citar               ; Citation-related commands for org, latex, markdown
         ;;citeproc            ; A CSL 1.0.2 Citation Processor
@@ -6413,66 +6414,121 @@ Add fringe on the left side of magit windows such that we can highlight region u
 
 ** Read :HOOK:BINDING:
 
-Alternative print entry function using [[https://github.com/rougier/svg-tag-mode][svg-tag-mode]].
+We use [[https://github.com/skeeto/elfeed][elfeed]] to keep in touch with (relevant) preprints.
 
 #+begin_src emacs-lisp
+(use-package elfeed
+  :bind (:map elfeed-search-mode-map
+         ("U" . elfeed-update )) ; Bind "U" to update feeds on main screen
+  :hook ((elfeed-search-mode-hook  .my-elfeed-search-mode-hook)
+         (elfeed-show-mode-hook .my-elfeed-show-mode-hook))
+  :config
+  (setq elfeed-search-title-max-width 80    ; Maximum titles width
+        elfeed-search-title-min-width 40    ; Minimum titles width
+        elfeed-search-trailing-width 24     ; Space reserved for feed & tag
+        elfeed-search-filter                ; Default filter
+        "@1-weeks-ago +unread"
+        elfeed-search-print-entry-function  ; Alternative print function
+        #'my-elfeed-search-print-entry)
+  )
+#+end_src
 
-(require 'elfeed)
-(require 'svg-tag-mode)
+We try to rank papers by using elfeed-score.
 
+#+begin_src emacs-lisp
+(use-package elfeed-score
+  :after elfeed
+  :hook (elfeed-search-update-hook  .elfeed-score-score-search)
+  :config
+  (setq elfeed-score-serde-score-file "~/.emacs.org/elfeed.score")
+  (elfeed-score-load-score-file "~/.emacs.org/elfeed.score") ; See the elfeed-score documentation for the score file syntax
+  (elfeed-score-enable)
+  (define-key elfeed-search-mode-map "=" elfeed-score-map)
+)
+#+end_src
+
+We separate author by commas and have at most three.
+
+#+begin_src emacs-lisp
+(defun concatenate-authors (authors-list)
+  "Given AUTHORS-LIST, list of plists; return string of all authors
+concatenated."
+  (if (>(length authors-list) 3)
+      (let ((short-authors (seq-subseq authors-list 0 3)))
+    (concat (mapconcat
+   (lambda (author) (plist-get author :name))
+   short-authors ", ") " et.al"))
+  (mapconcat
+   (lambda (author) (plist-get author :name))
+   authors-list ", ")))
+#+end_src
+
+Next we shorten feed titles. At the moment this is hard-coded.
+
+#+begin_src emacs-lisp
+(defun short-feed-titles (feed-title)
+  "Given a feed-title, we return its shortened version."
+  (cond ((string= feed-title "Quantum groups, skein theories, operadic and diagrammatic algebra, quantum field theory") "math.QA")
+        ((string= feed-title "Enriched categories, topoi, abelian categories, monoidal categories, homological algebra") "math.CT")
+        ((string= feed-title "Homotopy theory, homological algebra, algebraic treatments of manifolds") "math.AT")
+        ((string= feed-title "Non-commutative rings and algebras, non-associative algebras, universal algebra and lattice theory, linear algebra, semigroups") "math.RA")
+        (t feed-title)))
+
+#+end_src
+
+We print entries very nicely
+#+begin_src emacs-lisp
 (defun my-elfeed-search-print-entry (entry)
-  "Alternative printing of elfeed entries using SVG tags."
+  "Print ENTRY to the buffer."
+  (let*
+      ((date (elfeed-search-format-date (elfeed-entry-date entry)))
+	   (title (or (elfeed-meta entry :title)
+		          (elfeed-entry-title entry) ""))
+	   (title-faces (elfeed-search--faces (elfeed-entry-tags entry)))
+	   (feed (elfeed-entry-feed entry))
+	   (feed-title (short-feed-titles (when feed
+	                                    (or (elfeed-meta feed :title) (elfeed-feed-title feed)))))
+	   (entry-authors (concatenate-authors
+			           (elfeed-meta entry :authors)))
+	   (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
+	   (tags-str (mapconcat
+		          (lambda (s) (propertize s 'face
+					                      'elfeed-search-tag-face))
+		          tags ","))
+	   (title-width (- (window-width) 10
+			           elfeed-search-trailing-width))
+	   (title-column (elfeed-format-column
+			          title (elfeed-clamp
+			                 elfeed-search-title-min-width
+			                 title-width
+			                 elfeed-search-title-max-width)
+			          :left))
+	   (authors-width 80)
+	   (authors-column (elfeed-format-column
+			            entry-authors (elfeed-clamp
+			                           elfeed-search-title-min-width
+			                           authors-width
+			                           131)
+			            :left)))
 
-  (let* ((date (elfeed-search-format-date (elfeed-entry-date entry)))
-         (title (or (elfeed-meta entry :title)
-                    (elfeed-entry-title entry) ""))
-         (unread (member 'unread (elfeed-entry-tags entry)))
-         (feed (elfeed-entry-feed entry))
-         (feed-title (when feed
-                       (or (elfeed-meta feed :title)
-                           (elfeed-feed-title feed))))
-         (title-face (if unread 'nano-default 'nano-faded))
-         (date-face (if unread 'nano-salient 'nano-faded))
-         (feed-title-face (if unread 'nano-strong '(nano-strong nano-faded)))
-         (tag-face (if unread 'nano-popout 'nano-faded))
-         (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
-         (tags (delete "unread" tags))
-         (tags-svg (mapconcat
-                    (lambda (s)
-                      (propertize (concat (upcase s) " ")
-                                  'display (svg-tag-make (upcase s)
-                                                         :margin 0
-                                                         :padding 1
-                                                         :inverse 1
-                                                         :face tag-face)))
-                    tags " "))
-         (left (concat
-                (when feed-title
-                  (propertize feed-title 'face feed-title-face))
-                " " tags-svg " "
-                (propertize title 'face title-face 'kbd-help title)))
-         (right (propertize date 'face date-face)))
-    (insert (my-string-join -1 left right))))
+    (insert (propertize date 'face 'elfeed-search-date-face) " ")
 
-#+end_src
+    (insert (propertize title-column
+			            'face title-faces 'kbd-help title) " ")
 
-Elfeed setup.
+    (insert (propertize authors-column
+			            'face 'elfeed-search-date-face
+			            'kbd-help entry-authors) " ")
 
-#+begin_src emacs-lisp
+    (when entry-authors
+      (insert (propertize feed-title
+			              'face 'elfeed-search-feed-face) " "))
 
-(setq elfeed-search-title-max-width 80    ; Maximum titles width
-      elfeed-search-title-min-width 40    ; Minimum titles width
-      elfeed-search-trailing-width 24     ; Space reserved for feed & tag
-      elfeed-search-filter                ; Default filter
-      "@1-weeks-ago +unread"
-      elfeed-search-print-entry-function  ; Alternative print function
-      #'my-elfeed-search-print-entry)
-
-
-                                        ; Bind "U" to update feeds on main screen
-(bind-key "U" #'elfeed-update elfeed-search-mode-map)
+    )
+  )
 
 #+end_src
+
 
 Hook on elfeed main screen (hl-line mode).
 
@@ -6485,8 +6541,6 @@ Hook on elfeed main screen (hl-line mode).
   (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
   (setq cursor-type nil))
 
-(add-hook 'elfeed-search-mode-hook  #'my-elfeed-search-mode-hook)
-
 #+end_src
 
 Hook on elfeed post screen (visual mode).
@@ -6496,7 +6550,7 @@ Hook on elfeed post screen (visual mode).
 
 (defun my-elfeed-show-mode-hook ()
   (visual-line-mode)
-  ;;  (setq truncate-lines t)
+  (setq truncate-lines t)
 
   (let ((inhibit-read-only t)
         (inhibit-modification-hooks t))
@@ -6504,9 +6558,9 @@ Hook on elfeed post screen (visual mode).
     (setq-local shr-width 79)
     (set-buffer-modified-p nil)))
 
-(add-hook 'elfeed-show-mode-hook #'my-elfeed-show-mode-hook)
-
 #+end_src
+
+
 
 ** Bookmarks
 
