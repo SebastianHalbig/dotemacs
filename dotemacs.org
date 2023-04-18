@@ -349,9 +349,6 @@ Emacs does a lot of things at startup and here, we disable pretty much everythin
  native-comp-async-report-warnings-errors 'silent ; Do not focus the warnings buffer
  confirm-kill-processes nil) ; Emacs should not ask for confiration to kill a process.
 
-(add-hook 'after-init-hook (lambda () (org-agenda nil "a")))
-(setq org-agenda-window-setup 'current-window)
-
 #+end_src
 
 All fancy clickable things are unnecessary so we remove them
@@ -5388,7 +5385,7 @@ An autoload function for my-config (that will load org mode).
               org-tags-column 1                            ; Tags next to header title
               org-hide-emphasis-markers t                  ; Hide markers
               org-cycle-separator-lines 2                  ; Number of empty lines between sections
-              org-use-tag-inheritance nil                  ; Tags ARE NOT inherited
+              org-use-tag-inheritance t                    ; Tags ARE inherited
               org-use-property-inheritance t               ; Properties ARE inherited
               org-indent-indentation-per-level 2           ; Indentation per level
               org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
@@ -5396,7 +5393,10 @@ An autoload function for my-config (that will load org mode).
               org-return-follows-link nil                  ; Follow links when hitting return
               org-image-actual-width nil                   ; Resize image to window width
               org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
-              org-outline-path-complete-in-steps nil)      ; No steps in path display
+              org-outline-path-complete-in-steps nil      ; No steps in path display
+              org-catch-invisible-edits 'show-and-error
+              org-insert-heading-respect-content t
+              org-pretty-entities t)
 
 #+end_src
 
@@ -5456,6 +5456,65 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 
 #+end_src
 
+** Modern Org mode
+#+begin_src emacs-lisp
+
+;; Modern org mode
+(use-package org
+  :pin gnu
+  :commands (org-capture org-agenda)
+  :config
+  (setq org-ellipsis " …")
+  (setq org-agenda-start-with-log-mode t)
+  (setq org-log-done 'time)
+  (setq org-log-into-drawer t)
+  (setq org-agenda-files '("~/Documents/org-files/agenda"))
+  (setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
+
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+          (sequence "SKETCH(s)" "DETAIL(D)" "WRITE-UP(w)" "|" "COMPLETED(c)")
+          ("INVESTIGATE(i)" "REPORT(r)"   "|" "FINISHED(f)")
+          (sequence "|" "CANCELED(C)")))
+
+  ;;  Auto-update tags whenever the state is changed
+  (setq org-tag-alist
+        '((:startgroup)
+                                        ; Put mutually exclusive tags here
+          (:endgroup)
+          ("short"        . ?s)
+          ("necessary"    . ?n)
+          ("extension"    . ?e)
+          ("idea"         . ?i)
+          ("organisation" . ?o)
+          ("meetings"     . ?m)
+          ("feedback"     . ?f)
+          ("regularly"    . ?r)
+          ))
+
+(setq pale-blue   '"#BBCCEE"
+      pale-cyan   '"#CCEEFF"
+      pale-green  '"#CCDDAA"
+      pale-yellow '"#EEEEBB"
+      pale-red    '"#FFCCCC"
+      pale-gray   '"#DDDDDD")
+
+  (setq org-todo-keyword-faces
+        '(("TODO" :background "#EEEEBB" :weight semi-bold)
+          ("NEXT" :background "#FFCCCC" :weight bold)
+          ("DONE" :background "#CCDDAA":weight semi-bold)
+          ("SKETCH" :background "#BBCCEE" :weight normal)
+          ("DETAIL" :background "#CCEEFF" :weight normal)
+          ("WRITE-UP" :background "#EEEEBB" :weight normal)
+          ("COMPLETED" :background "#DDDDDD" :weight normal)
+          ("INVESTIGATE" :background "#BBCCEE" :weight normal)
+          ("REPORT" :background "#CCEEFF" :weight normal)
+          ("FINISHED" :background "#DDDDDD" :weight normal)
+          ("CANCELED" :background "#DDDDDD" :weight normal)))
+
+  (global-org-modern-mode)
+  )
+#+end_src
 ** TODO HTML-Export :CUSTOM:
 
 We treat ~code~ and =verbatim= faces differently among export
@@ -5502,119 +5561,10 @@ We treat ~code~ and =verbatim= faces differently among export
 :END:
 
 #+begin_src emacs-lisp
-
-;; Modern org mode
-
-(use-package org
-  :pin gnu
-  :commands (org-capture org-agenda)
-  :config
-  (setq org-ellipsis " ▾")
-
-  (setq org-agenda-start-with-log-mode t)
-  (setq org-log-done 'time)
-  (setq org-log-into-drawer t)
-
-  (setq org-agenda-files '("~/Documents/org-files/agenda"))
-
-  (setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
-  (setq org-use-fast-todo-selection t)
-
-  (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(w)" "|" "DONE(d)")
-          (sequence "PENDING(p)" "DEFERRED(D)" "OCCURING (o)" "|" "COMPLETED(c)")
-          ;; (sequence "REPORT(r)" "BUG(b)" "KNOWNCAUSE(k)" "|" "FIXED(f)")
-          (sequence "|" "CANCELED(C)")))
-
-
-
-  (setq org-todo-keyword-faces
-        '(("TODO" :foreground "tomato4" :weight bold)
-          ("DONE" :foreground "PaleGreen4" :weight bold)
-          ("REVIEW" :foreground "LightGoldenrod3" :weight bold)
-          ("WAITING" :foreground "peru" :weight bold)
-          ("INACTIVE" :foreground "coral" :weight bold)
-          ("CANCELLED" :foreground "sienna" :weight bold)))
-
-  ;;  Auto-update tags whenever the state is changed
-  (setq org-todo-state-tags-triggers
-        '(("CANCELLED" ("CANCELLED" . t))
-          ("WAITING" ("SOMEDAY") ("INACTIVE") ("WAITING" . t))
-          ("INACTIVE" ("WAITING") ("SOMEDAY") ("INACTIVE" . t))
-          ("SOMEDAY" ("WAITING") ("INACTIVE") ("SOMEDAY" . t))
-          (done ("WAITING") ("INACTIVE") ("SOMEDAY"))
-          ("TODO" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
-          ("REVIEW" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))
-          ("DONE" ("WAITING") ("CANCELLED") ("INACTIVE") ("SOMEDAY"))))
-
-  (setq org-tag-alist
-        '((:startgroup)
-                                        ; Put mutually exclusive tags here
-          (:endgroup)
-          ("short"        . ?s)
-          ("necessary"    . ?n)
-          ("extension"    . ?e)
-          ("idea"         . ?i)
-          ("polish"       . ?p)
-          ("internal"     . ?I)
-          ("organisation" . ?o)
-          ("meetings"     . ?m)
-          ("feedback"     . ?f)
-          ("regularly"    . ?r)
-          ))
-
-  (setq org-capture-templates
-        `(
-          ("t" "Tasks / Projects")
-          ("tt" "Task" entry (file+olp "~/Documents/org-files/agenda" "Tasks")
-           "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
-
-          ("j" "Journal Entries")
-          ("jj" "Journal" entry
-           (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
-           "\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
-           ;; ,(dw/read-file-as-string "~/Notes/Templates/Daily.org")
-           :clock-in :clock-resume
-           :empty-lines 1)
-          ("jm" "Meeting" entry
-           (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
-           "* %<%I:%M %p> - %a :meetings:\n\n%?\n\n"
-           :clock-in :clock-resume
-           :empty-lines 1)
-
-          ("w" "Workflows")
-          ("we" "Checking Email" entry (file+olp+datetree "~/Projects/Code/emacs-from-scratch/OrgFiles/Journal.org")
-           "* Checking Email :email:\n\n%?" :clock-in :clock-resume :empty-lines 1)
-
-          ("m" "Metrics Capture")
-          ("mw" "Weight" table-line (file+headline "~/Projects/Code/emacs-from-scratch/OrgFiles/Metrics.org" "Weight")
-           "| %U | %^{Weight} | %^{Notes} |" :kill-buffer t)))
-
-  (define-key global-map (kbd "C-c j")
-              (lambda () (interactive) (org-capture nil "jj")))
-  )
-
-
-(require 'org-super-agenda)
-
-(setq org-agenda-skip-scheduled-if-done t
-      org-agenda-skip-deadline-if-done t
-      org-agenda-include-deadlines t
-      org-agenda-block-separator #x2501
-      org-agenda-compact-blocks t
-      org-agenda-start-with-log-mode t)
+(setq  org-agenda-start-with-log-mode t)
 (setq org-agenda-deadline-faces
       '((1.0001 . org-warning)              ; due yesterday or before
         (0.0    . org-upcoming-deadline)))  ; due today or later
-
-
-
-(defun style-org-agenda()
-  (set-face-attribute 'org-agenda-date nil :height 1.1)
-  (set-face-attribute 'org-agenda-date-today nil :height 1.1 :weight 'bold)
-  (set-face-attribute 'org-agenda-date-weekend nil :height 1.1))
-
-(add-hook 'org-agenda-mode-hook 'style-org-agenda)
 
 (setq org-agenda-breadcrumbs-separator " ❱ "
       org-agenda-current-time-string " ┈┈┈┈┈┈┈┈┈┈┈┈┈ now"
@@ -5631,77 +5581,7 @@ We treat ~code~ and =verbatim= faces differently among export
                                                     (org-agenda-format-date-aligned date))))
 (setq org-cycle-separator-lines 2)
 
-
-
-
-(setq org-agenda-custom-commands
-      '(("o" "Overview"
-         ((agenda "" ((org-agenda-span 'day)
-                      (org-super-agenda-groups
-                       '((:name "Today"
-                                :time-grid t
-                                :date today
-                                :todo "TODAY"
-                                :scheduled today
-                                :deadline today
-                                :order 1)))))
-          (alltodo "" ((org-agenda-overriding-header "")
-                       (org-super-agenda-groups
-                        '(;; Each group has an implicit boolean OR operator between its selectors.
-                          (:name "Today"
-                                 :face (:weight "semi-bold"))
-                          (:name "Behind deadline"
-                                 :and (:deadline past :todo ("TODO" "WAITING" "HOLD" "NEXT"))
-                                 :face (:background "#7f1b19"))
-                          (:name "Work important"
-                                 :and (:priority>= "B" :category "Work" :todo ("TODO" "NEXT")))
-                          (:name "Work other"
-                                 :and (:category "Work" :todo ("TODO" "NEXT")))
-                          (:name "Important"
-                                 :priority "A")
-                          (:priority<= "B"
-                                       ;; Show this section after "Today" and "Important", because
-                                       ;; their order is unspecified, defaulting to 0. Sections
-                                       ;; are displayed lowest-number-first.
-                                       :order 1)
-                          (:name "Papers"
-                                 :file-path "org/roam/notes")
-                          (:name "Waiting"
-                                 :todo "WAITING"
-                                 :order 9)
-                          (:name "On hold"
-                                 :todo "HOLD"
-                                 :order 10)))))))))
-(add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
-
-
-;; Minimal UI
-
-
-(setq
- ;; Edit settings
- ;; org-auto-align-tags nil
- org-tags-column 0
- org-catch-invisible-edits 'show-and-error
- org-special-ctrl-a/e t
- org-insert-heading-respect-content t
-
- ;; Org styling, hide markup etc.
- org-hide-emphasis-markers t
- org-pretty-entities t
- org-ellipsis "…"
-
- ;; Agenda styling
- org-agenda-tags-column 0
- org-agenda-block-separator ?─
- org-agenda-time-grid
- '((daily today require-timed)
-   (800 1000 1200 1400 1600 1800 2000)
-   " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
- org-agenda-current-time-string
- "⭠ now ─────────────────────")
-
-(global-org-modern-mode)
+;; (add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
 
 
 (use-package org-recur
@@ -5768,74 +5648,45 @@ Open agenda(s)
 
 #+end_src
 
-Files
-
-#+begin_src emacs-lisp
-
-(setq org-agenda-files (list "~/Documents/org-files/agenda/maths.org"
-                             "~/Documents/org-files/agenda/leisure.org")
-      org-agenda-diary-file (expand-file-name "diary" user-emacs-directory))
-
-#+end_src
-
 Settings
 
 #+begin_src emacs-lisp
 
-(setq org-agenda-window-setup 'current-window
-      org-agenda-restore-windows-after-quit t
-      org-agenda-show-all-dates nil
-      org-agenda-time-in-grid t
-      org-agenda-show-current-time-in-grid t
-      org-agenda-start-on-weekday 1
-      org-agenda-span 7
-      org-agenda-hide-tags-regexp "." ; No tags
-                                        ; org-agenda-hide-tags-regexp nil) ; All tags
-      org-agenda-tags-column 0
-                                        ; org-agenda-tags-column -79)      ; Left aling
-      org-agenda-block-separator nil
-      org-agenda-category-icon-alist nil
-      org-agenda-skip-deadline-if-done t
-      org-agenda-skip-scheduled-if-done t
-      org-agenda-sticky t)
+(use-package org-agenda
+  :hook (org-agenda-finalize-hook . my-org-agenda-mode-hook)
+  :config
+  (setq org-agenda-skip-scheduled-if-done t
+        org-agenda-skip-deadline-if-done t
+        org-agenda-include-deadlines t
+        org-agenda-compact-blocks t
+        org-agenda-start-day nil ;; i.e. today
+        org-agenda-span 3
+        org-agenda-start-on-weekday nil
+        org-agenda-window-setup 'current-window
+        org-agenda-restore-windows-after-quit t
+        org-agenda-show-all-dates nil
+        org-agenda-time-in-grid t
+        org-agenda-show-current-time-in-grid t
+        org-agenda-block-separator nil
+        org-agenda-category-icon-alist nil
+        org-agenda-sticky t)
+  (setq org-agenda-prefix-format
+        '((agenda . "%i %?-12t%s")
+          (todo .   "%i")
+          (tags .   "%i")
+          (search . "%i")))
+  (setq org-agenda-sorting-strategy
+        '((agenda deadline-down scheduled-down todo-state-up time-up
+                  habit-down priority-down category-keep)
+          (todo   priority-down category-keep)
+          (tags   timestamp-up priority-down category-keep)
+          (search category-keep)))
+  (setq org-agenda-time-grid
+        '((daily today require-timed)
+          ()
+          "......" "----------------"))
 
-#+end_src
-
-Prefix format
-
-#+begin_src emacs-lisp
-
-(setq org-agenda-prefix-format
-      '((agenda . "%i %?-12t%s")
-        (todo .   "%i")
-        (tags .   "%i")
-        (search . "%i")))
-
-#+end_src
-
-Sorting strategy
-
-#+begin_src emacs-lisp
-
-(setq org-agenda-sorting-strategy
-      '((agenda deadline-down scheduled-down todo-state-up time-up
-                habit-down priority-down category-keep)
-        (todo   priority-down category-keep)
-        (tags   timestamp-up priority-down category-keep)
-        (search category-keep)))
-
-#+end_src
-
-Minimal time grid
-
-#+begin_src emacs-lisp
-
-(setq org-agenda-time-grid
-      '((daily today require-timed)
-        ()
-        "......" "----------------"))
-
-(setq org-agenda-current-time-string "   now")
+  (setq org-agenda-current-time-string "   now"))
 
 #+end_src
 
@@ -5851,6 +5702,17 @@ A small function to cancel a meeting
 
 #+end_src
 
+We activate hl line mode in agenda buffers.
+#+begin_src emacs-lisp
+
+(defun my-org-agenda-mode-hook ()
+  (hl-line-mode t)
+  (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
+  (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
+  (setq cursor-type nil))
+
+#+end_src
+
 ** Holidays :HOOK:PERSONAL:
 
 #+begin_src emacs-lisp
@@ -5858,33 +5720,9 @@ A small function to cancel a meeting
 (require 'cal-iso)
 (require 'holidays)
 
-(defvar french-holidays nil
-  "French holidays")
 
-(setq french-holidays
-      `((holiday-fixed 1 1 "New year's Day")
-	    (holiday-fixed 5 1 "Labour Day")
-	    (holiday-fixed 5 8 "Victory in Europe Day")
-	    (holiday-fixed 7 14 "Bastille day")
-	    (holiday-fixed 8 15 "Assumption of Mary")
-	    (holiday-fixed 11 11 "Armistice 1918")
-	    (holiday-fixed 11 1 "All Saints' Day")
-	    (holiday-fixed 12 25 "Christmas Day")
-	    (holiday-easter-etc 0 "Easter Sunday")
-        (holiday-easter-etc 1 "Easter Monday")
-        (holiday-easter-etc 39 "Ascension Day")
-        (holiday-easter-etc 50 "Whit Monday")
-        (holiday-sexp
-         '(if (equal
-               (holiday-easter-etc 49)
-               (holiday-float 5 0 -1 nil))
-              (car (car (holiday-float 6 0 1 nil)))
-            (car (car (holiday-float 5 0 -1 nil))))
-         "Mother's Day")))
-
-(setq calendar-holidays french-holidays     ; French holidays
-      calendar-date-style 'european         ; European style calenders
-      calendar-week-start-day '1            ; The week starts on Monday
+(setq calendar-date-style 'european         ; European style calenders
+      calendar-week-start-day '1             ; The week starts on Monday
       calendar-mark-diary-entries-flag nil) ; Do not show diary entries
 
 
@@ -5923,13 +5761,68 @@ The daily agenda
 
 #+begin_src emacs-lisp
 
-(add-to-list 'org-agenda-custom-commands
-             '("a" "Agenda"
-               ((agenda "Agenda"
-                        ((org-agenda-todo-keyword-format "%s")
-                         (org-agenda-skip-deadline-if-done nil)
-                         (org-deadline-warning-days 3)
-                         (org-agenda-overriding-header nil))))))
+(use-package org-super-agenda
+  :after org-agenda
+  :init
+  (setq org-super-agenda-groups
+       '(;; Each group has an implicit boolean OR operator between its selectors.
+         (:name "Today"           ; section name
+                :time-grid t      ; Items that appear on the time grid
+                :scheduled today
+                :deadline today)
+         (:name "Outlook"
+                :and (:scheduled future :priority>= "B")
+                :and (:deadline future :priority>= "B")
+                )
+         (:name "Next"
+                :todo "NEXT")
+         (:name "Short"
+                :tag "short")
+         ;; After the last group, the agenda will display items that didn't
+         ;; match any of these groups, with the default order position of 99
+         ))
+  (setq org-agenda-custom-commands
+        '(("g" "GTD view"
+           ((agenda "" ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         '((:discard (:not (:scheduled today
+                                            :deadline today)))
+                           (:name "📅 Today\n"           ; section name
+                                  :time-grid t      ; Items that appear on the time grid
+                                  :scheduled today
+                                  :deadline today
+                                  :order 1)
+                           ))))
+            (alltodo "" ((org-agenda-overriding-header "")
+                         (org-super-agenda-groups
+                          '((:log t)
+                            (:name "🕮 Research\n"
+                                   :tag "research"
+                                   :order 2)
+                            (:name "🗨 Upcoming teaching\n"
+                                   :tag "teaching"
+                                   :order 3)
+                            (:name "📧 Mail\n"
+                                   :tag "mail"
+                                   :order 4)
+                            (:name "🎙 Talks\n"
+                                   :tag "talk"
+                                   :order 5)
+                            (:name "🗣 Meetings"
+                                    :tag "meeting"
+                                   :order 6)
+                            (:name "⚠ Overdue \n"
+                                   :deadline past
+                                   :order 7)
+                            (:name "✩ Important \n"
+                                   :priority "A"
+                                   :order 8)
+                            (:name "🗏 Scheduled soon \n"
+                                   :scheduled future
+                                   :order 9)
+                            (:discard (:not (:todo "TODO")))))))))))
+:config
+(org-super-agenda-mode))
 
 #+end_src
 
@@ -5943,170 +5836,15 @@ Some decorations for the agenda
          (canceled (string-match-p (regexp-quote "~") x))
          (x (replace-regexp-in-string ":TODO:" "" x))
          (x (replace-regexp-in-string ":DONE:" "" x))
-         (x (replace-regexp-in-string "~" "" x))
-         (x (if (and (boundp 'org-agenda-dim) org-agenda-dim)
-                (propertize x 'face 'nano-faded) x))
-         (x (if done (propertize x 'face 'nano-faded) x))
-         (x (if canceled (propertize x 'face 'nano-faded) x)))
+         (x (replace-regexp-in-string "~" "if canceled" (propertize x 'face 'nano-faded) x)))
     x))
 
-;;(advice-add 'org-agenda-highlight-todo
-;;            :filter-return #'my-org-agenda-highlight-todo)
-
-#+end_src
-
-Timestamp tags for the agenda (bold means inverse video below):
-
-now        -> *now*
-9:00       -> *9h00*
-9:30-10:00 -> 9h30 | *30mn*
--> ANYTIME
-
-#+name: svg-tag-timestamp
-#+begin_src emacs-lisp
-
-(require 'svg-lib)
-(require 'svg-tag-mode)
-
-(defun my-svg-tag-timestamp (&rest args)
-  "Create a timestamp SVG tag for the time at point."
-
-  (interactive)
-  (let ((inhibit-read-only t))
-
-    (goto-char (point-min))
-    (while (search-forward-regexp
-            "\\(\([0-9]/[0-9]\):\\)" nil t)
-      (set-text-properties (match-beginning 1) (match-end 1)
-                           `(display ,(svg-tag-make "ANYTIME"
-                                                    :face 'nano-faded
-                                                    :inverse nil
-                                                    :padding 3 :alignment 0))))
-
-    (goto-char (point-min))
-    (while (search-forward-regexp
-            "\\([0-9]+:[0-9]+\\)\\(\\.+\\)" nil t)
-
-      (set-text-properties (match-beginning 1) (match-end 2)
-                           `(display ,(svg-tag-make (match-string 1)
-                                                    :face 'nano-faded
-                                                    :margin 4 :alignment 0))))
-
-    (goto-char (point-min))
-    (while (search-forward-regexp
-            "\\([0-9]+:[0-9]+\\)\\(\\.*\\)" nil t)
-
-      (set-text-properties (match-beginning 1) (match-end 2)
-                           `(display ,(svg-tag-make (match-string 1)
-                                                    :face 'nano-default
-                                                    :inverse t
-                                                    :margin 4 :alignment 0))))
-    (goto-char (point-min))
-    (while (search-forward-regexp
-            "\\([0-9]+:[0-9]+\\)\\(-[0-9]+:[0-9]+\\)" nil t)
-      (let* ((t1 (parse-time-string (match-string 1)))
-             (t2 (parse-time-string (substring (match-string 2) 1)))
-             (t1 (+ (* (nth 2 t1) 60) (nth 1 t1)))
-             (t2 (+ (* (nth 2 t2) 60) (nth 1 t2)))
-             (d  (- t2 t1)))
-
-        (set-text-properties (match-beginning 1) (match-end 1)
-                             `(display ,(svg-tag-make (match-string 1)
-                                                      :face 'nano-faded
-                                                      :crop-right t)))
-        ;; 15m: ¼, 30m:½, 45m:¾
-        (if (< d 60)
-            (set-text-properties (match-beginning 2) (match-end 2)
-                                 `(display ,(svg-tag-make (format "%2dm" d)
-                                                          :face 'nano-faded
-                                                          :crop-left t :inverse t)))
-          (set-text-properties (match-beginning 2) (match-end 2)
-                               `(display ,(svg-tag-make (format "%1dH" (/ d 60))
-                                                        :face 'nano-faded
-                                                        :crop-left t :inverse t
-                                                        :padding 2 :alignment 0))))))))
+(advice-add 'org-agenda-highlight-todo
+            :filter-return #'my-org-agenda-highlight-todo)
 
 #+end_src
 
 
-#+begin_src emacs-lisp
-
-(add-hook 'org-agenda-mode-hook #'my-svg-tag-timestamp)
-(advice-add 'org-agenda-redo :after #'my-svg-tag-timestamp)
-
-#+end_src
-
-** Tasks agenda
-
-A custom date format function using svg tags (progress pies) for the task agenda.
-
-#+name: my-org-agenda-custom-date
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-custom-date ()
-  (interactive)
-  (let* ((timestamp (org-entry-get nil "TIMESTAMP"))
-         (timestamp (or timestamp (org-entry-get nil "DEADLINE"))))
-    (if timestamp
-        (let* ((delta (- (org-time-string-to-absolute (org-read-date nil nil timestamp))
-                         (org-time-string-to-absolute (org-read-date nil nil ""))))
-               (delta (/ (+ 1 delta) 30.0))
-               (face (cond ;; ((< delta 0.25) 'nano-popout)
-                      ;; ((< delta 0.50) 'nano-salient)
-                      ((< delta 1.00) 'nano-default)
-                      (t 'nano-faded))))
-          (concat
-           (propertize " " 'face nil
-                       'display (svg-lib-progress-pie
-                                 delta nil
-                                 :background (face-background face nil 'default)
-                                 :foreground (face-foreground face)
-                                 :margin 0 :stroke 2 :padding 1))
-           " "
-           (propertize
-            (format-time-string "%d/%m" (org-time-string-to-time timestamp))
-            'face 'nano-popout)))
-      "     ")))
-
-#+end_src
-
-The task agenda
-
-#+begin_src emacs-lisp
-
-(add-to-list 'org-agenda-custom-commands
-             '("x" "Tasks"
-               ((todo "TODO" ;; "PROJECT"
-                      ( (org-agenda-todo-keyword-format ":%s:")
-                        (org-agenda-prefix-format '((todo   . " ")))
-                        (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))
-                        (org-agenda-overriding-header (propertize " Todo \n" 'face 'nano-strong))))
-
-                (tags "+TALK+TIMESTAMP>=\"<now>\""
-                      ((org-agenda-span 90)
-                       (org-agenda-max-tags 5)
-                       (org-agenda-prefix-format '((tags   . " %(my-org-agenda-custom-date) ")))
-                       (org-agenda-overriding-header "\n Upcoming talks\n")))
-
-                (tags ">TEACHING+TIMESTAMP=\"<now>\""
-                      ((org-agenda-span 90)
-                       (org-agenda-max-tags 5)
-                       (org-agenda-prefix-format '((tags   . " %(my-org-agenda-custom-date) ")))
-                       (org-agenda-overriding-header "\n Upcoming lessons\n")))
-
-                (tags "TRAVEL+TIMESTAMP>=\"<now>\""
-                      ((org-agenda-span 90)
-                       (org-agenda-max-tags 5)
-                       (org-agenda-prefix-format '((tags .  " %(my-org-agenda-custom-date) ")))
-                       (org-agenda-overriding-header "\n Upcoming travels\n")))
-
-                (tags "DEADLINE>=\"<today>\""
-                      ((org-agenda-span 90)
-                       (org-agenda-max-tags 5)
-                       (org-agenda-prefix-format '((tags .  " %(my-org-agenda-custom-date) ")))
-                       (org-agenda-overriding-header "\n Upcoming deadlines\n"))))))
-
-#+end_src
 
 ** Update :TIMER:
 
@@ -6148,13 +5886,8 @@ Set refile targets according to my setup
 (setq org-refile-use-outline-path nil)
 (setq org-refile-targets
       '(
-        ("~/Documents/org/agenda.org"    :maxlevel . 2)
-        ("~/Documents/org/inbox.org"     :maxlevel . 1)
-        ;;        ("~/Documents/org/organizer.org" :tag      . "tasks")
-        ;;        ("~/Documents/org/organizer.org" :tag      . "notes")
-        ;;        ("~/Documents/org/organizer.org" :tag      . "mails")
-        ;;        ("~/Documents/org/organizer.org" :tag      . "meetings")
-        ;;("~/Documents/org/archives.org" :maxlevel . 1)
+        ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 5)
+        ("~/Documents/org-files/agenda/leisure.org"    :maxlevel . 5)
         ))
 
 #+end_src
@@ -6163,12 +5896,19 @@ Set refile targets according to my setup
 #+begin_src emacs-lisp :prologue "" :epilogue ""
 
 (setq org-capture-templates
-      '(("i" "Inbox"  entry   (file "inbox.org")
-         "* TODO %?Task :INBOX:\n")
+      `(("i" "Inbox" entry  (file+headline "./agenda/inbox.org" "Miscellaneous")
+        ,(concat "* TODO %?\n"
+                 "/Entered on/ %U"))
+        ("m" "Meeting" entry  (file+headline "./agenda/inbox.org" "Meetings")
+        ,(concat "* %? :meeting:\n"
+                 "SCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+1d\"))"))
+        ("n" "Note" entry  (file+headline "./agenda/inbox.org" "Notes")
+        ,(concat "* Note (%a)\n"
+                 "/Entered on/ %U\n" "\n" "%?"))
+        ("@" "Inbox [mu4e]" entry (file+headline "./agenda/inbox.org" "Mails")
+        ,(concat "* TODO Reply to \"%a\" %?\n"
+                 "/Entered on/ %U"))))
 
-        ("m" "Meeting" entry  (file+headline "agenda.org" "Future")
-         "* %?Meeting   <%<%Y-%m-%d %a 12:00-13:00>>"
-         :empty-lines-after 1)))
 
 #+end_src
 
@@ -6189,6 +5929,16 @@ Assign key
   (org-capture nil "i"))
 
 (bind-key "C-c i" #'my-org-capture-inbox)
+
+
+(defun org-capture-mail ()
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "@"))
+
+(require 'mu4e)
+(define-key mu4e-headers-mode-map (kbd "C-c i") 'org-capture-mail)
+(define-key mu4e-view-mode-map    (kbd "C-c i") 'org-capture-mail)
 
 #+end_src
 
