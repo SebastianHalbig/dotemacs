@@ -6699,6 +6699,22 @@ Open an iterm (OSX) and go to the curent directory
 
 * TODO Miscellaneous
 For all the small additional goodies that make life a bit easier.
+** Dashboard
+
+Emacs-dashboard is used as the splash screen to show current tasks and projects
+#+begin_src emacs-lisp
+(use-package dashboard
+  :straight (:type git :host github :repo "emacs-dashboard/emacs-dashboard")
+  :ensure t
+  :config
+  (dashboard-setup-startup-hook)
+  (setq dashboard-items '((recents  . 5)
+                          (bookmarks . 5)
+                          (projects . 5)
+                          (agenda . 5)))
+  )
+
+#+end_src
 ** Spotify
 We use smudge to control spotify from within emacs.
 
