@@ -3806,6 +3806,7 @@ Setting up mail composition with org mode.
 
   (auto-save-mode -1)
   (set-fill-column 80)
+  (delete-other-windows)
   ;;(auto-fill-mode)
   (setq flyspell-generic-check-word-predicate
         'mail-mode-flyspell-verify))
@@ -3823,9 +3824,9 @@ Setting up mail composition with org mode.
         org-msg-options "toc:nil author:nil email:nil \\n:t"
 	    org-msg-greeting-fmt "\nHi%s,\n\n"
 	    org-msg-greeting-name-limit 3
-	    org-msg-default-alternatives '((new		      . (text))
-				                       (reply-to-html . (text))
-				                       (reply-to-text . (text)))
+	    org-msg-default-alternatives '((new		      . (utf-8))
+				                       (reply-to-html . (utf-8))
+				                       (reply-to-text . (utf-8)))
 	    org-msg-convert-citation t
 	    org-msg-signature "" )
   (add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*")))
