@@ -204,6 +204,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
           company-auctex
           company-reftex
         powerthesaurus      ; Because you can't know enough words.
+        jeison              ; Dependency of powertheaurus
         all-the-icons-completion  ; All the icons for marginalia
         ;;deft                ; Quickly browse, filter, and edit plain text notes
         ;;elpher              ; A friendly gopher and gemini client
