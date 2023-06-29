@@ -6764,6 +6764,13 @@ We use smudge to control spotify from within emacs.
     )
 #+end_src
 
+** Singular
+
+Singular is a computer algebra program with an emacs shell. We load it here
+#+begin_src emacs-lisp
+(use-package singular)
+#+end_src
+
 * Finishing up
 ** TODO Some cosmetics
 We use our customisation of the nano theme.
