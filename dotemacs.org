@@ -2472,7 +2472,7 @@ Now we can set up flyspell and guess-language.
 ;;   :after flyspell-correct)
 
 (use-package guess-language
-  :hook (mu4e-compose-mode)
+  :hook (mu4e-compose-mode . guess-language-mode)
   :config
 (setq guess-language-langcodes '((en . ("en_GB" "English"))
                                  (de . ("de_DE" "German")))
@@ -3926,12 +3926,12 @@ This provides a tag action inside the mu4e headers view to quickly tag message. 
 
 #+begin_src emacs-lisp
 
-(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE" "SAVE" "TODO" "DATE" "PENDING" "KITAEV" "WEYL" "INFINITY" "LEIBNITZ" "ADJUNCTION"  )
+(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE" "SAVE"  "PENDING")
   "Mu4e tag history list.")
 
 (add-to-list 'savehist-additional-variables 'mu4e-tag-history)
 
-(put 'mu4e-tag-history 'history-length 20)
+(put 'mu4e-tag-history 'history-length 7)
 
 #+end_src
 
@@ -4178,21 +4178,13 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
 #+begin_src emacs-lisp
 
 (defvar my-prettify-tag-alist
-  '(("TODO"           . "")
-    ("DATE"           . "")
-    ("RESEARCH"       . "")
-    ("PENDING"        . "")
-    ("INVOICE"        . "")
+  '(("RESEARCH"       . "")
+    ("PENDING"        . "")
+    ("INVOICE"        . "")
     ("SAVE"           . "")
-    ("TEACHING"       . "")
-    ("INFO"           . "")
-    ("ORGANISATIONAL" . "")
-    ("KITAEV"         . "")
-    ("WEYL"           . "")
-    ("INFINITY"       . "")
-    ("LEIBNITZ"       . "")
-    ("ADJUNCTION"     . "")
-    ("TALK"           . "")))
+    ("TEACHING"       . "")
+    ("INFO"           . "")
+    ("ORGANISATIONAL" . "")))
 
 (defun my-prettify-tag (tag)
   "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
