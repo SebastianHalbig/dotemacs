@@ -336,6 +336,15 @@ My latex-specific auto-expanding-snippets and the <tab> and <return> functionali
 
 #+end_src
 
+Singular shell:
+
+#+begin_src emacs-lisp
+
+(straight-use-package
+  '(singular :local-repo "singular"))
+
+#+end_src
+
 ** TODO Startup :ENHANCE:
 
 Emacs does a lot of things at startup and here, we disable pretty much everything.
