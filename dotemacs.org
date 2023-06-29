@@ -2484,6 +2484,14 @@ Now we can set up flyspell and guess-language.
   :init (setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify))
 #+end_src
 
+We use powerthesaurus for fancy word juggling.
+#+begin_src emacs-lisp
+
+  ;; (use-package powerthesaurus
+  ;;   :ensure jeison
+  ;;   )
+#+end_src
+
 ** Imenu list
 
 Imenu setup
