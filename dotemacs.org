@@ -1024,7 +1024,7 @@ This section is meant to ease the writing of the configuration file using a dedi
 
 Before being able to use it, you need to execute the whole subtree using [[help:org-babel-execute-subtree][org-babel-execute-subtree]] (generally bound to =C-c C-v s=).
 
-*** Sidebar :BINDING:
+*** Sidebar :INACTIVE:BINDING:
 
 This defines an org sidebar using imenu-list.
 
@@ -1210,7 +1210,8 @@ Some information for when a top node is closed
 #+RESULTS:
 : my-imenu-list-ret-dwim
 
-*** Filter :BINDING:
+
+*** Filter :INACTIVE:BINDING:
 
 This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries using the specified expression (e.g. "+HOOK +DEFER").
 
@@ -1238,7 +1239,7 @@ This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries usin
 
 
 #+begin_src emacs-lisp
-
+(require 'org)
 (require 'svg-tag-mode)
 
 (defvar my-org-imenu-filter-history
@@ -1321,7 +1322,7 @@ This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries usin
 
 #+RESULTS:
 
-*** Configuration mode
+*** Configuration mode :INACTIVE:
 
 This section defines the ~my-config-mode~ to ease navigating and interacting with the configuration file.
 
@@ -1481,6 +1482,15 @@ REMOTE is non-nil, search on the remote host indicated by
     ;; behavior of call-process.
     (let ((default-directory (file-name-quote default-directory 'top)))
       (locate-file command exec-path exec-suffixes 1))))
+
+#+end_src
+
+Flyspell causes some problems. We try to fix them here
+
+
+#+begin_src emacs-lisp
+
+(defun flyspell() (flyspell-mode))
 
 #+end_src
 
@@ -1734,22 +1744,22 @@ TODO: Defining a nano-modeline for the dirvish mode.
 
 #+begin_src emacs-lisp
 
-(defun my-nano-modeline-dirvish-list-mode-p ()
-  (derived-mode-p 'dirvish-mode)
-  )
+;; (defun my-nano-modeline-dirvish-list-mode-p ()
+;;   (derived-mode-p 'dirvish-mode)
+;;   )
 
-(defun my-nano-modeline-dirvish-list-mode (&optional icon)
-  (let* ((icon (or icon
-                   (plist-get (cdr (assoc 'dirvish-mode nano-modeline-mode-formats)) :icon)))
-         (cur-file-name (when dired-mode (dired-file-name-at-point)))
-         (cur-file-attr (when cur-file-name (file-attributes cur-file-name)))
-         (cur-file-last-acc (when cur-file-attr (file-attribute-access-time cur-file-attr)))
-         (cur-file-str (when cur-file-last-acc (concat cur-file-name " last accessed: " cur-file-last-acc)))
-         )(
-         (nano-modeline-render icon
-                               cur-file-name
-                               cur-file-last-acc
-                               ""))))
+;; (defun my-nano-modeline-dirvish-list-mode (&optional icon)
+;;   (let* ((icon (or icon
+;;                    (plist-get (cdr (assoc 'dirvish-mode nano-modeline-mode-formats)) :icon)))
+;;          (cur-file-name (when dired-mode (dired-file-name-at-point)))
+;;          (cur-file-attr (when cur-file-name (file-attributes cur-file-name)))
+;;          (cur-file-last-acc (when cur-file-attr (file-attribute-access-time cur-file-attr)))
+;;          (cur-file-str (when cur-file-last-acc (concat cur-file-name " last accessed: " cur-file-last-acc)))
+;;          )(
+;;          (nano-modeline-render icon
+;;                                cur-file-name
+;;                                cur-file-last-acc
+;;                                ""))))
 #+end_src
 
 Thanks to dirvish, navigating through files is now like dancing.
@@ -1757,9 +1767,7 @@ Thanks to dirvish, navigating through files is now like dancing.
 #+begin_src emacs-lisp
 
 (use-package dirvish
-  :hook ((dirvish-setup . dirvish-emerge-mode)
-         (dirvish-mode  . my-thin-modeline)
-         (dired-mode    . my-thin-modeline))
+  :hook ((dirvish-setup . dirvish-emerge-mode))
   :bind
   (:map ergoemacs-override-keymap
         ("C-x d" . dirvish)
@@ -1789,10 +1797,10 @@ Thanks to dirvish, navigating through files is now like dancing.
                           (when (file-directory-p file)
                             `(shell . ("exa" "--color=always" "-al" "--group-directories-first" ,file))))
   (add-to-list 'dirvish-preview-dispatchers 'exa)
-  (add-to-list 'nano-modeline-mode-formats '(dirvish-mode
-                                             :mode-p my-nano-modeline-dirvish-list-mode-p
-                                             :format my-nano-modeline-dirvish-list-mode
-                                             :icon "") t)
+  ;; (add-to-list 'nano-modeline-mode-formats '(dirvish-mode
+  ;;                                            :mode-p my-nano-modeline-dirvish-list-mode-p
+  ;;                                            :format my-nano-modeline-dirvish-list-mode
+  ;;                                            :icon "") t)
   (setq dirvish-quick-access-entries
         '(("h" "~/"                                " Home")
           ("e" "~/.emacs.d/    "                   " Emacs cache")
@@ -3044,35 +3052,36 @@ We're using [[https://github.com/rougier/nano-modeline][nano-modeline]] and modi
                     :background (my-face-background 'nano-subtle)
                     :box nil)
 
-(set-face-attribute 'nano-modeline-active-name nil
-                    :foreground "black"
-                    :inherit '(nano-modeline-active nano-strong))
-(set-face-attribute 'nano-modeline-active-primary nil
-                    :inherit '(nano-modeline-active))
-(set-face-attribute 'nano-modeline-active-secondary nil
-                    :inherit '(nano-faded nano-modeline-active))
+;; (set-face-attribute 'nano-modeline-active-name nil
+;;                     :foreground "black"
+;;                     :inherit '(nano-modeline-active nano-strong))
 
-(set-face-attribute 'nano-modeline-active-status-RW nil
-                    :inherit '(nano-faded-i nano-strong nano-modeline-active))
-(set-face-attribute 'nano-modeline-active-status-** nil
-                    :inherit '(nano-popout-i nano-strong nano-modeline-active))
-(set-face-attribute 'nano-modeline-active-status-RO nil
-                    :inherit '(nano-default-i nano-strong nano-modeline-active))
+;; (set-face-attribute 'nano-modeline-active-primary nil
+;;                     :inherit '(nano-modeline-active))
+;; (set-face-attribute 'nano-modeline-active-secondary nil
+;;                     :inherit '(nano-faded nano-modeline-active))
 
-(set-face-attribute 'nano-modeline-inactive-name nil
-                    :inherit '(nano-faded nano-strong
-                                          nano-modeline-inactive))
-(set-face-attribute 'nano-modeline-inactive-primary nil
-                    :inherit '(nano-faded nano-modeline-inactive))
+;; (set-face-attribute 'nano-modeline-active-status-RW nil
+;;                     :inherit '(nano-faded-i nano-strong nano-modeline-active))
+;; (set-face-attribute 'nano-modeline-active-status-** nil
+;;                     :inherit '(nano-popout-i nano-strong nano-modeline-active))
+;; (set-face-attribute 'nano-modeline-active-status-RO nil
+;;                     :inherit '(nano-default-i nano-strong nano-modeline-active))
 
-(set-face-attribute 'nano-modeline-inactive-secondary nil
-                    :inherit '(nano-faded nano-modeline-inactive))
-(set-face-attribute 'nano-modeline-inactive-status-RW nil
-                    :inherit '(nano-modeline-inactive-secondary))
-(set-face-attribute 'nano-modeline-inactive-status-** nil
-                    :inherit '(nano-modeline-inactive-secondary))
-(set-face-attribute 'nano-modeline-inactive-status-RO nil
-                    :inherit '(nano-modeline-inactive-secondary))
+;; (set-face-attribute 'nano-modeline-inactive-name nil
+;;                     :inherit '(nano-faded nano-strong
+;;                                           nano-modeline-inactive))
+;; (set-face-attribute 'nano-modeline-inactive-primary nil
+;;                     :inherit '(nano-faded nano-modeline-inactive))
+
+;; (set-face-attribute 'nano-modeline-inactive-secondary nil
+;;                     :inherit '(nano-faded nano-modeline-inactive))
+;; (set-face-attribute 'nano-modeline-inactive-status-RW nil
+;;                     :inherit '(nano-modeline-inactive-secondary))
+;; (set-face-attribute 'nano-modeline-inactive-status-** nil
+;;                     :inherit '(nano-modeline-inactive-secondary))
+;; (set-face-attribute 'nano-modeline-inactive-status-RO nil
+;;                     :inherit '(nano-modeline-inactive-secondary))
 
 #+end_src
 
@@ -3083,8 +3092,8 @@ We set a thin modeline
 (defun my-thin-modeline ()
   "Transform the modeline in a thin faded line"
 
-  (nano-modeline-face-clear 'mode-line)
-  (nano-modeline-face-clear 'mode-line-inactive)
+  ;; (nano-modeline-face-clear 'mode-line)
+  ;; (nano-modeline-face-clear 'mode-line-inactive)
   (setq mode-line-format (list ""))
   (setq-default mode-line-format (list ""))
   (set-face-attribute 'mode-line nil
@@ -3107,11 +3116,23 @@ We set a thin modeline
 We start the nano modeline.
 #+begin_src emacs-lisp
 
-(nano-modeline-mode 1)
+(add-hook 'prog-mode-hook            #'nano-modeline-prog-mode)
+(add-hook 'text-mode-hook            #'nano-modeline-text-mode)
+(add-hook 'org-mode-hook             #'nano-modeline-org-mode)
+(add-hook 'pdf-view-mode-hook        #'nano-modeline-pdf-mode)
+(add-hook 'mu4e-headers-mode-hook    #'nano-modeline-mu4e-headers-mode)
+(add-hook 'mu4e-view-mode-hook       #'nano-modeline-mu4e-message-mode)
+(add-hook 'elfeed-show-mode-hook     #'nano-modeline-elfeed-entry-mode)
+(add-hook 'elfeed-search-mode-hook   #'nano-modeline-elfeed-search-mode)
+(add-hook 'term-mode-hook            #'nano-modeline-term-mode)
+(add-hook 'xwidget-webkit-mode-hook  #'nano-modeline-xwidget-mode)
+(add-hook 'messages-buffer-mode-hook #'nano-modeline-message-mode)
+(add-hook 'org-capture-mode-hook     #'nano-modeline-org-capture-mode)
+(add-hook 'org-agenda-mode-hook      #'nano-modeline-org-agenda-mode)
 
 #+end_src
 
-** Minibuffer :MODE:HOOK:
+** Minibuffer :INACTIVE:MODE:HOOK:
 
 Headerline (fake) for minibuffer
 
@@ -3261,7 +3282,7 @@ No prompt editing and recursive minibuffer
 
 #+end_src
 
-** Miniframe :MODE:FACE:BUGFIX:
+** Miniframe :INACTIVE:MODE:FACE:BUGFIX:
 
 #+begin_src emacs-lisp
 
