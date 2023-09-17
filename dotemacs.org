@@ -2774,6 +2774,20 @@ It has a nice and quite useful wiki [[https://emacs-lsp.github.io/lsp-mode/][
 
 #+end_src
 
+** TODO YASnippet
+We use yasnippet in Latex mode
+
+#+begin_src emacs-lisp
+
+(use-package yasnippet
+  :demand t
+  :config (yas-global-mode)
+  :custom
+  (yas-inhibit-overlay-modification-protection nil))
+
+
+#+end_src
+
 ** Benchmark
 
 #+begin_src emacs-lisp
