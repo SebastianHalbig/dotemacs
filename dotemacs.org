@@ -181,6 +181,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         ergoemacs-mode      ; "Modern" key-bindings
         fira-code-mode      ; Fira code ligatures
         oauth               ; Oauth library
+        biblio              ; Handling bibliographies.
         offlineimap         ; OfflineIMAP from Emacs
         no-littering        ;
         org-msg             ; Write mails with org mode.
@@ -229,6 +230,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         ;;markdown-mode       ; Major mode for Markdown-formatted text
         multi-term          ; Managing multiple terminal buffers in Emacs.
         pinentry            ; GnuPG Pinentry server implementation
+        org-gcal            ; Gcal synchronisation
         use-package         ; A configuration macro for simplifying your .emacs
         vc-backup           ; VC backend for versioned backups
         ;;yaml-mode           ; YAML mode
@@ -1501,7 +1503,7 @@ Automatically tangle org-mode files with the option #+auto_tangle: t
 
 #+begin_src emacs-lisp
 
-(add-hook 'org-mode-hook 'org-auto-tangle-mode)
+;;(add-hook 'org-mode-hook 'org-auto-tangle-mode)
 
 #+end_src
 
@@ -5335,6 +5337,15 @@ This is only a rough setup to be able to write python code in emacs.
 #+RESULTS:
 
 * TODO Bibliography
+** Biblio
+
+We will use biblio for handling/downloading papers.
+
+#+begin_src emacs-lisp
+(use-package biblio)
+#+end_src
+
+
 ** Bibtex
 
 Settings for bibtex
@@ -5857,18 +5868,21 @@ The daily agenda
                             (:name "🎙 Talks\n"
                                    :tag "talk"
                                    :order 5)
-                            (:name "🗣 Meetings"
+                            (:name "💬 Meetings"
                                     :tag "meeting"
-                                   :order 6)
+                                    :order 6)
+                            (:name "📝 Administrative tasks"
+                                    :tag "admin"
+                                    :order 7)
                             (:name "⚠ Overdue \n"
                                    :deadline past
-                                   :order 7)
+                                   :order 8)
                             (:name "✩ Important \n"
                                    :priority "A"
-                                   :order 8)
+                                   :order 9)
                             (:name "🗏 Scheduled soon \n"
                                    :scheduled future
-                                   :order 9)
+                                   :order 10)
                             (:discard (:not (:todo "TODO")))))))))))
 :config
 (org-super-agenda-mode))
@@ -5935,11 +5949,17 @@ Set refile targets according to my setup
 (setq org-refile-use-outline-path nil)
 (setq org-refile-targets
       '(
-        ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 5)
-        ("~/Documents/org-files/agenda/leisure.org"    :maxlevel . 5)
+        ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 3)
+        ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 3)
+        ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 3)
+        ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 3)
         ))
 
 #+end_src
+
+#+RESULTS:
+: ((~/Documents/org-files/agenda/maths.org :maxlevel . 5) (~/Documents/org-files/agenda/leisure.org :maxlevel . 5) ())
+
 ** Capture :ADVICE:BINDING:
 
 #+begin_src emacs-lisp :prologue "" :epilogue ""
@@ -6154,6 +6174,17 @@ Finally, we disable [[help:org-agenda-show-outline-path][org-agenda-show-outline
 
 #+end_src
 
+** Calendar
+We want to sync the agenda/calendar over multiple devices. Since we're lazy we will use gcal.
+
+#+begin_src emacs-lisp
+(use-package org-gcal
+  :config
+  (setq org-gcal-client-id         "609704434601-f52c59f8oo68jg4nfkkrbhfrf3senhbl.apps.googleusercontent.com"
+        org-gcal-client-secret     "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"
+        org-gcal-fetch-file-alist '(("sebastianhalbig77@googlemail.com" .  "~/Documents/org-files/calendar.org"))
+        plstore-cache-passphrase-for-symmetric-encryption t))
+#+end_src
 ** Benchmark
 
 #+begin_src emacs-lisp  :prologue "" :epilogue ""
