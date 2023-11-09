@@ -218,6 +218,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         elfeed-score        ; A scoring tool for elfeed
         ;;f                   ; Modern API for working with files and directories
         citar               ; Citation-related commands for org, latex, markdown
+        citar-embark
         ;;citeproc            ; A CSL 1.0.2 Citation Processor
         flyspell-correct-popup ; Correcting words with flyspell via popup interface
         flyspell-popup      ; Correcting words with Flyspell in popup menus
@@ -2061,7 +2062,7 @@ It is a bit slow to load so we do need load it explicitely.
 
 A consistent theme for GNU Emacs. The light theme is based on Material colors and the dark theme is based on Nord colors. The theme is based on a set of six faces (only).
 
-#+begin_src lisp
+#+begin_src emacs-lisp
 
 (require 'nano-theme)
 (setq nano-fonts-use t) ; Use theme font stack
@@ -5344,7 +5345,39 @@ We will use biblio for handling/downloading papers.
 #+begin_src emacs-lisp
 (use-package biblio)
 #+end_src
+** Citar
 
+#+begin_src emacs-lisp
+(use-package citar
+  :custom
+  (org-cite-global-bibliography '("~/Documents/mathematics/literature/literature.bib"))
+  (org-cite-insert-processor 'citar)
+  (org-cite-follow-processor 'citar)
+  (org-cite-activate-processor 'citar)
+  (citar-bibliography org-cite-global-bibliography)
+  (citar-indicators
+  (list citar-indicator-files-icons
+        citar-indicator-links-icons
+        citar-indicator-notes-icons
+        citar-indicator-cited-icons))
+  (citar-templates
+      '((main . "${author editor:20%sn}  ${date year issued:4}  ${title:40}")
+        (suffix . " ${=key= id:10}  ${tags keywords:*}")
+        (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+        (note . "Notes on ${author editor:%etal}, ${title}")))
+  :hook
+  (LaTeX-mode . citar-capf-setup)
+  (org-mode . citar-capf-setup)
+  :bind
+  (:map org-mode-map :package org ("C-c b" . #'org-cite-insert))
+  (:map LaTeX-mode-map ("C-c b" . #'citar-insert-citation))
+  )
+
+(use-package citar-embark
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
+#+end_src
 
 ** Bibtex
 
