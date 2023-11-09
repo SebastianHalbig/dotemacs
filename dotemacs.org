@@ -4923,6 +4923,7 @@ Some latex-commands that are auto-expanded by aas.
       " ~"      "\\sim"
       " =="     "\\cong"
       " ot"     "\otimes"
+      " bn"     "\\mathbb{N}"
       " bz"     "\\mathbb{Z}"
       " bq"     "\\mathbb{Q}"
       " br"     "\\mathbb{R}"
@@ -4948,7 +4949,7 @@ Some latex-commands that are auto-expanded by aas.
       " end"   (lambda () (interactive)
                  (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
       " set"   (lambda () (interactive)
-                 (yas-expand-snippet "\\\\{$0"))
+                 (yas-expand-snippet "\\\\{$0\\\\}"))
       " sum"   (lambda () (interactive)
                  (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
       ;;" gl"    (lambda () (interactive)
@@ -5281,6 +5282,7 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
           ("\\&"                   ?& (Bc . Bc) ?|)
           ;;REFERECING
           ("\\ref"                 ?☞)
+          ("\\eqref"               ?☞)
           ("\\cite"                ?†)
           ("\\footnote"            ?‡)
           ("\\label"               43 (cc . cc) ?‡)
@@ -5298,6 +5300,9 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
           ("\\|"                   ?║)
           ;; Misc
           ("\\dots"                ?…)
+          ("\\blank"       . ?—)
+          ("\\eqdef"       . ?≝)
+          ("\\defeq"       . (?: (cr cl -20 -8) ?=))
           ("\\textbackslash"       ?＼)
           ("\\backslash"           ?＼)
           ("\\qed"                 ?□)
@@ -5320,7 +5325,12 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
   (LaTeX-mode . fira-code-mode)
   :config
   (latex-symbols-prettify)
-   )
+  )
+
+(use-package emacs
+  :custom (prettify-symbols-unprettify-at-point 'right-edge)
+  )
+
 #+end_src
 
 ** Benchmark
