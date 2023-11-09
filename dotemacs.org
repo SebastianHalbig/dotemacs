@@ -2877,7 +2877,6 @@ The following code is taken from the literate config of [[https://protesilaos.co
   :config
   (setq prefix-help-command #'embark-prefix-help-command)
   (setq embark-quit-after-action t)     ; XXX: Read the doc string!
-  (setq embark-cycle-key (kbd "M-."))   ; see the `embark-act' key
   (setq embark-confirm-act-all nil)
   (setq embark-indicators
         '(embark-mixed-indicator
