@@ -6115,10 +6115,10 @@ Set refile targets according to my setup
 (setq org-refile-use-outline-path nil)
 (setq org-refile-targets
       '(
-        ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 3)
+        ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 2)
         ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 3)
-        ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 3)
-        ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 3)
+        ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 2)
+        ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 2)
         ))
 
 #+end_src
@@ -6349,7 +6349,8 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
   (setq org-gcal-client-id         "609704434601-f52c59f8oo68jg4nfkkrbhfrf3senhbl.apps.googleusercontent.com"
         org-gcal-client-secret     "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"
         org-gcal-fetch-file-alist '(("sebastianhalbig77@googlemail.com" .  "~/Documents/org-files/calendar.org"))
-        plstore-cache-passphrase-for-symmetric-encryption t))
+        plstore-cache-passphrase-for-symmetric-encryption t)
+  (org-gcal-reload-client-id-secret))
 #+end_src
 ** Benchmark
 
