@@ -7010,6 +7010,10 @@ We use our customisation of the nano theme.
 * NOT YET INTEGRATED
 
 #+begin_src emacs-lisp
+;; CHATGPT
+
+(use-package gptel
+  :straight (:host github :repo "karthink/gptel"))
 
 ;; (use-package emacs
 ;;   :init (column-number-mode)
