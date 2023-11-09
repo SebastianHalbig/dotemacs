@@ -3876,6 +3876,11 @@ Setting up mail composition with org mode.
 
 #+begin_src emacs-lisp
 (use-package org-msg
+  :preface
+  (defun org-msg-no-temp-buffer (orig-fun &rest args)
+    "Advice to set `org-export-show-temporary-export-buffer' to `nil'."
+    (let ((org-export-show-temporary-export-buffer nil))
+      (apply orig-fun args)))
   :hook (mu4e-main-mode . org-msg-mode)
   :config
   (setq org-msg-startup "content"
@@ -3887,8 +3892,16 @@ Setting up mail composition with org mode.
 				                       (reply-to-text . (utf-8)))
 	    org-msg-convert-citation t
 	    org-msg-signature "" )
+  (advice-add 'org-msg-preview :around #'org-msg-no-temp-buffer)
+  (advice-add 'org-msg-ctrl-c-ctrl-c :around #'org-msg-no-temp-buffer)
+  (add-hook 'message-sent-hook
+            (lambda ()
+              (interactive)
+              (switch-to-buffer "*mu4e-article*")
+              (mu4e-view-quit)
+              (kill-buffer "*Org ASCII Export*"))))
+
   (add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*")))
- )
 
 
 #+end_src
