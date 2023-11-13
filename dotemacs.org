@@ -3883,7 +3883,7 @@ Setting up mail composition with org mode.
   :hook (mu4e-main-mode . org-msg-mode)
   :config
   (setq org-msg-startup "content"
-        org-msg-options "toc:nil author:nil email:nil \\n:t"
+        org-msg-options "toc:nil author:nil email:nil \\n:t broken-links:t"
 	    org-msg-greeting-fmt "\nHi%s,\n\n"
 	    org-msg-greeting-name-limit 3
 	    org-msg-default-alternatives '((new		      . (utf-8))
