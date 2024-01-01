@@ -4944,7 +4944,7 @@ Some latex-commands that are auto-expanded by aas.
       " zc"     "\\ZCat{C}"
       " subset" "\\subset"
       " supset" "\\supset"
-      " <>"    (lambda () (interactive)
+      " angled"    (lambda () (interactive)
                  (yas-expand-snippet "\\langle $0 \\rangle"))
       " adj"   (lambda () (interactive)
                  (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
