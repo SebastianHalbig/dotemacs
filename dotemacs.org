@@ -999,7 +999,7 @@ A set of mail (mu4e) related functions.
 
 ** TODO Better search :BINDING:
 
-Bound to the =C-s=, this function provides an integrated search and regexp-replace environment. Invoking it once opens the search with the active region as its default input. Typing a new string, deletes the default query and replaces it. If there is no default input, the arrow keys allow to navigate the search history (of the active buffer). Iterated calling of ~my-search()~, toggles between search and regexp-replace mode.
+Bound to  =C-f=, this function provides an integrated search and regexp-replace environment. Invoking it once opens the search with the active region as its default input. Typing a new string, deletes the default query and replaces it. If there is no default input, the arrow keys allow to navigate the search history (of the active buffer). Iterated calling of ~my-search()~, toggles between search and regexp-replace mode.
 
 #+begin_src emacs-lisp
 
