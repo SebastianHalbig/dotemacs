@@ -3784,9 +3784,9 @@ See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
       mml2015-sign-with-sender t)           ; Use message sender to find a key to sign with.
 
 ;;(setq epa-file-cache-passphrase-for-symmetric-encryption nil)
-;;(require 'epa-file)
-;;(epa-file-enable)
-;;(setq epa-file-select-keys nil)
+(require 'epa-file)
+(epa-file-enable)
+(setq epa-file-select-keys nil)
 (setq epa-pinentry-mode 'loopback)
 (pinentry-start)
 
