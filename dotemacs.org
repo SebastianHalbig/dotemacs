@@ -4768,6 +4768,11 @@ We begin with some basic latex default settings.
   (setq TeX-open-quote "`")                  ; We use single quotation marks.
   (setq TeX-close-quote "'")                 ; We use single quotation marks.
   (setq font-latex-fontify-sectioning 1.0)   ; We set section hights to 1.
+
+  (advice-add
+  'TeX-source-correlate-sync-source
+  :after
+  (lambda (&rest r) (recenter)))
   )
 
 #+end_src
