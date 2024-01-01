@@ -1,11 +1,154 @@
 #+TITLE: Emacs literate configuration
 #+AUTHOR: Sebastian Halbig
-#+DATE: 04/2022
+#+DATE: 01/2023
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.emacs.d/init.el")))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/Documents/emacs/init.el")))
+
+
+
 
 
 * Documentation
+
+* Elpaca
+
+We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manager for this config.
+A short summary of its functionality take from its documentation is as follows:
+
+#+BEGIN_QUOTE
+  Elpaca is an elisp package manager. It allows users to find, install, update, and remove third-party packages for Emacs. It is a replacement for the built-in Emacs package manager, package.el.
+
+  Elpaca:
+
+  + Installs packages asynchronously, in parallel for fast, non-blocking installations.
+  + Includes a flexible UI for finding and operating on packages.
+  + Downloads packages from their sources for convenient elisp development.
+  + Supports thousands of elisp packages out of the box (MELPA, NonGNU/GNU ELPA, Org/org-contrib).
+  + Makes it easy for users to create their own ELPAs.
+#+END_QUOTE
+
+Like straight, one needs to bootstrap elpaca
+#+begin_src emacs-lisp
+(defvar elpaca-installer-version 0.6)
+(defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+(defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+(defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+(defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                              :ref nil
+                              :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                              :build (:not elpaca--activate-package)))
+(let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+       (build (expand-file-name "elpaca/" elpaca-builds-directory))
+       (order (cdr elpaca-order))
+       (default-directory repo))
+  (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (unless (file-exists-p repo)
+    (make-directory repo t)
+    (when (< emacs-major-version 28) (require 'subr-x))
+    (condition-case-unless-debug err
+        (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                 ((zerop (call-process "git" nil buffer t "clone"
+                                       (plist-get order :repo) repo)))
+                 ((zerop (call-process "git" nil buffer t "checkout"
+                                       (or (plist-get order :ref) "--"))))
+                 (emacs (concat invocation-directory invocation-name))
+                 ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                       "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                 ((require 'elpaca))
+                 ((elpaca-generate-autoloads "elpaca" repo)))
+            (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+          (error "%s" (with-current-buffer buffer (buffer-string))))
+      ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (unless (require 'elpaca-autoloads nil t)
+    (require 'elpaca)
+    (elpaca-generate-autoloads "elpaca" repo)
+    (load "./elpaca-autoloads")))
+(add-hook 'after-init-hook #'elpaca-process-queues)
+(elpaca `(,@elpaca-order))
+#+end_src
+** use-package integration
+
+We will use elpaca in conjunction with use-package.
+The elpaca-documentation suggests the following piece of code for the integration of elpaca into use-package.
+
+#+begin_src emacs-lisp
+(elpaca elpaca-use-package
+  ;; Enable :elpaca use-package keyword.
+  (elpaca-use-package-mode)
+  ;; Assume :elpaca t unless otherwise specified.
+  (setq elpaca-use-package-by-default t))
+#+end_src
+** TODO Early init
+
+As suggested in the manual, we disable the standard package manager at startup.
+#+begin_src emacs-lisp
+(setq package-enable-at-startup nil)
+#+end_src
+
+
+
+#+begin_src emacs-lisp
+(elpaca-wait)
+#+end_src
+
+
+* Ergoemacs
+We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
+#+begin_src emacs-lisp
+(use-package ergoemacs-mode
+    :config
+    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
+    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
+    (ergoemacs-mode 1))                   ; Globally enables ergoemacs-mode
+#+end_src
+
+
+* Design
+
+** Lambda theme
+#+begin_src emacs-lisp
+(use-package lambda-themes
+  :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
+  :custom
+  (lambda-themes-set-italic-comments t)
+  (lambda-themes-set-italic-keywords t)
+  (lambda-themes-set-variable-pitch t)
+  :config
+  ;; load preferred theme
+  (load-theme 'lambda-light t))
+#+end_src
+
+** Nano modeline
+
+#+begin_src emacs-lisp
+(use-package lambda-line
+  :elpaca (:type git :host github :repo "lambda-emacs/lambda-line")
+  :custom
+  (lambda-line-icon-time t) ;; requires ClockFace font (see below)
+  (lambda-line-clockface-update-fontset "ClockFaceRect") ;; set clock icon
+  (lambda-line-position 'top) ;; Set position of status-line
+  (lambda-line-abbrev t) ;; abbreviate major modes
+  (lambda-line-hspace "  ")  ;; add some cushion
+  (lambda-line-prefix t) ;; use a prefix symbol
+  (lambda-line-prefix-padding nil) ;; no extra space for prefix
+  (lambda-line-status-invert nil)  ;; no invert colors
+  (lambda-line-gui-ro-symbol  " ⨂") ;; symbols
+  (lambda-line-gui-mod-symbol " ⬤")
+  (lambda-line-gui-rw-symbol  " ◯")
+  (lambda-line-space-top +.50)  ;; padding on top and bottom of line
+  (lambda-line-space-bottom -.50)
+  (lambda-line-symbol-position 0.1) ;; adjust the vertical placement of symbol
+  :config
+  ;; activate lambda-line
+  (lambda-line-mode)
+  ;; set divider line in footer
+  (when (eq lambda-line-position 'top)
+    (setq-default mode-line-format (list "%_"))
+    (setq mode-line-format (list "%_"))))
+#+end_src
+
+
+* Documentation :INACTIVE:
 ** Forewords
 
 This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It is an adaptation of Nicolas P. Rougier's brilliant work. It cannot be used directly and needs to be transformed to extract all the different code blocks into a single configuration file. This is done using the [[help:org-babel-tangle][org-babel-Utangle]] function that "extract the bodies of all source code blocks from the current file into their own source-specific files". You can try by yourself by typing the sequence: =C-c C-v t= (org-babel-execute-subtree).
@@ -65,7 +208,7 @@ Note also that the first time you will start emacs using this configuration, *it
 - [ ] use use-package consequently
 
 
-* Core
+* Core :INACTIVE:
 
 ** Header
 
@@ -632,7 +775,7 @@ We suppress this with a bit of "hacking".
 #+end_src
 
 
-* Personal library
+* Personal library :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -1520,7 +1663,7 @@ Automatically tangle org-mode files with the option #+auto_tangle: t
 #+end_src
 
 
-* Interface
+* Interface :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -2049,7 +2192,7 @@ It is a bit slow to load so we do need load it explicitely.
 #+end_src
 
 
-* Visual
+* Visual :INACTIVE:
 
 
 #+begin_src emacs-lisp
@@ -2339,7 +2482,7 @@ Make sure underline is positioned at the very bottom.
 #+end_src
 
 
-* Editing
+* Editing :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -2543,7 +2686,7 @@ For retina display (OSX)
 #+end_src
 
 
-* Completion
+* Completion :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -2800,7 +2943,7 @@ We use yasnippet in Latex mode
 #+end_src
 
 
-* Minibuffer & Modeline
+* Minibuffer & Modeline :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -3438,7 +3581,7 @@ This function used as value for `resize-mini-frames' variable."
 
 
 
-* Mail :DEFER:
+* Mail :INACTIVE:DEFER:
 :PROPERTIES:
 :header-args:emacs-lisp: :prologue "(with-eval-after-load 'mu4e" :epilogue ")"
 :END:
@@ -4739,7 +4882,7 @@ We activate the dashboard in the headers view.
 #+end_src
 
 
-* Math-mode :DEFER:MODE:BINDING:
+* Math-mode :INACTIVE:DEFER:MODE:BINDING:
 
 #+begin_src emacs-lisp  :prologue "" :epilogue ""
 
@@ -5350,7 +5493,7 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
 
 
 
-* TODO Python :DEFER:MODE:
+* TODO Python :INACTIVE:DEFER:MODE:
 
 This is only a rough setup to be able to write python code in emacs.
 
@@ -5365,7 +5508,7 @@ This is only a rough setup to be able to write python code in emacs.
 
 #+RESULTS:
 
-* TODO Bibliography
+* TODO Bibliography :INACTIVE:
 ** Biblio
 
 We will use biblio for handling/downloading papers.
@@ -5597,7 +5740,7 @@ An autoload function for my-config (that will load org mode).
 #+end_src
 
 
-* Org :DEFER:
+* Org :INACTIVE:DEFER:
 :PROPERTIES:
 :header-args:emacs-lisp: :prologue "(with-eval-after-load 'org" :epilogue ")"
 :END:
@@ -5686,7 +5829,6 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
              '("S" . "src emacs-lisp"))
 
 #+end_src
-
 
 ** Modern Org mode
 #+begin_src emacs-lisp
@@ -5787,7 +5929,7 @@ We treat ~code~ and =verbatim= faces differently among export
 
 
 
-* Agenda :DEFER:
+* Agenda :INACTIVE:DEFER:
 :PROPERTIES:
 :header-args:emacs-lisp: :prologue "(with-eval-after-load 'org-agenda" :epilogue ")"
 :END:
@@ -6375,7 +6517,7 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 
 #+end_src
 
-** Magit :ADVICE:HOOK:
+** Magit :INACTIVE:ADVICE:HOOK:
 
 Prevent magit from writing in the header line.
 
@@ -6404,7 +6546,7 @@ Add fringe on the left side of magit windows such that we can highlight region u
 #+end_src
 
 
-* News :DEFER:
+* News :INACTIVE:DEFER:
 :PROPERTIES:
 :header-args:emacs-lisp: :prologue "(with-eval-after-load 'elfeed" :epilogue ")"
 :END:
@@ -6885,7 +7027,7 @@ We give elfeed the mu4e looks and feel.
 # #+end_src
 
 
-* System
+* System :INACTIVE:
 #+begin_src emacs-lisp  :prologue "" :epilogue ""
 
 (setq my-section-start-time (current-time))
@@ -6949,7 +7091,7 @@ Open an iterm (OSX) and go to the curent directory
 #+end_src
 
 
-* TODO Miscellaneous
+* TODO Miscellaneous :INACTIVE:
 For all the small additional goodies that make life a bit easier.
 ** Dashboard
 
@@ -6992,7 +7134,7 @@ Singular is a computer algebra program with an emacs shell. We load it here
 (use-package singular)
 #+end_src
 
-* Finishing up
+* Finishing up :INACTIVE:
 ** TODO Some cosmetics
 We use our customisation of the nano theme.
 #+begin_src emacs-lisp
@@ -7013,7 +7155,7 @@ We use our customisation of the nano theme.
 
 #+end_src
 
-* NOT YET INTEGRATED
+* NOT YET INTEGRATED :INACTIVE:
 
 #+begin_src emacs-lisp
 ;; CHATGPT
