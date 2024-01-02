@@ -2,7 +2,7 @@
 #+AUTHOR: Sebastian Halbig
 #+DATE: 01/2023
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/Documents/emacs/init.el")))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.emacs.d/init.el")))
 
 
 
@@ -103,7 +103,7 @@ We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to
 #+end_src
 
 
-* Design
+* TODO Design
 
 ** Lambda theme
 #+begin_src emacs-lisp
@@ -112,13 +112,23 @@ We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to
   :custom
   (lambda-themes-set-italic-comments t)
   (lambda-themes-set-italic-keywords t)
-  (lambda-themes-set-variable-pitch t)
+  :bind ("<f6>" . lambda-themes-toggle-theme)
+  :custom-face
+  (default ((t (:family "Roboto Mono Nerd"
+                :weight light
+                :height 140))))
+  (bold ((t (:family "Roboto Mono"
+             :weight regular))))
+  (italic ((t (:family "Roboto Mono Nerd"
+               :weight semilight
+               :slant italic))))
   :config
   ;; load preferred theme
   (load-theme 'lambda-light t))
 #+end_src
 
-** Nano modeline
+
+** Lambda modeline
 
 #+begin_src emacs-lisp
 (use-package lambda-line
@@ -6509,7 +6519,7 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 #+end_src
 
 
-* Versioning
+* Versioning :INACTIVE:
 
 #+begin_src emacs-lisp :prologue "" :epilogue ""
 
