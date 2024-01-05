@@ -5390,6 +5390,18 @@ This is only a rough setup to be able to write python code in emacs.
 #+RESULTS:
 
 * TODO Bibliography
+** Titlecase
+
+#+begin_src emacs-lisp
+(use-package titlecase
+  :straight (titlecase
+             :host codeberg
+             :repo "acdw/titlecase.el")
+  :after embark
+  :bind (:map embark-region-map
+              ("T" . titlecase-dwim)))
+
+#+end_src
 ** Biblio
 
 We will use biblio for handling/downloading papers.
