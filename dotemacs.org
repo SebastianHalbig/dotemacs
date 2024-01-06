@@ -6414,6 +6414,12 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 Prevent magit from writing in the header line.
 
 #+begin_src emacs-lisp
+(use-package magit
+  :config
+  (visual-line-mode 1))
+#+end_src
+
+#+begin_src emacs-lisp
 
 (advice-add 'magit-set-header-line-format :override #'ignore)
 
