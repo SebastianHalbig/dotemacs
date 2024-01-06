@@ -5407,7 +5407,11 @@ This is only a rough setup to be able to write python code in emacs.
 We will use biblio for handling/downloading papers.
 
 #+begin_src emacs-lisp
-(use-package biblio)
+(use-package biblio
+  :config
+  (setq biblio-bibtex-use-autokey t)
+  (setopt biblio-cleanup-bibtex-function #'bibtex-clean-entry)
+  )
 #+end_src
 ** Zotra
 
@@ -5460,17 +5464,11 @@ We will use biblio for handling/downloading papers.
   (setq zotra-default-bibliography org-cite-global-bibliography)
   (setq zotra-default-entry-format "biblatex")
   (setq zotra-download-attachment-default-directory "~/Documents/mathematics/literature/pdfs/")
-  (setq zotra-backend 'zotra-cli)
-  (setq zotra-cli-command '("~/.emacs.d/zotra-cli/bin/index.js"))
+  (setq zotra-backend 'zotra-server)
+  (setq zotra-local-server-directory "~/.emacs.d/zotra-server/")
   (setq zotra-after-get-bibtex-entry-hook '(finalise-entry
-                                            zotra-download-attachment-for-current-entry
+                                            ;; zotra-download-attachment-for-current-entry
                                             bibtex-fill-entry))
-  ;;(remove-hook 'zotra-after-get-bibtex-entry-hook 'bibtex-clean-entry)
-  ;; (add-hook 'zotra-after-get-bibtex-entry-hook 'zotra-download-attachment-for-current-entry)
-  ;; (add-hook 'zotra-after-get-bibtex-entry-hook 'bibtex-clean-entry -100 t)
-  ;; (ebib-index-mode-map
-  ;;  "i" 'zotra-add-entry-from-search
-  ;;  "u" 'zotra-add-entry-from-url)
   )
 
 #+end_src
@@ -6935,7 +6933,8 @@ Set default shell (zsh)
 #+begin_src emacs-lisp
 
 (setq-default shell-file-name          "/bin/zsh"
-              explicit-shell-file-name "/bin/zsh")
+              explicit-shell-file-name "/bin/zsh"
+              explicit-zsh-args '("--interactive" "--login"))
 
 #+end_src
 
@@ -6943,8 +6942,8 @@ Make sure our environment variables are set properly
 
 #+begin_src emacs-lisp
 
-;; (require 'exec-path-from-shell)
-;; (exec-path-from-shell-copy-envs '("LANG" "LC_ALL" "LC_CTYPES"))
+(require 'exec-path-from-shell)
+(exec-path-from-shell-copy-envs '("LANG" "LC_ALL" "LC_CTYPES" "PATH"))
 
 #+end_src
 
