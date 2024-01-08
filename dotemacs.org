@@ -7066,6 +7066,16 @@ We use our customisation of the nano theme.
 
 * NOT YET INTEGRATED
 
+Visual regexp
+
+#+begin_src emacs-lisp
+(use-package visual-regexp
+  :straight (:host github :repo "benma/visual-regexp.el")
+  :bind (:map ergoemacs-override-keymap
+              ("M-5" . vr/query-replace)
+              ("M-%" . vr/query-replace)))
+#+end_src
+
 #+begin_src emacs-lisp
 ;; CHATGPT
 
