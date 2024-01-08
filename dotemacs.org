@@ -3988,12 +3988,12 @@ This provides a tag action inside the mu4e headers view to quickly tag message. 
 
 #+begin_src emacs-lisp
 
-(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE" "SAVE"  "PENDING")
+(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE")
   "Mu4e tag history list.")
 
 (add-to-list 'savehist-additional-variables 'mu4e-tag-history)
 
-(put 'mu4e-tag-history 'history-length 7)
+(put 'mu4e-tag-history 'history-length 5)
 
 #+end_src
 
