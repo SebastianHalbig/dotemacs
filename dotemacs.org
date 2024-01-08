@@ -5414,6 +5414,13 @@ We will use biblio for handling/downloading papers.
   (setopt biblio-cleanup-bibtex-function #'bibtex-clean-entry)
   )
 #+end_src
+
+#+begin_src emacs-lisp
+(use-package biblio-zbmath
+  :straight (biblio-zbmath :local-repo "biblio-zbmath")
+  :load-path "~/.emacs.d/straight/repos/biblio-zbmath"
+  )
+#+end_src
 ** Zotra
 
 
