@@ -1790,9 +1790,7 @@ Thanks to dirvish, navigating through files is now like dancing.
         ("M-e"      . dirvish-emerge-menu)
         ([remap dired-sort-toggle-or-edit] . dirvish-quicksort)
         ([remap dired-do-redisplay] . dirvish-ls-switches-menu)
-        ([remap dired-do-copy] . dirvish-yank-menu)
-        :map mode-specific-map
-        ("e" . dirvish-dwim))
+        ([remap dired-do-copy] . dirvish-yank-menu))
   :config
   (dirvish-override-dired-mode)
   (dirvish-define-preview exa (file)
@@ -5494,6 +5492,8 @@ We will use biblio for handling/downloading papers.
              :host github
              :repo "joostkremers/ebib")
   :demand t
+  :bind
+  (:map LaTeX-mode-map ("C-c e" . #'ebib))
   :config
   (setq ebib-preload-bib-files
         '("~/Documents/mathematics/literature/literature.bib"))
