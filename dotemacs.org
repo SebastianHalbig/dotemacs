@@ -3516,9 +3516,9 @@ Mu4e doesn't come with an autoload function, we declare it here.
       shr-use-colors nil) ; Simple HTML Renderer / no color
 
 #+end_src
-We bind mu4e to C-M
+We bind mu4e to M-m.
 #+begin_src emacs-lisp
-(bind-key (kbd "C-m") #'mu4e 'ergoemacs-override-keymap)
+(bind-key (kbd "M-m") #'mu4e 'ergoemacs-override-keymap)
 #+end_src
 How to handle various MIME data.
 
