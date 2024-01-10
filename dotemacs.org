@@ -6425,8 +6425,12 @@ Prevent magit from writing in the header line.
 
 #+begin_src emacs-lisp
 (use-package magit
+  :straight (magit
+             :host github
+             :repo "magit/magit")
   :config
-  (visual-line-mode 1))
+  (visual-line-mode 1)
+  (setq magit-branch-direct-configure nil)) ;;use the standard branch config
 #+end_src
 
 #+begin_src emacs-lisp
