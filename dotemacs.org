@@ -10,7 +10,7 @@
 
 * Documentation
 
-* Elpaca
+* TODO Elpaca
 
 We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manager for this config.
 A short summary of its functionality take from its documentation is as follows:
@@ -94,6 +94,7 @@ As suggested in the manual, we disable the standard package manager at startup.
 
 * Ergoemacs
 We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
+Change of standard bindings are saved in _ergoemacs-override-keymap_.
 #+begin_src emacs-lisp
 (use-package ergoemacs-mode
     :config
@@ -104,35 +105,120 @@ We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to
 
 
 * TODO Design
+The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
 ** Lambda theme
+
 #+begin_src emacs-lisp
 (use-package lambda-themes
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
+  :demand t
   :custom
   (lambda-themes-set-italic-comments t)
   (lambda-themes-set-italic-keywords t)
   :bind ("<f6>" . lambda-themes-toggle-theme)
   :custom-face
-  (default ((t (:family "Roboto Mono Nerd"
-                :weight light
-                :height 140))))
-  (bold ((t (:family "Roboto Mono"
-             :weight regular))))
-  (italic ((t (:family "Roboto Mono Nerd"
-               :weight semilight
-               :slant italic))))
   :config
   ;; load preferred theme
   (load-theme 'lambda-light t))
 #+end_src
 
+** Fonts
 
-** Lambda modeline
+This is the font stack we install:
+
+- Default font:  Roboto Mono 14pt Light    [[https://fonts.google.com/specimen/Roboto+Mono][   ]]
+- /Italic font/:    Victor Mono 14pt Semilight [[https://github.com/rubjo/victor-mono][  ]]
+- *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]]
+- Icon font:     Roboto Mono Nerd 14pt Light  [[https://www.nerdfonts.com/][]]
+
+Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
+chosen to really *stand out* from the default font (Roboto Mono).
+┌─────────────────────────────────────────────────────────────────┐
+│  The quick brown fox jumps over the lazy dog                   │
+│  /The quick brown fox jumps over the lazy dog/                   ┼─ Victor Mono Italic
+│  *The quick brown fox jumps over the lazy dog*                   ├─ Inconsolata
+└──┼────────────────────────────────────────────┼─────────────────┘
+Roboto Mono Nerd                           Roboto Mono
+
+Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
+
+
+#+begin_src lisp
+
+(set-face-attribute 'default nil
+                    :family "Roboto Mono "
+                    :weight 'light
+                    :height 140)
+
+(set-face-attribute 'bold nil
+                    :family "Roboto Mono"
+                    :weight 'regular)
+
+(set-face-attribute 'italic nil
+                    :family "Victor Mono"
+                    :weight 'semilight
+                    :height (/ (float 15) (float 14))
+                    :slant 'italic
+                    )
+#+end_src
+
+
+We additionally define some fonts for common character sets.
+To get a list of all character sets type "M-x list-character-sets"
+
+#+begin_src emacs-lisp
+(use-package dash)
+#+end_src
+#+begin_src emacs-lisp
+(use-package emacs
+  :elpaca nil
+  :after dash
+  :demand t
+  :config
+  ( --map (set-fontset-font t (-first-item it) (-second-item it))
+       '((unicode "Roboto Mono Nerd Font")
+         (symbol  "Roboto Mono Nerd Font")
+         (emoji   "Roboto Mono Nerd Font")
+         ))
+  )
+#+end_src
+
+** Typography and layout
+
+#+begin_src emacs-lisp
+
+(setq-default fill-column 100                         ; Default line width
+              sentence-end-double-space nil           ; Use a single space after dots
+              bidi-paragraph-direction 'left-to-right ; Faster
+              truncate-string-ellipsis "…")           ; Nicer ellipsis
+
+#+end_src
+
+
+#+begin_src emacs-lisp
+
+(use-package visual-fill-column
+  :ensure adaptive-wrap
+  :custom (visual-fill-column-center-text t)
+  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
+          )
+  )
+
+#+end_src
+Changing the symbol for truncation (…) and wrap (↩).
+
+
+
+** TODO Lambda modeline
+The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
 
 #+begin_src emacs-lisp
 (use-package lambda-line
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-line")
+  :after lambda-themes
+  :demand t
   :custom
   (lambda-line-icon-time t) ;; requires ClockFace font (see below)
   (lambda-line-clockface-update-fontset "ClockFaceRect") ;; set clock icon
@@ -156,6 +242,8 @@ We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to
     (setq-default mode-line-format (list "%_"))
     (setq mode-line-format (list "%_"))))
 #+end_src
+
+#+RESULTS:
 
 
 * Documentation :INACTIVE:
