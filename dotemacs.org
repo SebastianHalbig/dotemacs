@@ -2250,17 +2250,16 @@ This is the font stack we install:
 Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
 chosen to really *stand out* from the default font (Roboto Mono).
 ┌─────────────────────────────────────────────────────────────────┐
-│  The quick brown fox jumps over the lazy dog │
-│  /The quick brown fox jumps over the lazy dog/     ┼─ Victor Mono Italic
-│  *The quick brown fox jumps over the lazy dog* ├─ Inconsolata
-└──┼────────────────────────────────────────────┼─────────────────┘
-Roboto Mono Nerd            Roboto Mono
+│   The quick brown fox jumps over the lazy dog                  │
+│   /The quick brown fox jumps over the lazy dog/                  ┼─ Victor Mono Italic
+│   *The quick brown fox jumps over the lazy dog*                  ├─ Roboto Mono Nerd
+└─┼─────────────────────────────────────┼─────────────────────────┘
+Roboto Mono Nerd                     Roboto Mono
 
-Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
+Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): \copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
 
 
 #+begin_src lisp
-
 (set-face-attribute 'default nil
                     :family "Roboto Mono"
                     :weight 'light
@@ -2274,20 +2273,29 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
                     :family "Victor Mono"
                     :weight 'semilight
                     :slant 'italic
+                    :height (lambda (x)
+                              (cond ((< x 100) (+ x 5))
+                                    ((and (>= x 100) (< x 110)) 110)
+                                    ((and (>= x 110) (< x 120)) 132)
+                                    ((and (>= x 120) (< x 130)) 132)
+                                    ((and (>= x 130) (< x 140)) 140)
+                                    ((and (>= x 140) (< x 150)) 150)
+                                    ((and (>= x 150) (< x 160)) 170)
+                                    ((and (>= x 160) (< x 170)) 180)
+                                    ((and (>= x 170) (< x 180)) 190)
+                                    ((and (>= x 180) (< x 190)) 200)
+                                    ((>= x 190) (round(* x 1.1)))))
                     )
 
-;; For now we use the Emacs "standard" unicode font
 
-;; (set-fontset-font t 'unicode
-;;                   (font-spec :name "Inconsolata Light"
-;;                              :size 16) nil)
+(set-fontset-font t 'unicode "Roboto Mono Nerd")
 
+(set-fontset-font t '(#xe000 . #xffdd) "Roboto Mono Nerd")
 
-(set-fontset-font t '(#xe000 . #xffdd) "RobotoMono Nerd Font")
-
-(set-fontset-font t 'emoji "Symbola")
+(set-fontset-font t 'emoji "Roboto Mono Nerd")
 
 #+end_src
+
 
 ** Typography and layout
 
