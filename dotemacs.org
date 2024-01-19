@@ -27,7 +27,7 @@ A short summary of its functionality take from its documentation is as follows:
   + Makes it easy for users to create their own ELPAs.
 #+END_QUOTE
 
-Like straight, one needs to bootstrap elpaca
+Like straight, one needs to bootstrap elpaca.
 #+begin_src emacs-lisp
 (defvar elpaca-installer-version 0.6)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
