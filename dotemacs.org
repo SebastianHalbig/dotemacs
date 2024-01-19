@@ -7080,7 +7080,23 @@ We use our customisation of the nano theme.
 
 * NOT YET INTEGRATED
 
-Visual regexp
+** Maxima
+See [[https://gitlab.com/sasanidas/maxima][maxima]]
+
+#+begin_src emacs-lisp
+(use-package maxima
+  :straight (maxima :type git :flavor melpa :files ("maxima.el" "maxima-font-lock.el" ("keywords" "keywords/*") "maxima-pkg.el") :host gitlab :repo   "sasanidas/maxima")
+  :bind (:map maxima-inferior-mode-map ("TAB" . maxima-complete))
+        (:map maxima-mode-map          ("TAB" . maxima-complete))
+  :init
+  (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)
+	  maxima-display-maxima-buffer nil)
+  (add-to-list 'auto-mode-alist
+		 (cons "\\.mac\\'" 'maxima-mode))
+  (add-to-list 'interpreter-mode-alist
+		 (cons "maxima" 'maxima-mode)))
+#+end_src
+** Visual regexp
 
 #+begin_src emacs-lisp
 (use-package visual-regexp
@@ -7089,7 +7105,7 @@ Visual regexp
               ("M-5" . vr/query-replace)
               ("M-%" . vr/query-replace)))
 #+end_src
-
+** TODO ChatGPT
 #+begin_src emacs-lisp
 ;; CHATGPT
 
@@ -7127,4 +7143,16 @@ Visual regexp
   (message "Final initialisation time:             %.2fs (+ %.2f system time)"
            init-time (- total-time init-time)))
 (message "---------------------------------------------------------------")
+#+end_src
+** Org Timeblock
+
+#+begin_src emacs-lisp
+(use-package org-timeblock
+  :straight (org-timeblock :type git
+              :host github
+              :repo "ichernyshovvv/org-timeblock")
+  :bind (:map ergoemacs-override-keymap ("M-n" . org-timeblock))
+  :custom
+  (org-timeblock-scale-options '(7 . 21))
+  (org-timeblock-span 7))
 #+end_src
