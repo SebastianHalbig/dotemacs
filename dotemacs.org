@@ -5764,16 +5764,18 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
   ;;  Auto-update tags whenever the state is changed
   (setq org-tag-alist
         '((:startgroup)
-                                        ; Put mutually exclusive tags here
+          ("mandatory"   . ?a)
+          ("dispensable" . ?d)   ; Put mutually exclusive tags here
           (:endgroup)
-          ("short"        . ?s)
-          ("necessary"    . ?n)
-          ("extension"    . ?e)
-          ("idea"         . ?i)
-          ("organisation" . ?o)
-          ("meetings"     . ?m)
-          ("feedback"     . ?f)
-          ("regularly"    . ?r)
+          ("bureaucracy" . ?b)
+          ("leisure"     . ?l)
+          ("music"       . ?m)
+          ("orga"        . ?o)
+          ("progn"       . ?p)
+          ("research"    . ?r)
+          ("sports"      . ?s)
+          ("teaching"    . ?t)
+          (""            . ?x)
           ))
 
 (setq pale-blue   '"#BBCCEE"
@@ -5784,17 +5786,17 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
       pale-gray   '"#DDDDDD")
 
   (setq org-todo-keyword-faces
-        '(("TODO" :background "#EEEEBB" :weight semi-bold)
-          ("NEXT" :background "#FFCCCC" :weight bold)
-          ("DONE" :background "#CCDDAA":weight semi-bold)
-          ("SKETCH" :background "#BBCCEE" :weight normal)
-          ("DETAIL" :background "#CCEEFF" :weight normal)
-          ("WRITE-UP" :background "#EEEEBB" :weight normal)
-          ("COMPLETED" :background "#DDDDDD" :weight normal)
-          ("INVESTIGATE" :background "#BBCCEE" :weight normal)
-          ("REPORT" :background "#CCEEFF" :weight normal)
-          ("FINISHED" :background "#DDDDDD" :weight normal)
-          ("CANCELED" :background "#DDDDDD" :weight normal)))
+        '(("TODO " :background "#EEEEBB" :weight semi-bold)
+          ("NEXT " :background "#FFCCCC" :weight bold)
+          ("DONE " :background "#CCDDAA":weight semi-bold)
+          ("SKETCH " :background "#BBCCEE" :weight normal)
+          ("DETAIL " :background "#CCEEFF" :weight normal)
+          ("WRITE-UP " :background "#EEEEBB" :weight normal)
+          ("COMPLETED " :background "#DDDDDD" :weight normal)
+          ("INVESTIGATE " :background "#BBCCEE" :weight normal)
+          ("REPORT " :background "#CCEEFF" :weight normal)
+          ("FINISHED " :background "#DDDDDD" :weight normal)
+          ("CANCELED " :background "#DDDDDD" :weight normal)))
 
   (global-org-modern-mode)
   )
