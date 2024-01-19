@@ -10,6 +10,55 @@
 
 * Documentation
 
+
+* Early init
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle "~/.emacs.d/early-init.el"
+:END:
+
+The early-init code is taken almost verbatim from [[https://protesilaos.com/emacs/dotemacs#h:7b7b5898-09f7-4128-8af0-4041f67cb729][Prot's config]] and combined with the early init of [[https://github.com/rougier/dotemacs/blob/master/dotemacs.org][Rougier]].
+
+#+begin_src emacs-lisp
+(setq frame-title-format '("%b")                ; We put the frame title into the "header"
+      ring-bell-function 'ignore                ; We do not want any bells
+      use-short-answers t                       ; y/n instead of yes/no
+      inhibit-splash-screen t                   ; Disable the splash screen
+      inhibit-startup-screen t                  ; Disable the startup screen
+      inhibit-startup-echo-area-message t       ; Disable initial echo message
+      initial-scratch-message ""                ; Empty the initial *scratch* buffer
+      initial-buffer-choice nil                 ; Open *scratch* buffer at init
+      site-run-file nil                         ; No site-wide run-time initializations.
+      inhibit-default-init t                    ; No site-wide default library
+      gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
+                                                ; collector during init
+      package-enable-at-startup nil             ; We'll use elpaca.el
+      native-comp-async-report-warnings-errors 'silent ; Do not focus the warnings buffer
+      confirm-kill-processes nil)               ; Emacs should not ask for confiration to
+                                                ;kill a process
+
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+
+
+(add-hook 'after-init-hook (lambda () (set-frame-name "home")))
+
+(setq native-comp-eln-load-path
+      (list (expand-file-name "eln-cache" user-emacs-directory)))
+
+;;As suggested in the manual, we disable the standard package manager at startup.
+(setq package-enable-at-startup nil)
+
+
+;; Reset garbage collector limit after init process has ended (8Mo)
+(add-hook 'after-init-hook
+          #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
+#+end_src
+
+
+Emacs does a lot of things at startup and here, we disable pretty much everything.
+
 * TODO Elpaca
 
 We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manager for this config.
@@ -78,19 +127,11 @@ The elpaca-documentation suggests the following piece of code for the integratio
   ;; Assume :elpaca t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
 #+end_src
-** TODO Early init
-
-As suggested in the manual, we disable the standard package manager at startup.
-#+begin_src emacs-lisp
-(setq package-enable-at-startup nil)
-#+end_src
-
-
+** TODO Wait
 
 #+begin_src emacs-lisp
 (elpaca-wait)
 #+end_src
-
 
 * Ergoemacs
 We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
@@ -103,16 +144,43 @@ Change of standard bindings are saved in _ergoemacs-override-keymap_.
     (ergoemacs-mode 1))                   ; Globally enables ergoemacs-mode
 #+end_src
 
-
 * TODO Design
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
 ** Lambda theme
+*** TODO [0/1] Prelude: A thin (bottom) modeline
+- [ ] Change the font to the same as the top modeline
+We define a thin modeline
+
+#+begin_src emacs-lisp
+
+(defun my-thin-modeline ()
+  "Transform the modeline in a thin faded line"
+
+  (setq mode-line-format (list ""))
+  (setq-default mode-line-format (list ""))
+  (set-face-attribute 'mode-line nil
+                      :box nil
+                      :inherit nil
+                      :foreground (my-face-background 'lambda-faint)
+                      :background (my-face-background 'lambda-faint)
+                      :height 0.1)
+  (set-face-attribute 'mode-line-inactive nil
+                      :box nil
+                      :inherit nil
+                      :foreground (my-face-background 'lambda-faint)
+                      :background (my-face-background 'lambda-faint)
+                      :height 0.1))
+
+(add-hook 'nano-modeline-mode-hook #'my-thin-modeline)
+
+#+end_src
 
 #+begin_src emacs-lisp
 (use-package lambda-themes
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
   :demand t
+  :ensure frame
   :custom
   (lambda-themes-set-italic-comments t)
   (lambda-themes-set-italic-keywords t)
@@ -120,10 +188,22 @@ The design is based on a variant of [[https://github.com/rougier/nano-emacs][nan
   :custom-face
   :config
   ;; load preferred theme
-  (load-theme 'lambda-light t))
+  (setq initial-scratch-message "")
+  ;; Default frame settings
+  (setq default-frame-alist '((min-height . 1)  '(height . 45)
+                              (min-width  . 1)  '(width  . 81)
+                              (vertical-scroll-bars . nil)
+                              (internal-border-width . 24)
+                              (left-fringe . 0)
+                              (right-fringe . 0)))
+  (setq initial-frame-alist default-frame-alist)
+  (load-theme 'lambda-light t)
+  (my-thin-modeline))
 #+end_src
 
-** Fonts
+
+
+** TODO Fonts
 
 This is the font stack we install:
 
@@ -184,7 +264,7 @@ To get a list of all character sets type "M-x list-character-sets"
   )
 #+end_src
 
-** Typography and layout
+** TODO Typography and layout
 
 #+begin_src emacs-lisp
 
@@ -208,7 +288,6 @@ To get a list of all character sets type "M-x list-character-sets"
 
 #+end_src
 Changing the symbol for truncation (…) and wrap (↩).
-
 
 
 ** TODO Lambda modeline
@@ -245,7 +324,17 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
 
 #+RESULTS:
 
+* Miscellaneous helper functions
 
+** Set foreground or background
+
+#+begin_src emacs-lisp
+(defun my-face-foreground (face &optional frame inherit)
+  (or (face-foreground face frame inherit) 'unspecified))
+
+(defun my-face-background (face &optional frame inherit)
+  (or (face-background face frame inherit) 'unspecified))
+#+end_src
 * Documentation :INACTIVE:
 ** Forewords
 
@@ -592,33 +681,7 @@ Singular shell:
 
 ** TODO Startup :ENHANCE:
 
-Emacs does a lot of things at startup and here, we disable pretty much everything.
 
-#+begin_src emacs-lisp
-
-(setq
- inhibit-startup-screen t               ; Disable start-up screen
- inhibit-startup-message t              ; Disable startup message
- inhibit-startup-echo-area-message t    ; Disable initial echo message
- initial-scratch-message ""             ; Empty the initial *scratch* buffer
- initial-buffer-choice nil                ; Open *scratch* buffer at init
- native-comp-async-report-warnings-errors 'silent ; Do not focus the warnings buffer
- confirm-kill-processes nil) ; Emacs should not ask for confiration to kill a process.
-
-#+end_src
-
-All fancy clickable things are unnecessary so we remove them
-#+begin_src emacs-lisp
-(add-hook 'emacs-startup-hook #'(lambda()
-                                  (when window-system
-                                    (menu-bar-mode -1)
-                                    (scroll-bar-mode -1)
-                                    (tool-bar-mode -1)
-                                    (tooltip-mode -1))))
-
-#+end_src
-
-We want to ensure that there is no littering. Hereto we enable no-littering.
 
 #+begin_src emacs-lisp
 
@@ -1800,27 +1863,6 @@ A function that close the current frame and kill emacs if it was the last frame.
 
 #+end_src
 
-Default frame geometry (large margin: 24 pixels).
-
-#+begin_src emacs-lisp
-
-(require 'frame)
-
-;; Default frame settings
-(setq default-frame-alist '((min-height . 1)  '(height . 45)
-                            (min-width  . 1)  '(width  . 81)
-                            (vertical-scroll-bars . nil)
-                            (internal-border-width . 24)
-                            (left-fringe . 0)
-                            (right-fringe . 0)
-                            (tool-bar-lines . 0)
-                            (menu-bar-lines . 0)))
-
-;; Default frame settings
-(setq initial-frame-alist default-frame-alist)
-
-
-#+end_src
 
 Frame related binding (self explanatory).
 
@@ -3351,33 +3393,7 @@ We're using [[https://github.com/rougier/nano-modeline][nano-modeline]] and modi
 
 #+end_src
 
-We set a thin modeline
 
-#+begin_src emacs-lisp
-
-(defun my-thin-modeline ()
-  "Transform the modeline in a thin faded line"
-
-  ;; (nano-modeline-face-clear 'mode-line)
-  ;; (nano-modeline-face-clear 'mode-line-inactive)
-  (setq mode-line-format (list ""))
-  (setq-default mode-line-format (list ""))
-  (set-face-attribute 'mode-line nil
-                      :box nil
-                      :inherit nil
-                      :foreground (my-face-background 'nano-subtle)
-                      :background (my-face-background 'nano-subtle)
-                      :height 0.1)
-  (set-face-attribute 'mode-line-inactive nil
-                      :box nil
-                      :inherit nil
-                      :foreground (my-face-background 'nano-subtle)
-                      :background (my-face-background 'nano-subtle)
-                      :height 0.1))
-
-(add-hook 'nano-modeline-mode-hook #'my-thin-modeline)
-
-#+end_src
 
 We start the nano modeline.
 #+begin_src emacs-lisp
