@@ -10,6 +10,10 @@
 
 * Documentation
 
+** [0/3] Open TODOs
+- [ ] Write a transient for elpaca.
+- [ ] Modify elpacs keybindings.
+- [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
 
 * Early init
 :PROPERTIES:
@@ -144,44 +148,308 @@ Change of standard bindings are saved in _ergoemacs-override-keymap_.
     (ergoemacs-mode 1))                   ; Globally enables ergoemacs-mode
 #+end_src
 
-* TODO Design
+* Design
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
 ** Lambda theme
-*** TODO [0/1] Prelude: A thin (bottom) modeline
-- [ ] Change the font to the same as the top modeline
-We define a thin modeline
+*** Prelude: Werner's nomenclature
+
+[[https://en.wikipedia.org/wiki/Werner%27s_Nomenclature_of_Colours][Werner's nomenclature of colours]] is a book of named colour samples compiled by the geologist Abraham Gottlob Werner(1749-1817), and subsequently amended by Patrick Syme.
+We will use these colours at various places.
+#+begin_src emacs-lisp
+;; whites
+(defvar snow-white
+    "#f9faf8" "snow-drop")
+(defvar reddish-white
+    "#faf9fa" "back of the christmas rose")
+(defvar purplish-white
+    "#f4f6fb" "white geranium or storks bill")
+(defvar yellowish-white
+    "#fbfbf6" "hawthorn blossom")
+(defvar orange-white
+    "#fcfaf5" "large wild convolvulus")
+(defvar greenish-white
+    "#fbfdf8" "polyanthus narcissus")
+(defvar skimmed-milk-white
+    "#edf0f2" "back of the petals of blue hepatica")
+(defvar greyish-white
+    "#e7ecef" "white hamburgh grapes")
+;; greys
+(defvar ash-grey
+    "#d1d8dd" "french wood ashes")
+(defvar smoke-grey
+    "#c0c7d3")
+(defvar french-grey
+    "#c1cad8")
+(defvar pearl-grey
+    "#b8c0ce" "back of petals of purple hepatica")
+(defvar yellowish-grey
+    "#b9bba9" "stems of the barberry")
+(defvar bluish-grey
+    "#9aa3b7")
+(defvar greenish-grey
+    "#828d96" "bark of ash tree")
+(defvar blackish-grey
+    "#494f67" "old stems of hawthorn")
+;; blacks
+(defvar greyish-black
+    "#424451")
+(defvar bluish-black
+    "#2c2e3e" "crowberry")
+(defvar greenish-black
+    "#30343e")
+(defvar pitch-or-brownish-black
+    "#2b272e")
+(defvar reddish-black
+    "#2b242a" "berry of fuchsia coccinea")
+(defvar ink-black
+    "#0b0b13" "berry of deadly night shade")
+(defvar velvet-black
+    "#0a0a0f" "black of red and black west-indian peas")
+;; blues
+(defvar scotch-blue
+    "#110d32" "stamina of single purple anemone")
+(defvar prussian-blue
+    "#060740" "stamina of bluish purple anemone")
+(defvar indigo-blue
+    "#475da0")
+(defvar china-blue
+    "#262a6b" "back parts of gentian flowers")
+(defvar azure-blue
+    "#5465a5" "grape hyacinth. gentian")
+(defvar ultramarine-blue
+    "#6077e2" "borrage")
+(defvar flax-flower-blue
+    "#6d8ad2" "flax flower")
+(defvar berlin-blue
+    "#7b99dc" "hepatica")
+(defvar verditter-blue
+    "#80c0d6")
+(defvar greenish-blue
+    "#78a2c0" "great fennel flower")
+(defvar greyish-blue
+    "#8da9c6" "small fennel flower")
+;; purples
+(defvar bluish-lilac-purple
+    "#d9ebfe" "blue lilac")
+(defvar bluish-purple
+    "#7b8eca" "parts of white and purple crocus")
+(defvar violet-purple
+    "#1e1753" "purple aster")
+(defvar pansy-purple
+    "#1e1b48" "sweet-scented violet")
+(defvar campanula-purple
+    "#5b61a8" "canterbury bell. campanula persicifolia")
+(defvar imperial-purple
+    "#3f3982" "deep parts of flower ofsaffron crocus")
+(defvar auricula-purple
+    "#361e53" "largest purple auricula")
+(defvar plum-purple
+    "#29205a" "plum")
+(defvar red-lilac-purple
+    "#c1c9e8" "red lilac. pale purple primrose")
+(defvar lavendar-purple
+    "#686c8e" "dried lavendar flowers")
+(defvar pale-bluish-purple
+    "#32335f")
+;; greens
+(defvar celandine-green
+    "#b6bdae" "back of tussilage leaves")
+(defvar mountain-green
+    "#aeb197" "thick leaved cudweed, silver leaved almond")
+(defvar leek-green
+    "#919682" "sea kale, leaves of leeks in winter")
+(defvar blackish-green
+    "#4b5059" "dark streaks on leaves of cayenne pepper")
+(defvar verdigris-green
+    "#71aa89")
+(defvar bluish-green
+    "#a4b3a6" "under disk of wild rose leaves")
+(defvar apple-green
+    "#abb796")
+(defvar emerald-green
+    "#97b578")
+(defvar grass-green
+    "#86996d" "general appearance of grass fields. sweet sugar pear")
+(defvar duck-green
+    "#334429" "upper disk of yew leaves")
+(defvar sap-green
+    "#829249" "upper disk of leaves of woody night shade")
+(defvar pistachio-green
+    "#98a760" "ripe pound pear. hypnum like saxifrage")
+(defvar asparagus-green
+    "#d0d9b9" "variegated horse-shoe geranium")
+(defvar olive-green
+    "#6d7f75" "foliage of lignum vitæ")
+(defvar oil-green
+    "#ad9f61" "nonpareil apple from the wall")
+(defvar siskin-green
+    "#d7e090" "ripe coalmar pear. irish pitcher apple")
+;; yellows
+(defvar sulphur-yellow
+    "#e2d943" "various coloured snap dragon")
+(defvar primrose-yellow
+    "#fffeb2" "wild primrose")
+(defvar wax-yellow
+    "#bd9e32" "greenish parts of nonpareil apple")
+(defvar lemon-yellow
+    "#f0dd5d" "shrubby goldylocks")
+(defvar gamboge-yellow
+    "#fbef4e" "yellow jasmine")
+(defvar kings-yellow
+    "#fff762" "yellow tulip. cinque foil")
+(defvar saffron-yellow
+    "#dea916" "anthers of saffron crocus")
+(defvar gallstone-yellow
+    "#a56700" "marigold apple")
+(defvar honey-yellow
+    "#ad8404")
+(defvar straw-yellow
+    "#fdf096" "oat straw")
+(defvar wine-yellow
+    "#e5db75" "white currants")
+(defvar sienna-yellow
+    "#fdec85" "stamina of honey-suckle")
+(defvar ochre-yellow
+    "#fbe573")
+(defvar cream-yellow
+    "#fff6ba")
+;; orange
+(defvar dutch-orange
+    "#f3af00" "common marigold. seedpod of spindle-tree")
+(defvar buff-orange
+    "#fecf19" "stamina of the large white cistus")
+(defvar orpiment-orange
+    "#e27000" "indian cress")
+(defvar brownish-orange
+    "#a62500" "style of the orange lily")
+(defvar reddish-orange
+    "#d16200" "hemimeris buff hibiscus")
+(defvar deep-reddish-orange
+    "#cc4700" "scarlet leadington apple")
+;; red
+(defvar tile-red
+    "#d05438" "shrubby pimpernel")
+(defvar hyacinth-red
+    "#af3b23" "red on the golden rennette apple")
+(defvar scarlet-red
+    "#ba1f21" "large red oriental poppy, red parts of red and black indian peas")
+(defvar vermillion-red
+    "#bc2d27" "love apple")
+(defvar aurora-red
+    "#d65848" "red on the naked apple")
+(defvar arterial-blood-red
+    "#730004" "corn poppy. cherry")
+(defvar flesh-red
+    "#fed0a4" "larkspur")
+(defvar rose-red
+    "#fff2dc" "common garden rose")
+(defvar peach-blossom-red
+    "#ffe1d6" "peach blossom")
+(defvar carmine-red
+    "#ec153e" "raspberry, cocks comb, carnation pink")
+(defvar lake-red
+    "#da0d44" "red tulip, rose officinalus")
+(defvar crimson-red
+    "#e03d55")
+(defvar purplish-red
+    "#8b0013" "dark crimson officinal garden rose")
+(defvar cochineal-red
+    "#a70c17" "under disk of decayed leaves of none-so-pretty")
+(defvar veinous-blood-red
+    "#630108" "musk flower or dark purple scaious")
+(defvar brownish-purple-red
+    "#c03c45" "flower of deadly nightshade")
+(defvar chocolate-red
+    "#750209" "brown disk of common marigold")
+(defvar brownish-red
+    "#9a0407")
+;; browns
+(defvar deep-orange-coloured-brown
+    "#723b16" "female spike of catstail reed")
+(defvar deep-reddish-brown
+    "#4d2a17" "dead leaves of green panic grass")
+(defvar umber-brown
+    "#443116" "disk of rubeckia")
+(defvar chesnut-brown
+    "#69411d" "chesnuts")
+(defvar yellowish-brown
+    "#87662a")
+(defvar wood-brown
+    "#c0a666" "hazel nuts")
+(defvar liver-brown
+    "#3f3114")
+(defvar hair-brown
+    "#827748")
+(defvar broccoli-brown
+    "#958762")
+(defvar olive-brown
+    "#6b5c3d" "stems of black currant bush")
+(defvar blackish-brown
+    "#342e14")
+
+#+end_src
+
+
+*** The theme itself
+We use the [[https://github.com/Lambda-Emacs/lambda-themes][lambda theme]]. It comes in four variants:
+- light,
+- faded light,
+- dark, and
+- faded dark.
+
+We want less colours and less stress for the eyes both in the light and dark mode.
+
+#+begin_src emacs-lisp
+  ;;lavendar-purple
+(defun my-lambda-light-werner ()
+  (progn
+    (load-theme 'lambda-light t)
+    (set-face-attribute 'lambda-fg nil )
+    (set-face-attribute 'lambda-bg nil "#fbfdf8")
+    (set-face-attribute 'lambda-purple nil :foreground "#686c8e");;lavendar-purple
+    (set-face-attribute 'lambda-crucial nil :foreground "#686c8e")
+    (set-face-attribute 'minibuffer-prompt nil :foreground "#686c8e")))
+#+end_src
 
 #+begin_src emacs-lisp
 
-(defun my-thin-modeline ()
-  "Transform the modeline in a thin faded line"
+(defun my-lambda-dark-werner ()
+  (progn
+    (load-theme 'lambda-dark t)
+    (set-face-attribute 'lambda-purple nil :foreground "#686c8e");;lavendar-purple
+    (set-face-attribute 'lambda-crucial nil :foreground "#686c8e")
+    (set-face-attribute 'minibuffer-prompt nil :foreground "#686c8e")))
+#+end_src
 
-  (setq mode-line-format (list ""))
-  (setq-default mode-line-format (list ""))
-  (set-face-attribute 'mode-line nil
-                      :box nil
-                      :inherit nil
-                      :foreground (my-face-background 'lambda-faint)
-                      :background (my-face-background 'lambda-faint)
-                      :height 0.1)
-  (set-face-attribute 'mode-line-inactive nil
-                      :box nil
-                      :inherit nil
-                      :foreground (my-face-background 'lambda-faint)
-                      :background (my-face-background 'lambda-faint)
-                      :height 0.1))
+Finally, a small fun which lets us switch between our settings.
+
+#+begin_src emacs-lisp
+(defun my-toggle-theme ()
+  "Toggle between dark and light variants."
+  (interactive)
+  (if (eq lambda-themes-active-theme 'light)
+      (progn
+        (lambda-themes--disable-all-themes)
+        (my-lambda-dark-werner)
+        (setq lambda-themes-active-theme 'dark)
+        (run-hooks 'lambda-themes-after-load-theme-hook))
+    (progn
+      (lambda-themes--disable-all-themes)
+      (my-lambda-light-werner)
+      (setq lambda-themes-active-theme 'light)
+      (run-hooks 'lambda-themes-after-load-theme-hook)
+      )))
 #+end_src
 
 #+begin_src emacs-lisp
 (use-package lambda-themes
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
   :demand t
-  :ensure frame
   :custom
   (lambda-themes-set-italic-comments t)
   (lambda-themes-set-italic-keywords t)
-  :bind ("<f6>" . lambda-themes-toggle-theme)
+  :bind ("<f6>" . my-toggle-theme)
   :custom-face
   :config
   ;; load preferred theme
@@ -194,15 +462,16 @@ We define a thin modeline
                               (left-fringe . 0)
                               (right-fringe . 0)))
   (setq initial-frame-alist default-frame-alist)
-  (load-theme 'lambda-light t))
+  (my-lambda-light-werner)
+  )
 #+end_src
 
-** TODO Fonts
+** TODO The font stack
 
 This is the font stack we install:
 
 - Default font:  Roboto Mono 14pt Light    [[https://fonts.google.com/specimen/Roboto+Mono][   ]]
-- /Italic font/:    Victor Mono 14pt Semilight [[https://github.com/rubjo/victor-mono][  ]]
+- /Italic font/:   Victor Mono 14pt Semilight [[https://github.com/rubjo/victor-mono][  ]]
 - *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]]
 - Icon font:     Roboto Mono Nerd 14pt Light  [[https://www.nerdfonts.com/][]]
 
@@ -232,7 +501,6 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 (set-face-attribute 'italic nil
                     :family "Victor Mono"
                     :weight 'semilight
-                    :height (/ (float 15) (float 14))
                     :slant 'italic
                     )
 #+end_src
@@ -241,9 +509,6 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 We additionally define some fonts for common character sets.
 To get a list of all character sets type "M-x list-character-sets"
 
-#+begin_src emacs-lisp
-(use-package dash)
-#+end_src
 #+begin_src emacs-lisp
 (use-package emacs
   :elpaca nil
@@ -258,7 +523,7 @@ To get a list of all character sets type "M-x list-character-sets"
   )
 #+end_src
 
-** TODO Typography and layout
+** TODO Layout
 
 #+begin_src emacs-lisp
 
@@ -283,8 +548,30 @@ To get a list of all character sets type "M-x list-character-sets"
 #+end_src
 Changing the symbol for truncation (…) and wrap (↩).
 
+
+
 ** TODO Lambda modeline
-The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
+The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We customise it at bit.
+
+*** Prelude: A thin (bottom) modeline
+ We will have a status line at the top of the frames and therefore disable the modeline at the bottom.
+
+#+begin_src emacs-lisp
+(defun my-thin-modeline ()
+  "Transform the modeline in a thin faded line"
+  (lambda-line-face-clear 'mode-line)
+  (lambda-line-face-clear 'mode-line-inactive)
+  (setq mode-line-format (list ""))
+  (setq-default mode-line-format (list ""))
+  (set-face-attribute 'mode-line nil
+                      :box nil
+                      :inherit nil
+                      )
+  (set-face-attribute 'mode-line-inactive nil
+                      :box nil
+                      :inherit nil
+                      ))
+#+end_src
 
 #+begin_src emacs-lisp
 (use-package lambda-line
@@ -293,31 +580,25 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
   :demand t
   :hook (lambda-line-mode-hook . my-thin-modeline)
   :custom
-  (lambda-line-icon-time t) ;; requires ClockFace font (see below)
-  (lambda-line-clockface-update-fontset "ClockFaceRect") ;; set clock icon
   (lambda-line-position 'top) ;; Set position of status-line
   (lambda-line-abbrev t) ;; abbreviate major modes
   (lambda-line-hspace "   ")  ;; add some cushion
-  (lambda-line-prefix t) ;; use a prefix symbol
-  (lambda-line-prefix-padding +.5) ;; no extra space for prefix
-  (lambda-line-status-invert nil)  ;; no invert colors
-  (lambda-line-gui-ro-symbol  " ⨂") ;; symbols
-  (lambda-line-gui-mod-symbol " ⬤")
-  (lambda-line-gui-rw-symbol  " ◯")
-  (lambda-line-symbol-position 0.1) ;; adjust the vertical placement of symbol
+  (lambda-line-prefix-padding +.5)
   :config
   ;; activate lambda-line
   (lambda-line-mode)
-  ;; set divider line in footer
-  (when (eq lambda-line-position 'top)
-    (setq-default mode-line-format (list "%_"))
-    (setq mode-line-format (list "%_"))))
+  (my-thin-modeline)
+)
 #+end_src
 
 #+RESULTS:
 
 * Miscellaneous helper functions
-
+** Dash
+[[https://github.com/magnars/dash.el][Dash]] makes working with lists better.
+#+begin_src emacs-lisp
+(use-package dash)
+#+end_src
 ** Set foreground or background
 
 #+begin_src emacs-lisp
