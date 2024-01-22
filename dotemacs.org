@@ -1,6 +1,6 @@
 #+TITLE: Emacs literate configuration
 #+AUTHOR: Sebastian Halbig
-#+DATE: 04/2022
+#+DATE: 01/2024
 #+STARTUP: show2levels indent hidestars
 #+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.emacs.d/init.el")))
 
