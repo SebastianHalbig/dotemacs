@@ -5,15 +5,50 @@
 #+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.emacs.d/init.el")))
 
 
+* Forewords
 
+This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It is inspired by the configurations:
+- [[https://github.com/rougier/dotemacs][Nicolas Rougier]] (main reference point),
+- [[https://protesilaos.com/emacs/dotemacs#][Protesilaos Stavrou]], and
+- [[https://gitlab.com/slotThe/dotfiles/-/tree/master/emacs][Tony Zorman]] (from whom I learnt that I want emacs).
 
+To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ([[org-babel-tangle]]).
 
 * Documentation
 
-** [0/3] Open TODOs
+** [0/5] Open TODOs
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
+- [ ] Use Werner's nomenclature in colour-coding instead of the hex values.
+- [ ] Change colour of org blocks. For example purplish-white (#f4f6fb).
+- [ ] Modify the Victor mono font to be compatible with Roboto mono.
+* Header
+
+This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
+
+#+begin_src emacs-lisp :epilogue (format-time-string ";; Last generated on %c")
+
+;; -*- lexical-binding: t -*-
+;; This file has been generated from dotemacs.org file. DO NOT EDIT.
+;; Based on from https://github.com/rougier/dotemacs
+
+;; Copyright (C) 2024 Sebastian Halbig
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <https://www.gnu.org/licenses/>.
+
+#+end_src
 
 * Early init
 :PROPERTIES:
@@ -390,13 +425,20 @@ We will use these colours at various places.
 
 #+end_src
 
-
 *** The theme itself
 We use the [[https://github.com/Lambda-Emacs/lambda-themes][lambda theme]]. It comes in four variants:
 - light,
 - faded light,
 - dark, and
 - faded dark.
+
+As a slight variant, we use muted colours.
+This has to be done in the package itself due to internal reasons.
+- lambda-fg dark:  #d1d8dd "french wood ashes"
+- lambda-fg light: #424451 "greyish-black"
+- lambda-bg dark:  #494f67 "blackish-grey"
+- lambda-bg light: #fbfdf8 "greenish-white"
+
 
 We want less colours and less stress for the eyes both in the light and dark mode.
 
@@ -405,11 +447,28 @@ We want less colours and less stress for the eyes both in the light and dark mod
 (defun my-lambda-light-werner ()
   (progn
     (load-theme 'lambda-light t)
-    (set-face-attribute 'lambda-fg nil )
-    (set-face-attribute 'lambda-bg nil "#fbfdf8")
     (set-face-attribute 'lambda-purple nil :foreground "#686c8e");;lavendar-purple
     (set-face-attribute 'lambda-crucial nil :foreground "#686c8e")
-    (set-face-attribute 'minibuffer-prompt nil :foreground "#686c8e")))
+    (set-face-attribute 'minibuffer-prompt nil :foreground "#686c8e")
+    (set-face-attribute 'header-line nil :background "#fbfdf8") ;;greenish-white
+    (set-face-attribute 'lambda-line-active nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-hspace-active nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-hspace-inactive nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-name nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-name nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-primary nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-primary nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-secondary nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-secondary nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-tertiary nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-tertiary nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-status-RO nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-status-RO nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-status-RW nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-status-RW nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-active-status-MD nil :background "#fbfdf8")
+    (set-face-attribute 'lambda-line-inactive-status-MD nil :background "#fbfdf8")))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -419,7 +478,26 @@ We want less colours and less stress for the eyes both in the light and dark mod
     (load-theme 'lambda-dark t)
     (set-face-attribute 'lambda-purple nil :foreground "#686c8e");;lavendar-purple
     (set-face-attribute 'lambda-crucial nil :foreground "#686c8e")
-    (set-face-attribute 'minibuffer-prompt nil :foreground "#686c8e")))
+    (set-face-attribute 'minibuffer-prompt nil :foreground "#686c8e")
+    (set-face-attribute 'header-line nil :background "#424451") ;;greyish-black
+    (set-face-attribute 'lambda-line-active nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive nil :background "#424451")
+    (set-face-attribute 'lambda-line-hspace-active nil :background "#424451")
+    (set-face-attribute 'lambda-line-hspace-inactive nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-name nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-name nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-primary nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-primary nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-secondary nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-secondary nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-tertiary nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-tertiary nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-status-RO nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-status-RO nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-status-RW nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-status-RW nil :background "#424451")
+    (set-face-attribute 'lambda-line-active-status-MD nil :background "#424451")
+    (set-face-attribute 'lambda-line-inactive-status-MD nil :background "#424451")))
 #+end_src
 
 Finally, a small fun which lets us switch between our settings.
@@ -442,6 +520,9 @@ Finally, a small fun which lets us switch between our settings.
       )))
 #+end_src
 
+
+We load the theme-code with a few configurations here.
+Choosing this theme is done when we set up the modeline due to the fact that we modify the theme and modeline simultaneously.
 #+begin_src emacs-lisp
 (use-package lambda-themes
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
@@ -449,6 +530,7 @@ Finally, a small fun which lets us switch between our settings.
   :custom
   (lambda-themes-set-italic-comments t)
   (lambda-themes-set-italic-keywords t)
+  (lambda-themes-set-variable-pitch nil)
   :bind ("<f6>" . my-toggle-theme)
   :custom-face
   :config
@@ -462,11 +544,10 @@ Finally, a small fun which lets us switch between our settings.
                               (left-fringe . 0)
                               (right-fringe . 0)))
   (setq initial-frame-alist default-frame-alist)
-  (my-lambda-light-werner)
   )
 #+end_src
 
-** TODO The font stack
+** The font stack
 
 This is the font stack we install:
 
@@ -498,10 +579,31 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
                     :family "Roboto Mono"
                     :weight 'regular)
 
+(set-face-attribute 'default nil
+                    :family "Roboto Mono"
+                    :weight 'light
+                    :height 140)
+
+(set-face-attribute 'bold nil
+                    :family "Roboto Mono"
+                    :weight 'regular)
+
 (set-face-attribute 'italic nil
                     :family "Victor Mono"
                     :weight 'semilight
                     :slant 'italic
+                    :height (lambda (x)
+                              (cond ((< x 100) (+ x 5))
+                                    ((and (>= x 100) (< x 110)) 110)
+                                    ((and (>= x 110) (< x 120)) 132)
+                                    ((and (>= x 120) (< x 130)) 132)
+                                    ((and (>= x 130) (< x 140)) 140)
+                                    ((and (>= x 140) (< x 150)) 150)
+                                    ((and (>= x 150) (< x 160)) 170)
+                                    ((and (>= x 160) (< x 170)) 180)
+                                    ((and (>= x 170) (< x 180)) 190)
+                                    ((and (>= x 180) (< x 190)) 200)
+                                    ((>= x 190) (round(* x 1.1)))))
                     )
 #+end_src
 
@@ -523,7 +625,7 @@ To get a list of all character sets type "M-x list-character-sets"
   )
 #+end_src
 
-** TODO Layout
+** Further general layout settings
 
 #+begin_src emacs-lisp
 
@@ -534,23 +636,7 @@ To get a list of all character sets type "M-x list-character-sets"
 
 #+end_src
 
-
-#+begin_src emacs-lisp
-
-(use-package visual-fill-column
-  :ensure adaptive-wrap
-  :custom (visual-fill-column-center-text t)
-  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
-          )
-  )
-
-#+end_src
-Changing the symbol for truncation (…) and wrap (↩).
-
-
-
-** TODO Lambda modeline
+** Lambda modeline
 The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We customise it at bit.
 
 *** Prelude: A thin (bottom) modeline
@@ -572,7 +658,7 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We
                       :inherit nil
                       ))
 #+end_src
-
+*** The modeline itself
 #+begin_src emacs-lisp
 (use-package lambda-line
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-line")
@@ -580,14 +666,30 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We
   :demand t
   :hook (lambda-line-mode-hook . my-thin-modeline)
   :custom
-  (lambda-line-position 'top) ;; Set position of status-line
-  (lambda-line-abbrev t) ;; abbreviate major modes
-  (lambda-line-hspace "   ")  ;; add some cushion
-  (lambda-line-prefix-padding +.5)
+  (lambda-line-position 'top)   ;; Set position of status-line
+  (lambda-line-abbrev t)        ;; abbreviate major modes
+  (lambda-line-hspace "   ")    ;; add some cushion
+  (lambda-line-prefix nil)      ;; I do not care about the RW/RO status.
+  (lambda-line-vc-symbol "  ") ;; I more specious variant of the "git-branch" symbol
+  (lambda-line-visual-bell nil) ;; No visual bell.
+  :custom-face
+  (lambda-line-active ((t (:inherit nil))))
+  (lambda-line-inactive ((t (:inherit nil))))
+  (lambda-line-hspace-active ((t (:inherit nil))))
+  (lambda-line-hspace-inactive ((t (:inherit nil))))
+  (lambda-line-active-name ((t (:inherit nil))))
+  (lambda-line-inactive-name ((t (:inherit nil))))
+  (lambda-line-active-primary ((t (:inherit nil))))
+  (lambda-line-inactive-primary ((t (:inherit nil))))
+  (lambda-line-active-secondary ((t (:inherit nil))))
+  (lambda-line-inactive-secondary ((t (:inherit nil))))
+  (lambda-line-active-tertiary ((t (:inherit nil))))
+  (lambda-line-inactive-tertiary ((t (:inherit nil))))
   :config
   ;; activate lambda-line
   (lambda-line-mode)
   (my-thin-modeline)
+  (my-lambda-light-werner)
 )
 #+end_src
 
@@ -608,34 +710,25 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We
 (defun my-face-background (face &optional frame inherit)
   (or (face-background face frame inherit) 'unspecified))
 #+end_src
+* Packages
+** Visual fill column and visual line mode
+
+We activate /visual-line-mode/ globally. Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+
+#+begin_src emacs-lisp
+(use-package visual-fill-column
+  :ensure adaptive-wrap
+  :init (global-visual-line-mode)
+  :custom (visual-fill-column-center-text t)
+          (visual-fill-column-enable-sensible-window-split t)
+  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
+          )
+  )
+#+end_src
+Changing the symbol for truncation (…) and wrap (↩).
+
 * Documentation :INACTIVE:
-** Forewords
-
-This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It is an adaptation of Nicolas P. Rougier's brilliant work. It cannot be used directly and needs to be transformed to extract all the different code blocks into a single configuration file. This is done using the [[help:org-babel-tangle][org-babel-Utangle]] function that "extract the bodies of all source code blocks from the current file into their own source-specific files". You can try by yourself by typing the sequence: =C-c C-v t= (org-babel-execute-subtree).
-
-However, on my Emacs (28.1), there seems to be a bug that prevent a proper tangling. You'll thus need to go to the [[Configuration]] section and execute it using =C-c C-v s= to fix this bug before tangling the file.
-
-Each subsection may be tagged with:
-
-- =:BINDING:=  The section defines some key binding
-- =:HOOK:=     The section installs some hook
-- =:ADVICE:=   The section installs some advice
-- =:FACE:=     The section modifies some face
-- =:MODE:=     The section activates a mode
-- =:DEFER:=    The content of the section is deferred (lazy load)
-- =:PERSONAL:= The content is personal and should be adapted
-- =:INACTIVE:= The content of the section won't be exported
-- =:BUGFIX:=   The section contains (temporary) bug fix code
-- =:OTHER:=    The section will be exported to a different file than default
-- =:TIMER:=    The section installs a timer
-- =:OS:=       The section contains some system specific code
-
-There is also a configuration mode defined in the section below to ease the writing.
-
-When tangled, the process will create the files[[file:~/.emacs.d/init.el][~/.emacs.d/init.el]] and [[file:~/.emacs.d/early-init.el][~/.emacs.d/early-init.el]] (from the [[Early init]] section).
-
-Note also that the first time you will start emacs using this configuration, *it will take a long time* because a lof of packages will be dowloaded, installed and possibly compiled (if you use Emacs 28 and above).
-
 ** To sort :INACTIVE:
 
 #+begin_src emacs-lisp
@@ -670,32 +763,7 @@ Note also that the first time you will start emacs using this configuration, *it
 
 * Core :INACTIVE:
 
-** Header
 
-This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
-
-#+begin_src emacs-lisp :epilogue (format-time-string ";; Last generated on %c")
-
-;; -*- lexical-binding: t -*-
-;; This file has been generated from dotemacs.org file. DO NOT EDIT.
-;; Based on from https://github.com/rougier/dotemacs
-
-;; Copyright (C) 2022 Nicolas P. Rougier
-
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
-
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; For a full copy of the GNU General Public License
-;; see <https://www.gnu.org/licenses/>.
-
-#+end_src
 
 #+begin_src emacs-lisp
 
