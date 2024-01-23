@@ -71,18 +71,21 @@ The early-init code is taken almost verbatim from [[https://protesilaos.com/emac
       gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
                                                 ; collector during init
       package-enable-at-startup nil             ; We'll use elpaca.el
-      native-comp-async-report-warnings-errors 'silent ; Do not focus the warnings buffer
+      native-comp-async-report-warnings-errors nil ; Skip compilation error buffers
+      ad-redefinition-action 'accept            ; Silence warnings for redefinition
+      read-process-output-max (* 1024 1024)     ; Increase read size per process
       confirm-kill-processes nil)               ; Emacs should not ask for confiration to
                                                 ;kill a process
 
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
+(menu-bar-mode -1)   ; Disable menu-bar
+(scroll-bar-mode -1) ; Disable scroll-bar
+(tool-bar-mode -1)   ; Disable tool-bar
+(tooltip-mode -1)    ; Disable tooltips
 
 
-(add-hook 'after-init-hook (lambda () (set-frame-name "home")))
+(add-hook 'after-init-hook (lambda () (set-frame-name "home"))) ; First frame is "home"
 
+;; List of directories to look for natively-compiled *.eln files.
 (setq native-comp-eln-load-path
       (list (expand-file-name "eln-cache" user-emacs-directory)))
 
@@ -165,23 +168,274 @@ The elpaca-documentation suggests the following piece of code for the integratio
   (elpaca-use-package-mode)
   ;; Assume :elpaca t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
-#+end_src
-** TODO Wait
 
-#+begin_src emacs-lisp
 (elpaca-wait)
 #+end_src
 
-* Ergoemacs
-We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
-Change of standard bindings are saved in _ergoemacs-override-keymap_.
+* Fundamental and early settings
+Many of the ideas here are a mix of [[https://protesilaos.com/emacs/dotemacs#h:dae63bd9-93a8-41c4-af1b-d0f39ba50974][Prot's config]] and [[https://github.com/rougier/dotemacs][Rougier's config]].
+If other sources are used, they are specifically mentioned.
+
+** Keeping emacs.d clean: Recentf and no-littering
+
+[[https://vincent.demeester.fr/articles/emacs_keep_it_clean][Vincent Demeester]] is, according to his bio, a developer working at "Red Hat". He has probably forgotten more about good code that what I will ever know so I will follow his advice.
+*** Recentf
+
+The following code will allow for an integration between dired and recentf.
+
 #+begin_src emacs-lisp
-(use-package ergoemacs-mode
-    :config
-    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
-    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
-    (ergoemacs-mode 1))                   ; Globally enables ergoemacs-mode
+(defun my-recentf-rename-notify (oldname newname &rest args)
+  "Change file or directory OLDNAME in the recentf list to NEWNAME"
+  (if (file-directory-p newname)
+      (my-recentf-rename-directory oldname newname)
+    (my-recentf-rename-file oldname newname)))
+
+(defun my-recentf-rename-file (oldname newname)
+  "Change the OLDNAME of a file in the recentf list to NEWNAME"
+  (setq recentf-list
+        (--map (if (string-equal it oldname)
+                      newname
+                    oldname)
+                recentf-list))
+  recentf-cleanup)
+
+(defun my-recentf-rename-directory (oldname newname)
+  "Chage OLDNAME to NEWNAME"
+  ;; oldname, newname and all entries of recentf-list should already
+  ;; be absolute and normalised so I think this can just test whether
+  ;; oldname is a prefix of the element.
+  (setq recentf-list
+        (--map (if (string-prefix-p oldname it)
+                      (concat newname (substring it (length oldname)))
+                    it)
+                recentf-list))
+  recentf-cleanup)
 #+end_src
+
+We can now configure recentf.
+
+#+begin_src emacs-lisp
+(use-package recentf
+  :elpaca nil
+  :config
+  (setq recentf-max-saved-items 200           ; length of the "recent list"
+        recentf-max-menu-items 20             ; length of the "recentf menu list"
+        recentf-auto-cleanup 360              ; Clean up recentf if emacs was idle
+                                              ; for 6 minutes
+        recentf-show-file-shortcuts-flag nil) ; show "[N]" for the Nth item
+  (recentf-mode 1)                            ; turn on recentf
+  ;; Do not save ssh, su or sudo commands.
+  (add-to-list 'recentf-exclude "^/\\(?:ssh\\|su\\|sudo\\)?:")
+  ;; Magic advice to rename entries in recentf when moving files in
+  ;; dired.
+  (advice-add 'dired-rename-file :after #'my-recentf-rename-notify))
+
+#+end_src
+
+*** No littering
+
+#+begin_src emacs-lisp
+(use-package no-littering
+  :elpaca (:type git :host github :repo "emacscollective/no-littering")
+  :after recentf
+  :demand t
+  :init
+  (setq no-littering-etc-directory ; Directory of config files of packages.
+        (expand-file-name "config/" user-emacs-directory)
+        no-littering-var-directory ; Directory of persistent files of packages.
+        (expand-file-name "data/" user-emacs-directory))
+  :config
+  (add-to-list 'recentf-exclude no-littering-etc-directory) ; Recentf exculdes the etc dir
+  (add-to-list 'recentf-exclude no-littering-var-directory) ; Recentf excludes the var dir
+  (setq create-lockfiles nil   ; I do not need lock files since I do not use mult. editors
+        make-backup-files t    ; Backup of a file the first time it is saved.
+        backup-by-copying t    ; Don't clobber symlinks
+        delete-by-moving-to-trash t  ; Delete files to trash
+        delete-old-versions t  ; I have version controll and do not need excess old versions
+        kept-new-versions 6    ; Newest versions to keep when new backup is made
+        kept-old-versions 2    ; Oldest versions to keep when new backup is made
+        vc-make-backup-files t ; No backup of files under version contr
+        version-control t)     ; Make numeric backup versions
+  (setq backup-directory-alist ; Alist of file name patterns and backup directory names
+        `((".*" . ,(no-littering-expand-var-file-name "backups/")))))
+#+end_src
+*** Load path
+
+
+** No custom files
+The poet said it best.
+
+#+begin_src emacs-lisp
+;; Disable the emacs custom block by making it disposable.
+(setq custom-file (make-temp-file "emacs-custom-"))
+#+end_src
+
+** Default input method and multilingual environments
+
+#+begin_src emacs-lisp
+(set-language-environment "English")           ; Set up multilingual environment
+(setq default-input-method "german"            ; need an umlaut? get an umlaut.
+      default-transient-input-method "german")
+#+end_src
+
+** Enable and disable certain commands
+
+#+begin_src emacs-lisp
+;; Enable these
+(mapc
+ (lambda (command)
+   (put command 'disabled nil))
+ '(list-timers narrow-to-region narrow-to-page upcase-region downcase-region))
+
+;; And disable these
+(mapc
+ (lambda (command)
+   (put command 'disabled t))
+ '(eshell project-eshell overwrite-mode iconify-frame diary))
+#+end_src
+
+** Encoding
+
+We tell emacs to use UTF-8 encoding as much as possible.
+
+#+begin_src emacs-lisp
+
+(set-default-coding-systems 'utf-8)     ; Default to utf-8 encoding
+(prefer-coding-system       'utf-8)     ; Add utf-8 at the front for automatic detection.
+(set-terminal-coding-system 'utf-8)     ; Set coding system of terminal output
+(set-keyboard-coding-system 'utf-8)     ; Set coding system for keyboard input on TERMINAL
+
+#+end_src
+
+** Auto-save
+If Emacs or the computer crashes, you can recover the files you were editing at the time of the crash from their auto-save files. To do this, start Emacs again and type the command ~M-x recover-session~. Here, we parameterise how files are saved in the background.
+
+#+begin_src emacs-lisp
+(setq auto-save-list-file-prefix ; Prefix for generating auto-save-list-file-name
+               (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
+      auto-save-default t        ; Auto-save every buffer that visits a file
+      auto-save-timeout 30       ; Number of seconds between auto-save
+      auto-save-interval 200)    ; Number of keystrokes between auto-saves
+#+end_src
+
+
+** History
+
+Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
+
+#+begin_src emacs-lisp
+
+(defun unpropertise-kill-ring ()
+  (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
+
+(add-hook 'kill-emacs-hook 'unpropertise-kill-ring)
+
+#+end_src
+
+We save every possible history we can think of.
+
+#+begin_src emacs-lisp
+
+(setq kill-ring-max 50
+      history-length 50)
+
+(setq savehist-additional-variables
+      '(kill-ring
+        command-history
+        set-variable-value-history
+        custom-variable-history
+        query-replace-history
+        read-expression-history
+        minibuffer-history
+        read-char-history
+        face-name-history
+        bookmark-history
+        file-name-history))
+
+(put 'minibuffer-history         'history-length 50)
+(put 'file-name-history          'history-length 50)
+(put 'set-variable-value-history 'history-length 25)
+(put 'custom-variable-history    'history-length 25)
+(put 'query-replace-history      'history-length 25)
+(put 'read-expression-history    'history-length 25)
+(put 'read-char-history          'history-length 25)
+(put 'face-name-history          'history-length 25)
+(put 'bookmark-history           'history-length 25)
+
+#+end_src
+
+No duplicates in history
+
+#+begin_src emacs-lisp
+
+(setq history-delete-duplicates t)
+
+#+end_src
+
+Start history mode.
+
+#+begin_src emacs-lisp
+(let (message-log-max)
+  (savehist-mode))
+
+(setq savehist-file (concat user-emacs-directory "history.el"))
+#+end_src
+
+Enable auto-save-visited-mode
+
+#+begin_src emacs-lisp
+
+(auto-save-visited-mode)
+
+#+end_src
+
+A buffer can get out of sync with respect to its visited file on disk if that file is changed by another program. This is prevented by auto revert mode
+
+#+begin_src emacs-lisp
+
+(use-package autorevert
+  :elpaca nil
+  :config
+  (setq auto-revert-verbose t)
+  (global-auto-revert-mode))
+
+#+end_src
+
+** Saving buffers
+
+#+begin_src emacs-lisp
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace) ; On save, delete trailing whitespaces
+(setq require-final-newline t)                ; Require a final newline—POSIX BOIS
+
+#+end_src
+
+** Restoring buffer positions on load.
+Record cursor position.
+
+#+begin_src emacs-lisp
+
+(use-package saveplace
+  :elpaca nil
+  :config
+  (setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
+  (setq save-place-forget-unreadable-files t)
+  (save-place-mode 1))
+
+#+end_src
+
+** Server
+Server start.
+
+#+begin_src emacs-lisp
+
+(require 'server)
+
+(unless (server-running-p)
+  (server-start))
+
+#+end_src
+
 
 * Design
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
@@ -501,6 +755,7 @@ We want less colours and less stress for the eyes both in the light and dark mod
 #+end_src
 
 Finally, a small fun which lets us switch between our settings.
+This is an adaptation of the toggle-theme functionality built into lambda-themes.
 
 #+begin_src emacs-lisp
 (defun my-toggle-theme ()
@@ -520,7 +775,6 @@ Finally, a small fun which lets us switch between our settings.
       )))
 #+end_src
 
-
 We load the theme-code with a few configurations here.
 Choosing this theme is done when we set up the modeline due to the fact that we modify the theme and modeline simultaneously.
 #+begin_src emacs-lisp
@@ -528,15 +782,14 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
   :demand t
   :custom
-  (lambda-themes-set-italic-comments t)
-  (lambda-themes-set-italic-keywords t)
-  (lambda-themes-set-variable-pitch nil)
+  (lambda-themes-set-italic-comments t)  ; Italic comments.
+  (lambda-themes-set-italic-keywords t)  ; Italic keywords
+  (lambda-themes-set-variable-pitch nil) ; Fixed pitch looks better to me.
   :bind ("<f6>" . my-toggle-theme)
-  :custom-face
   :config
   ;; load preferred theme
-  (setq initial-scratch-message "")
-  ;; Default frame settings
+  (setq initial-scratch-message "")      ; Why would I ever want a scratch message?
+  ;; Default frame settings (taken from N.Rougier)
   (setq default-frame-alist '((min-height . 1)  '(height . 45)
                               (min-width  . 1)  '(width  . 81)
                               (vertical-scroll-bars . nil)
@@ -547,7 +800,7 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   )
 #+end_src
 
-** The font stack
+** TODO The font stack
 
 This is the font stack we install:
 
@@ -640,7 +893,7 @@ To get a list of all character sets type "M-x list-character-sets"
 The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We customise it at bit.
 
 *** Prelude: A thin (bottom) modeline
- We will have a status line at the top of the frames and therefore disable the modeline at the bottom.
+ We will have a status line at the top of the frames and therefore disable the modeline at the bottom (except for a thin seperator line).
 
 #+begin_src emacs-lisp
 (defun my-thin-modeline ()
@@ -666,12 +919,12 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We
   :demand t
   :hook (lambda-line-mode-hook . my-thin-modeline)
   :custom
-  (lambda-line-position 'top)   ;; Set position of status-line
-  (lambda-line-abbrev t)        ;; abbreviate major modes
-  (lambda-line-hspace "   ")    ;; add some cushion
-  (lambda-line-prefix nil)      ;; I do not care about the RW/RO status.
-  (lambda-line-vc-symbol "  ") ;; I more specious variant of the "git-branch" symbol
-  (lambda-line-visual-bell nil) ;; No visual bell.
+  (lambda-line-position 'top)   ; Set position of status-line
+  (lambda-line-abbrev t)        ; abbreviate major modes
+  (lambda-line-hspace "   ")    ; add some cushion
+  (lambda-line-prefix nil)      ; I do not care about the RW/RO status.
+  (lambda-line-vc-symbol "  ") ; I more specious variant of the "git-branch" symbol
+  (lambda-line-visual-bell nil) ; No visual bell.
   :custom-face
   (lambda-line-active ((t (:inherit nil))))
   (lambda-line-inactive ((t (:inherit nil))))
