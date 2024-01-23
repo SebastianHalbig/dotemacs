@@ -946,24 +946,502 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We
 )
 #+end_src
 
-#+RESULTS:
+* Packages
 
-* Miscellaneous helper functions
+** Cape
+
+[[https://github.com/minad/cape][Cape: completion at point]] is a package by [[https://github.com/minad][Minad]] that enhances the completion ecosystem.
+Our configuration is based on a [[https://kristofferbalintona.me/posts/202203130102/][blog post]] by Kristoffer Balintona.
+#+begin_src emacs-lisp
+(use-package cape
+  :elpaca (:type git :host github :repo "minad/cape")
+  ;; Bind dedicated completion commands
+  ;; Alternative prefix keys: C-c p, M-p, M-+, ...
+  :bind (("C-c p p" . completion-at-point) ;; capf
+         ("C-c p t" . complete-tag)        ;; etags
+         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+         ("C-c p h" . cape-history)
+         ("C-c p f" . cape-file)
+         ("C-c p k" . cape-keyword)
+         ("C-c p s" . cape-elisp-symbol)
+         ("C-c p a" . cape-abbrev)
+         ("C-c p l" . cape-line)
+         ("C-c p w" . cape-dict)
+         ("C-c p \\" . cape-tex)
+         ("C-c p _" . cape-tex)
+         ("C-c p ^" . cape-tex)
+         ("C-c p &" . cape-sgml)
+         ("C-c p r" . cape-rfc1345))
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-history)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-to-list 'completion-at-point-functions #'cape-tex)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  ;;add-to-list 'completion-at-point-functions #'cape-dict)
+  (add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+  ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  (setq cape-dict-file "/usr/share/dict/en_GB.txt")
+  (defun my-cape-capf-setup-latex ()
+    (require 'company-auctex)
+    (require 'company-reftex)
+    (let ((result))
+      (dolist (element (list
+                        ;; First add `company-yasnippet'
+                        (cape-company-to-capf #'company-yasnippet)
+                        ;; Then add `cape-tex'
+                        #'cape-tex
+                        ;; Then add `company-auctex' in the order it adds its
+                        ;; backends.
+                        (cape-company-to-capf #'company-auctex-bibs)
+                        (cape-company-to-capf #'company-auctex-labels)
+                        (cape-company-to-capf #'company-reftex-citations)
+                        (cape-company-to-capf #'company-reftex-labels)
+                        (cape-company-to-capf
+                        (apply-partially #'company--multi-backend-adapter
+                                          '(company-auctex-macros
+                                            company-auctex-symbols
+                                            company-auctex-environments
+                                            company-reftex-citations
+                                            company-reftex-labels))))
+                       result)
+        (add-to-list 'completion-at-point-functions element))))
+  :hook (LaTeX-mode . my-cape-capf-setup-latex)
+  :custom
+  (cape-dabbrev-min-length 3))
+
+#+end_src
+** TODO Consult
+We replace some of emacs functions with their consult equivalent
+
+#+begin_src emacs-lisp
+(use-package consult
+  :elpaca (:type git :host github :repo "minad/consult")
+  :bind (("C-x C-r" . consult-recent-file)
+         ("C-x h"   . consult-outline)
+         ("C-x b"   . consult-buffer)
+         ("C-c h"   . consult-history)
+         ("C-f"     . consult-line)
+         :map ergoemacs-override-keymap
+         ("C-x C-r" . consult-recent-file)
+         ("C-x h"   . consult-outline)
+         ("C-x b"   . consult-buffer)
+         ("C-c h"   . consult-history)
+         ("C-f"     . consult-line)
+         :map ergoemacs--emacs-command-emulation-map
+         ("C-a" . nil))
+  :config
+  (setq consult-preview-key nil) ; No live preview
+ )
+#+end_src
+
+For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ commands, we define our owns with live preview (independently of the [[help:consult-preview-key][consult-preview-key]])
+
+#+name: my-consult-line
+#+begin_src emacs-lisp
+
+(defun my-consult-line ()
+  "Consult line with live preview"
+
+  (interactive)
+  (let ((consult-preview-key 'any)
+        (mini-frame-resize 'grow-only)) ;; !! Important
+    (consult-line)))
+
+(bind-key "C-s"   #'my-consult-line)
+
+#+end_src
+#+name: my-consult-goto-line
+#+begin_src emacs-lisp
+
+(defun my-consult-goto-line ()
+  "Consult goto line with live preview"
+
+  (interactive)
+  (let ((consult-preview-key 'any))
+    (consult-goto-line)))
+
+(bind-key "M-g g"   #'my-consult-goto-line)
+(bind-key "M-g M-g" #'my-consult-goto-line)
+
+#+end_src
+** Corfu
+
+[[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
+The following code is inspired by a [[https://kristofferbalintona.me/posts/202202270056/][blog post]] of Kristoffer Balintona.
+
+
+#+begin_src emacs-lisp
+(use-package corfu
+  :elpaca (corfu :type git
+                 :host github
+                 :repo "minad/corfu"
+                 :files (:defaults "extensions/*")
+                 :includes (corfu-info corfu-history corfu-popupinfo))
+  ;; :hook (lsp-completion-mode . my-corfu-setup-lsp) ; Use corfu for lsp completion
+  :bind (:map corfu-map
+              ("<escape>" . corfu-quit)
+              ("<return>" . corfu-insert)
+              ("M-d" . corfu-show-documentation)
+              ("M-l" . corfu-show-location))
+  :custom
+  ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
+  ;; want to perform completion
+  (tab-always-indent 'complete)       ; Allows for indetation AND completion on <tab>.
+  (completion-cycle-threshold nil)    ; Always show candidates in menu
+  (corfu-auto t)                      ; Enable autocompletion
+  (corfu-auto-prefix 2)               ; Minimum length of prefix before completion.
+  (corfu-auto-delay 20)               ; Delay before auto-completion shows up
+  (corfu-min-width 80)                ; Minimal width of corfu popup.
+  (corfu-max-width corfu-min-width)   ; Always have the same width
+  (corfu-count 10)                    ; Maximal number of candidates.
+  (corfu-scroll-margin 5)             ; Use scroll margins
+  (read-extended-command-predicate
+ #'command-completion-default-include-p) ; Hide corfu commands from  being used via M-x
+
+  (corfu-cycle t)
+  (completion-cycle-threshold 3)      ; If there are only 3 candidates, no poup is shown.
+  (corfu-quit-at-boundary 'seperator) ; Quits at boundary unless a seperator is used.
+  (corfu-separator ?\s)               ; Use space
+  (corfu-quit-no-match 'separator)    ; Don't quit if there is `corfu-separator' inserted
+  (corfu-preview-current 'insert)     ; Preview first candidate. Insert on input if only one
+  (corfu-preselect-first t)           ; Preselect first candidate
+  (corfu-popupinfo-delay 0.1)           ; Show some documentation about the candidates.
+  (add-to-list 'savehist-additional-variables 'corfu-history)
+  ;; Other
+  (corfu-echo-documentation nil)      ; Already use corfu-doc
+  (lsp-completion-provider :none)     ; Use corfu instead for lsp completions
+  :init
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  (corfu-history-mode)
+  :hook (lsp-completion-mode . my-corfu-setup-lsp)
+  :config
+  ;; Setup lsp to use corfu for lsp completion
+  (defun my-corfu-setup-lsp ()
+    "Use orderless completion style with lsp-capf instead of the
+default lsp-passthrough."
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless)))
+  )
+#+end_src
+
+** Cus edit
+
+[[https://github.com/emacs-mirror/emacs/blob/master/lisp/cus-edit.el][Cus edit]] implements the code to create and edit customize buffers.
+#+begin_src emacs-lisp
+(use-package emacs
+  :elpaca nil
+  :config
+  (setq-default
+   custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
+   custom-unlispify-tag-names nil          ; Prefer kebab-case for symbols
+))
+#+end_src
 ** Dash
 [[https://github.com/magnars/dash.el][Dash]] makes working with lists better.
 #+begin_src emacs-lisp
 (use-package dash)
 #+end_src
-** Set foreground or background
+** TODO Embark :INACTIVE:TEST:
+The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
 
 #+begin_src emacs-lisp
-(defun my-face-foreground (face &optional frame inherit)
-  (or (face-foreground face frame inherit) 'unspecified))
-
-(defun my-face-background (face &optional frame inherit)
-  (or (face-background face frame inherit) 'unspecified))
+(use-package embark
+  :bind (("C-." . embark-act)
+         :map minibuffer-local-completion-map
+         ("C-." . embark-act)
+         ("C->" . embark-become)
+         :map embark-region-map
+         ("a" . align-regexp)
+         ("C" . capitalize-dwim)
+         ("SPC" . whitespace-cleanup-region)
+         ("RET" . fill-region)
+         :map embark-symbol-map
+         ("." . embark-find-definition)
+         ("k" . describe-keymap)
+         )
+  :config
+  (setq prefix-help-command #'embark-prefix-help-command)
+  (setq embark-quit-after-action t)     ; XXX: Read the doc string!
+  (setq embark-confirm-act-all nil)
+  (setq embark-indicators
+        '(embark-mixed-indicator
+          embark-highlight-indicator))
+  ;; NOTE 2021-07-31: The mixed indicator starts out with a minimal view
+  ;; and then pops up the verbose buffer, so those variables matter.
+  (setq embark-verbose-indicator-excluded-actions
+        '("\\`customize-" "\\(local\\|global\\)-set-key"
+          set-variable embark-cycle embark-keymap-help embark-isearch))
+  (setq embark-verbose-indicator-buffer-sections
+        `(target "\n" shadowed-targets " " cycle "\n" bindings))
+  (setq embark-mixed-indicator-both nil)
+  (setq embark-mixed-indicator-delay 1.5)
+  ;;  NOTE 2021-07-28: This is used when `embark-indicator' is set to
+  ;;  `embark-mixed-indicator' or `embark-verbose-indicator'.  We can
+  ;;  specify the window parameters here, but I prefer to do that in my
+  ;;  `display-buffer-alist' (search this document) because it is easier
+  ;;  to keep track of all my rules in one place.
+  (setq embark-verbose-indicator-display-action nil)
+  )
 #+end_src
-* Packages
+
+** Ergoemacs
+We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
+Change of standard bindings are saved in _ergoemacs-override-keymap_.
+#+begin_src emacs-lisp
+(use-package ergoemacs-mode
+    :config
+    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
+    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
+    (ergoemacs-mode 1)                    ; Globally enables ergoemacs-mode
+    (setq initial-scratch-message ""))    ; Why is this needed?!?
+#+end_src
+
+** Marginalia :INACTIVE:TEST:
+
+See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-completion-and-orderless/#vertico
+We do not configure marginalia to much. Text on the right. Trying to not show file ages. That's it.
+
+#+begin_src emacs-lisp
+
+(defun vertico--prompt-selection ()
+  "Highlight the prompt"
+
+  (let ((inhibit-modification-hooks t))
+    (set-text-properties (minibuffer-prompt-end) (point-max)
+                         '(face (nano-strong nano-salient)))))
+
+(use-package marginalia
+  :init (marginalia-mode)
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle))
+  :custom
+  (marginalia--ellipsis "…")      ; Nicer ellipsis
+  (marginalia-align 'right)       ; right alignment
+  (marginalia-align-offset -1)    ; one space on the right
+  (marginalia-max-relative-age 0) ; Supresses showing the file age
+  )
+#+end_src
+
+See https://github.com/minad/vertico/issues/145
+To enhance the visuals, we integrate all the icons into marginalia
+
+#+begin_src emacs-lisp
+
+(defun minibuffer-vertico-setup ()
+
+  (setq truncate-lines t)
+  (setq completion-in-region-function
+        (if vertico-mode
+            #'consult-completion-in-region
+          #'completion--in-region)))
+
+(add-hook 'vertico-mode-hook #'minibuffer-vertico-setup)
+(add-hook 'minibuffer-setup-hook #'minibuffer-vertico-setup)
+
+(use-package all-the-icons-completion
+  :after (marginalia all-the-icons)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+  :init
+  (all-the-icons-completion-mode))
+#+end_src
+
+** Orderless
+
+Allow completion based on space-separated tokens, out of order.
+Config inspired by a [[https://kristofferbalintona.me/posts/202202211546/#orderless][blog post]] of Kristoffer Balintona.
+
+#+begin_src emacs-lisp
+(use-package orderless
+  :elpaca (:type git :host github :repo "oantolin/orderless")
+  :custom-face
+  (orderless-match-face-0 ((t (:foreground "black" :background nil))))
+  (orderless-match-face-1 ((t (:background nil))))
+  (orderless-match-face-2 ((t (:background nil))))
+  (orderless-match-face-3 ((t (:background nil))))
+  :custom
+  (completion-styles '(orderless))
+  (completion-category-defaults nil) ; I want to be in control!
+  (orderless-component-separator 'orderless-escapable-split-on-space)
+  (orderless-matching-styles
+   '(orderless-prefixes
+     orderless-literal
+     orderless-regexp
+     orderless-initialism
+     ))
+  (orderless-style-dispatchers
+    '(orderless-affix-dispatch))
+  (orderless-affix-dispatch-alist
+   '((33 . orderless-without-literal) ;; "!" at start/end excludes this word from the search
+     (37 . char-fold-to-regexp)       ;; "%" at start/end ignores inflections of the word
+     (44 . orderless-initialism)      ;; "," at start/end activates initalism
+     (61 . orderless-literal)         ;; "=" at start/end makes the word match literally
+     (126 . orderless-flex)))         ;; "~" at start/end activate flexible matching.
+  (read-file-name-completion-ignore-case t)
+  (read-buffer-completion-ignore-case t)
+  (completion-ignore-case t)
+  (completion-category-overrides '((file (styles . (partial-completion)))))
+  )
+#+end_src
+
+** LSP-Mode
+
+A few more niceties for our completion setup are provided by using the lsp-mode.
+It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].The following config is derived from Tony Zorman's settings.
+
+#+begin_src emacs-lisp
+(use-package lsp-mode
+  :preface
+  (defun my-lsp-shutdown-last-workspaces ()
+    "Shut down the `lsp--last-active-workspaces'."
+    (interactive)
+    (mapc (lambda (ws)
+            (lsp--warn "Stopping %s" (lsp--workspace-print ws))
+            (with-lsp-workspace ws (lsp--shutdown-workspace)))
+          lsp--last-active-workspaces))
+  :hook
+  ((latex-mode LaTeX-mode) . lsp-deferred)
+  (lsp-mode . (lambda ()
+                (setq-local read-process-output-max (* 1024 1024))))
+  (lsp-completion-mode ; for corfu compatibility
+   . (lambda ()
+       (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+             '(flex))))
+  :commands (lsp-deferred lsp)
+  :bind (:map lsp-mode-map
+              ("C-c l i" . lsp-ui-imenu)
+              ("C-c C-r" . lsp-execute-code-action)
+              ("C-c C-d" . lsp-ui-doc-show)
+              ("C-c l s" . (lambda ()
+                             (interactive)
+                             (lsp-ui-sideline-enable (not lsp-ui-sideline-mode))))
+              ("C-c h"   . (lambda ()
+                             (interactive)
+                             (when lsp-lens-mode
+                               (lsp-lens-mode -1))
+                             (lsp-lens-hide)))
+              ("C-c d"   . (lambda ()
+                             (interactive)
+                             (when (not lsp-lens-mode)
+                               (lsp-lens-mode 1))
+                             (lsp-lens-show))))
+  :custom
+  (lsp-use-plists t)
+  (lsp-completion-provider :none)       ; Corfu
+  (lsp-keymap-prefix "C-c l")
+  (lsp-idle-delay 0.6)
+  ;; Disable things I don't care about
+  (lsp-headerline-breadcrumb-enable nil)
+  (lsp-modeline-code-actions-enable nil)
+  (lsp-modeline-diagnostics-enable nil)
+  (lsp-enable-symbol-highlighting nil)
+)
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package lsp-ui
+  :after lsp-mode
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-doc-show-with-mouse nil)
+  (lsp-ui-sideline-enable nil)
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-show-hover t)
+  )
+#+end_src
+
+** TODO Vertico :INACTIVE:TEST:
+
+
+[[https://github.com/minad/vertico][Vertico]] provides a performant and minimalistic vertical completion UI based on the default completion system but aims to be highly flexible, extensible and modular.
+
+For informations on completion-at-point and completion-in-region see:
+https://github.com/minad/vertico#completion-at-point-and-completion-in-region
+The pointer for the currrent line is derived from: [[
+https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
+
+There is a hacky code which replaces the numbers in front of the matches with white spaces.
+However this assumes as of now that these are one-digit numbers.
+
+#+begin_src emacs-lisp
+(use-package vertico
+  :demand t                             ; Otherwise won't get loaded immediately
+  :elpaca (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
+                     :includes (vertico-indexed
+                                vertico-flat
+                                vertico-grid
+                                vertico-mouse
+                                vertico-quick
+                                vertico-buffer
+                                vertico-repeat
+                                vertico-reverse
+                                vertico-directory
+                                vertico-multiform
+                                vertico-unobtrusive
+                                ))
+  :bind (("M-." . vertico-repeat)
+         :map vertico-map
+         ("<tab>" . vertico-insert)
+         ("<escape>" . minibuffer-keyboard-quit)
+         ("?" . minibuffer-completion-help)
+         ( "<backtab>" . minibuffer-complete)
+         )
+  :hook ((rfn-eshadow-update-overlay . vertico-directory-tidy) ; Clean up file path when typing
+         (minibuffer-setup . vertico-repeat-save) ; Make sure vertico state is saved
+         )
+  :custom
+  (vertico-count 10)             ; At most 10 entries are shown
+  (vertico-count-format nil)     ; But we do not count them
+  (vertico-resize nil)           ; The size of the minbuffer is fixed
+  (vertico-cycle t)
+  ;; Extensions
+  (vertico-grid-separator "       ")
+  (vertico-grid-lookahead 50)
+  (vertico-buffer-display-action '(display-buffer-reuse-window))
+  (vertico-multiform-categories
+   '((file grid)
+     (consult-grep buffer)
+     )
+   )
+  (completion-in-region-function
+   (lambda (&rest args)
+     (apply (if vertico-mode
+                #'consult-completion-in-region
+              #'completion--in-region)
+            args)))
+  :init
+  :config
+  (vertico-mode)
+  ;; Extensions
+  (vertico-multiform-mode)
+  ;; Prefix the current candidate with “ ”. From
+  ;; https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow
+  (advice-add #'vertico--format-candidate :around
+              (lambda (orig cand prefix suffix index _start)
+                (setq cand (funcall orig cand prefix suffix index _start))
+                ;; (string-match "[[:digit:]]+" cand)
+                ;; ;; We replace (for now) one digit with a properly styled white space.
+                ;; (setq cand (replace-match (if (= vertico--index index)
+                ;;      (propertize " " 'face 'vertico-current)
+                ;;    t" ") nil t cand)) ; Change to multi-digit numbers
+                (concat
+                 (if (= vertico--index index)
+                     (propertize " " 'face 'vertico-current)
+                   t"  ")
+                 cand)))
+  :custom-face
+  (vertico-group-separator ((t (:strike-through t))))
+  (vertico-current ((t (:inherit 'nano-strong 'nano-subtle))))
+  (completions-first-difference ((t (:inherit 'nano-default))))
+  )
+#+end_src
+
 ** Visual fill column and visual line mode
 
 We activate /visual-line-mode/ globally. Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
@@ -981,554 +1459,31 @@ We activate /visual-line-mode/ globally. Additionally, we use the package "[[htt
 #+end_src
 Changing the symbol for truncation (…) and wrap (↩).
 
-* Documentation :INACTIVE:
-** To sort :INACTIVE:
+** YASnippet
+We use yasnippet in Latex mode
 
 #+begin_src emacs-lisp
 
-(setq-default
- ad-redefinition-action 'accept         ; Silence warnings for redefinition
- custom-unlispify-menu-entries nil      ; Prefer kebab-case for titles
- custom-unlispify-tag-names nil         ; Prefer kebab-case for symbols
- (put 'downcase-region 'disabled nil)    ; Enable downcase-region
- (put 'upcase-region 'disabled nil)      ; Enable upcase-region
- native-comp-async-report-warnings-errors nil ; Skip compilation error buffers
- read-process-output-max (* 1024 1024)  ; Increase read size per process
+(use-package yasnippet
+  :elpaca (:type git :host github :repo "oaotavora/yasnippet")
+  :demand t
+  :config (yas-global-mode)
+  :custom
+  (yas-inhibit-overlay-modification-protection nil))
 
 #+end_src
 
-** To do [5/12] :INACTIVE:
 
-- [X] Tangle file when saving (org-auto-tangle)
-- [X] Hitting `space` on top node should open the node (instead of folding)
-- [X] Dim inactive entries in the sidebar
-- [X] Shift-tab to toggle sidebar (all entries)
-- [X] Filter sidebar (`f` key)
-- [ ] Integrate  LaTeX settings into this config
-- [ ] Configure the mail settings
-- [ ] Build a usefull startup screen
-- [ ] Work on the agenda settings
-- [ ] Work on org-roam settings
-- [ ] Setup dirvish
-- [ ] Fix keybindings
-- [ ] use use-package consequently
-
-
-* Core :INACTIVE:
-
-
+* Miscellaneous helper functions
+** Set foreground or background
 
 #+begin_src emacs-lisp
+(defun my-face-foreground (face &optional frame inherit)
+  (or (face-foreground face frame inherit) 'unspecified))
 
-(defvar my-init-start-time (current-time) "Time when init.el was started")
-(defvar my-section-start-time (current-time) "Time when section was started")
-(defun my-report-time (section)
-  (message "%-36s %.2fs"
-           (concat section " " "section time: ")
-           (float-time (time-subtract (current-time) my-section-start-time))))
-(message "---------------------------------------------------------------")
-
+(defun my-face-background (face &optional frame inherit)
+  (or (face-background face frame inherit) 'unspecified))
 #+end_src
-
-** Packages management :PERSONAL:
-
-Using [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup).
-
-#+begin_src emacs-lisp
-
-(setq straight-check-for-modifications nil)
-
-#+end_src
-
-#+begin_src emacs-lisp
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
-#+end_src
-
-Library and theme load paths with a special case for mu4e (you may need to adapt this path).
-
-#+begin_src emacs-lisp
-
-(add-to-list 'load-path
-             (expand-file-name "lisp" user-emacs-directory))
-(add-to-list 'custom-theme-load-path
-             (expand-file-name "theme" user-emacs-directory))
-(add-to-list 'load-path
-             "/usr/share/emacs/site-lisp/mu4e/mu4e.el")
-
-#+end_src
-
-Load uses the newest version possible.
-
-#+begin_src emacs-lisp
-
-(setq load-prefer-newer t) ; always choose the newest version of a package
-
-#+end_src
-
-** Packages installation :CLEANUP:
-
-Packages used in this specific configuration. You may want to adapt this list. The first time this sequence will be executed, *it will take a long time*. Then, at next restart, it should be very fast (less than 1 second because it won't install anything basically).
-
-#+begin_src emacs-lisp
-
-(setq package-list
-      '(all-the-icons       ; ICONS
-        projectile          ; TODO
-        dash                ; Better list handling
-        adaptive-wrap       ; A version of adaptive-line-wrap that does not alter the text.
-        visual-fill-column  ; Visual line wrapping according to fill-column.
-        dirvish             ; A modern file manager
-        anzu                ; Show number of matches in modeline
-        swiper              ; Better search with swiper
-        lsp-mode            ; Implementation of language server protocol
-        lsp-ui              ; TODO
-        rainbow-mode        ; TODO
-        dictcc              ; Online DE/EN dictionary interface
-        flyspell-lazy       ; Lazy flyspell-completion
-        puni                ; Parenthesis handeling
-        rainbow-delimiters  ; Make parentheses sexy
-        cdlatex             ; LaTeX features
-        laas                ; LaTeX autocompleting snippes
-        latex-extra         ; Addons for LaTeX-mode
-        ergoemacs-mode      ; "Modern" key-bindings
-        fira-code-mode      ; Fira code ligatures
-        oauth               ; Oauth library
-        biblio              ; Handling bibliographies.
-        offlineimap         ; OfflineIMAP from Emacs
-        no-littering        ;
-        org-msg             ; Write mails with org mode.
-        org-modern          ; Nicer org mode
-        org-super-agenda    ; TODO ???
-        org-recur           ; For recurring tasks
-        selectrum           ; TODO REMOVE?
-        selectrum-prescient ; TODO REMOVE?
-        wgrep               ; TODO REMOVE?
-        undo-tree           ; Undo history presented in a tree
-        cape                ; Completion At Point Extensions
-        orderless           ; Completion style for matching regexps in any order
-        ;; vertico          ; VERTical Interactive COmpletion
-                            ; We use a customised version. Thus it is commented out here.
-        marginalia          ; Enrich existing commands with completion annotations
-        embark
-        consult             ; Consulting completing-read
-        embark-consult      ; Consult integration into embark
-        ;; corfu            ; Completion Overlay Region FUnction.
-                            ; We use a special build. Thus its commented out.
-          company           ; We can integrate company backends into corfu...
-          company-auctex
-          company-reftex
-        powerthesaurus      ; Because you can't know enough words.
-        jeison              ; Dependency of powertheaurus
-        all-the-icons-completion  ; All the icons for marginalia
-        ;;deft                ; Quickly browse, filter, and edit plain text notes
-        ;;elpher              ; A friendly gopher and gemini client
-        smudge              ; Spotify for emacs
-        elpy                ; Python in Emacs
-        elfeed              ; Emacs Atom/RSS feed reader
-        elfeed-org          ; Configure elfeed with one or more org-mode files
-        elfeed-dashboard    ; Elfeed with a mu4e feeling
-        elfeed-score        ; A scoring tool for elfeed
-        ;;f                   ; Modern API for working with files and directories
-        citar               ; Citation-related commands for org, latex, markdown
-        citar-embark
-        ;;citeproc            ; A CSL 1.0.2 Citation Processor
-        flyspell-correct-popup ; Correcting words with flyspell via popup interface
-        flyspell-popup      ; Correcting words with Flyspell in popup menus
-        guess-language      ; Robust automatic language detection
-        helpful             ; A better help buffer
-        htmlize             ; Convert buffer text and decorations to HTML
-        mini-frame          ; Show minibuffer in child frame on read-from-minibuffer
-        imenu-list          ; Show imenu entries in a separate buffer
-        magit               ; A Git porcelain inside Emacs.
-        ;;markdown-mode       ; Major mode for Markdown-formatted text
-        multi-term          ; Managing multiple terminal buffers in Emacs.
-        pinentry            ; GnuPG Pinentry server implementation
-        org-gcal            ; Gcal synchronisation
-        use-package         ; A configuration macro for simplifying your .emacs
-        vc-backup           ; VC backend for versioned backups
-        ;;yaml-mode           ; YAML mode
-        ;;consult-recoll      ; Consult interface for recoll query
-        org-auto-tangle     ; Tangle org file when it is saved
-        exec-path-from-shell; Get environment variables such as $PATH from the shell
-        which-key))         ; Display available keybindings in popup
-
-;; Install packages that are not yet installed
-(dolist (package package-list)
-  (straight-use-package package))
-
-;; AucTeX-LaTeXmk fork
-(provide 'tex-buf)
-(straight-use-package
- '(auctex-latexmk :type git :host github :repo "aam-at/auctex-latexmk"))
-
-;; Browsing nerd-fonts within emacs
-(straight-use-package
- '(nerd-fonts :type git :host github :repo "twlz0ne/nerd-fonts.el"))
-
-;; Special case for pdf-tools that has recently (2022) changed maintainer
-(straight-use-package
- '(pdf-tools :type git :host github :repo "vedang/pdf-tools"))
-
-;; Denote not yet on ELPA (2022-06-19)
-(straight-use-package
- '(denote :type git :host github :repo "protesilaos/denote"))
-
-;; The newes compat version is not on ELPA
-(straight-use-package
- '(compat :type git :host github :repo "emacs-straight/compat"))
-
-#+end_src
-
-Packages of N. Rougier
-
-#+begin_src emacs-lisp
-
-;; Display org properties in the agenda buffer (modified version)
-(straight-use-package
- '(org-agenda-property :type git :host github :repo "Malabarba/org-agenda-property"
-                       :fork (:host github :repo "rougier/org-agenda-property")))
-
-;; NANO splash
-(straight-use-package
- '(nano-splash :type git :host github :repo "rougier/nano-splash"))
-
-;; NANO theme
-(straight-use-package
- '(nano-theme :type git :host github :repo "rougier/nano-theme"))
-
-;; NANO modeline
-(straight-use-package
- '(nano-modeline :type git :host github :repo "rougier/nano-modeline"))
-
-;; NANO agenda
-(straight-use-package
- '(nano-agenda :type git :host github :repo "rougier/nano-agenda"))
-
-;; NANO agenda
-(straight-use-package
- '(minibuffer-header :type git :host github :repo "rougier/minibuffer-header"))
-
-;; SVG tags, progress bars & icons
-(straight-use-package
- '(svg-lib :type git :host github :repo "rougier/svg-lib"))
-
-;; Replace keywords with SVG tags
-(straight-use-package
- '(svg-tag-mode :type git :host github :repo "rougier/svg-tag-mode"))
-
-;; Dashboard for mu4e
-(straight-use-package
- '(mu4e-dashboard :type git :host github :repo "rougier/mu4e-dashboard"))
-
-;; Folding mode for mu4e
-(straight-use-package
- '(mu4e-folding :type git :host github :repo "rougier/mu4e-folding"))
-
-;; Relative date formatting
-(straight-use-package
- '(relative-date :type git :host github :repo "rougier/relative-date"))
-
-;; org imenu
-(straight-use-package
- '(org-imenu :type git :host github :repo "rougier/org-imenu"))
-
-;; pdf-drop-mode
-(straight-use-package
- '(pdf-drop-mode :type git :host github :repo "rougier/pdf-drop-mode"))
-
-
-;; Bilbliography manager in org mode
-(straight-use-package
- '(org-bib :type git :host github :branch "org-imenu" :repo "rougier/org-bib-mode"))
-
-#+end_src
-
-My latex-specific auto-expanding-snippets and the <tab> and <return> functionalities:
-
-#+begin_src emacs-lisp
-
-(straight-use-package
-  '(smart-keys-for-latex :type git :host github :repo "SebastianHalbig/smart-keys-for-latex"))
-
-#+end_src
-
-Singular shell:
-
-#+begin_src emacs-lisp
-
-(straight-use-package
-  '(singular :local-repo "singular"))
-
-#+end_src
-
-** TODO Startup :ENHANCE:
-
-
-
-#+begin_src emacs-lisp
-
-(require 'no-littering)
-
-#+end_src
-
-** Encoding
-
-We tell emacs to use UTF-8 encoding as much as possible.
-
-#+begin_src emacs-lisp
-
-(set-default-coding-systems 'utf-8)     ; Default to utf-8 encoding
-(prefer-coding-system       'utf-8)     ; Add utf-8 at the front for automatic detection.
-(set-terminal-coding-system 'utf-8)     ; Set coding system of terminal output
-(set-keyboard-coding-system 'utf-8)     ; Set coding system for keyboard input on TERMINAL
-
-#+end_src
-
-Furthermore, we fix English as the default language.
-
-#+begin_src emacs-lisp
-
-(set-language-environment "English")    ; Set up multilingual environment
-
-#+end_src
-
-** Recovery
-
-If Emacs or the computer crashes, you can recover the files you were editing at the time of the crash from their auto-save files. To do this, start Emacs again and type the command ~M-x recover-session~. Here, we parameterise how files are saved in the background.
-
-#+begin_src emacs-lisp
-
-(setq auto-save-list-file-prefix ; Prefix for generating auto-save-list-file-name
-               (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
-      ;; auto-save-file-name-transforms ; An alternative to the above prefix.
-	  ;; `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
-      auto-save-default t        ; Auto-save every buffer that visits a file
-      auto-save-timeout 20       ; Number of seconds between auto-save
-      auto-save-interval 200     ; Number of keystrokes between auto-saves
-      create-lockfiles t)        ; Create lockfiles to interact nicely with different editors operating on the same file.
-
-#+end_src
-
-** Backups
-
-Emacs carefully copies the old contents to another file, called the “backup” file, before actually saving. Emacs makes a backup for a file only the first time the file is saved from a buffer. No matter how many times you subsequently save the file, its backup remains unchanged. However, if you kill the buffer and then visit the file again, a new backup file will be made. Here, we activate backup and parameterise the number of backups to keep.
-
-#+begin_src emacs-lisp
-
-
-(setq backup-directory-alist       ; File name patterns and backup directory names.
-      `(("." . ,(expand-file-name "backups" user-emacs-directory)))
-      make-backup-files t          ; Backup of a file the first time it is saved.
-      vc-make-backup-files t       ; No backup of files under version contr
-      backup-by-copying t          ; Don't clobber symlinks
-      version-control t            ; Version numbers for backup files
-      delete-old-versions t        ; Delete excess backup files silently
-      kept-old-versions 6          ; Number of old versions to keep
-      kept-new-versions 9          ; Number of new versions to keep
-      delete-by-moving-to-trash t) ; Delete files to trash
-
-;; Back
-(require 'vc-backup)
-
-#+end_src
-
-** Bookmarks
-
-#+begin_src emacs-lisp
-
-(setq bookmark-default-file (expand-file-name "bookmark" user-emacs-directory))
-
-#+end_src
-
-** Recent files
-
-50 Recents files with some exclusion (regex patterns).
-
-#+begin_src emacs-lisp
-
-(require 'recentf)
-
-(add-to-list 'recentf-exclude no-littering-var-directory)
-(add-to-list 'recentf-exclude no-littering-etc-directory)
-
-(setq recentf-max-menu-items 10
-      recentf-max-saved-items 100
-      recentf-exclude '("~/Documents/.*/"))
-
-(let (message-log-max)
-  (recentf-mode 1))
-
-#+end_src
-
-** History :HOOK:
-
-Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
-
-#+begin_src emacs-lisp
-
-(defun unpropertise-kill-ring ()
-  (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
-
-(add-hook 'kill-emacs-hook 'unpropertise-kill-ring)
-
-#+end_src
-
-We save every possible history we can think of.
-
-#+begin_src emacs-lisp
-
-(setq kill-ring-max 50
-      history-length 50)
-
-(setq savehist-additional-variables
-      '(kill-ring
-        command-history
-        set-variable-value-history
-        custom-variable-history
-        query-replace-history
-        read-expression-history
-        minibuffer-history
-        read-char-history
-        face-name-history
-        bookmark-history
-        file-name-history))
-
-(put 'minibuffer-history         'history-length 50)
-(put 'file-name-history          'history-length 50)
-(put 'set-variable-value-history 'history-length 25)
-(put 'custom-variable-history    'history-length 25)
-(put 'query-replace-history      'history-length 25)
-(put 'read-expression-history    'history-length 25)
-(put 'read-char-history          'history-length 25)
-(put 'face-name-history          'history-length 25)
-(put 'bookmark-history           'history-length 25)
-
-#+end_src
-
-No duplicates in history
-
-#+begin_src emacs-lisp
-
-(setq history-delete-duplicates t)
-
-#+end_src
-
-Start history mode.
-
-#+begin_src emacs-lisp
-
-(let (message-log-max)
-  (savehist-mode))
-
-(setq savehist-file (concat user-emacs-directory "history.el"))
-
-
-#+end_src
-
-Enable auto-save-visited-mode
-
-#+begin_src emacs-lisp
-
-(auto-save-visited-mode)
-
-#+end_src
-
-A buffer can get out of sync with respect to its visited file on disk if that file is changed by another program. This is prevented by auto revert mode
-
-#+begin_src emacs-lisp
-
-(use-package autorevert
-:config
-(setq auto-revert-verbose t)
-(global-auto-revert-mode))
-
-#+end_src
-
-** Saving
-
-#+begin_src emacs-lisp
-
-(add-hook 'before-save-hook 'delete-trailing-whitespace) ; On save, delete trailing whitespaces
-(setq require-final-newline t)                ; Require a final newline—POSIX BOIS
-
-#+end_src
-
-** Cursor
-
-Record cursor position from one session ot the other
-
-#+begin_src emacs-lisp
-
-(use-package saveplace
-  :config
-  (setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
-  (setq save-place-forget-unreadable-files t)
-  (save-place-mode 1))
-
-#+end_src
-
-** Customisation
-
-Since init.el will be generated from this file, we save customisation in a dedicated file.
-
-#+begin_src emacs-lisp
-
-(setq custom-file (concat user-emacs-directory "custom.el"))
-
-(when (file-exists-p custom-file)
-  (load custom-file nil t))
-
-#+end_src
-
-** Server
-
-Server start.
-
-#+begin_src emacs-lisp
-
-(require 'server)
-
-(unless (server-running-p)
-  (server-start))
-
-#+end_src
-
-** Keybindings :BUGFIX:
-
-A "modern" keyboard layout is provided by ergoemacs.
-Sadly it does things quite noisily.
-We suppress this with a bit of "hacking".
-
-#+begin_src emacs-lisp
-(let ((message-log-max nil))             ; We suppress the output to *messages*
-  (use-package ergoemacs-mode
-    :config
-    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
-    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
-    (ergoemacs-mode 1)))                  ; Globally enables ergoemacs-mode
-
-#+end_src
-
-** Benchmark
-
-#+begin_src emacs-lisp
-
-(my-report-time "Core")
-
-#+end_src
-
 
 * Personal library :INACTIVE:
 
@@ -3420,262 +3375,6 @@ For retina display (OSX)
 #+end_src
 
 
-* Completion :INACTIVE:
-
-#+begin_src emacs-lisp
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** Cape :MODE:
-
-A completion framework on steroids.
-It will need some tweaking in the future.
-Starting point is from [[https://kristofferbalintona.me/posts/202203130102/]]
-#+begin_src emacs-lisp
-(use-package cape
-  ;; Bind dedicated completion commands
-  ;; Alternative prefix keys: C-c p, M-p, M-+, ...
-  :bind (("C-c p p" . completion-at-point) ;; capf
-         ("C-c p t" . complete-tag)        ;; etags
-         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-         ("C-c p h" . cape-history)
-         ("C-c p f" . cape-file)
-         ("C-c p k" . cape-keyword)
-         ("C-c p s" . cape-symbol)
-         ("C-c p a" . cape-abbrev)
-         ("C-c p l" . cape-line)
-         ("C-c p w" . cape-dict)
-         ("C-c p \\" . cape-tex)
-         ("C-c p _" . cape-tex)
-         ("C-c p ^" . cape-tex)
-         ("C-c p &" . cape-sgml)
-         ("C-c p r" . cape-rfc1345))
-  :init
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-history)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;;add-to-list 'completion-at-point-functions #'cape-dict)
-  (add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
-  (setq cape-dict-file "/usr/share/dict/en_GB.txt")
-  (defun my-cape-capf-setup-latex ()
-    (require 'company-auctex)
-    (require 'company-reftex)
-    (let ((result))
-      (dolist (element (list
-                        ;; First add `company-yasnippet'
-                        (cape-company-to-capf #'company-yasnippet)
-                        ;; Then add `cape-tex'
-                        #'cape-tex
-                        ;; Then add `company-auctex' in the order it adds its
-                        ;; backends.
-                        (cape-company-to-capf #'company-auctex-bibs)
-                        (cape-company-to-capf #'company-auctex-labels)
-                        (cape-company-to-capf #'company-reftex-citations)
-                        (cape-company-to-capf #'company-reftex-labels)
-                        (cape-company-to-capf
-                        (apply-partially #'company--multi-backend-adapter
-                                          '(company-auctex-macros
-                                            company-auctex-symbols
-                                            company-auctex-environments
-                                            company-reftex-citations
-                                            company-reftex-labels))))
-                       result)
-        (add-to-list 'completion-at-point-functions element))))
-  :hook (LaTeX-mode . my-cape-capf-setup-latex)
-  :custom
-  (cape-dabbrev-min-length 3))
-
-
-#+end_src
-
-** Corfu :MODE:BINDING:
-
-[[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
-The following code is inspired by [[https://kristofferbalintona.me/posts/202202270056/]]
-
-
-#+begin_src emacs-lisp
-(use-package corfu
-  :straight (corfu :files (:defaults "extensions/*")
-                   :includes (corfu-info corfu-history corfu-popupinfo))
-  ;; :hook (lsp-completion-mode . my-corfu-setup-lsp) ; Use corfu for lsp completion
-  :bind (:map corfu-map
-              ("<escape>" . corfu-quit)
-              ("<return>" . corfu-insert)
-              ("M-d" . corfu-show-documentation)
-              ("M-l" . corfu-show-location))
-  :custom
-  ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
-  ;; want to perform completion
-  (tab-always-indent 'complete)       ; Allows for indetation AND completion on <tab>.
-  (completion-cycle-threshold nil)    ; Always show candidates in menu
-  (corfu-auto t)                      ; Enable autocompletion
-  (corfu-auto-prefix 2)               ; Minimum length of prefix before completion.
-  (corfu-auto-delay 20)               ; Delay before auto-completion shows up
-  (corfu-min-width 80)                ; Minimal width of corfu popup.
-  (corfu-max-width corfu-min-width)   ; Always have the same width
-  (corfu-count 10)                    ; Maximal number of candidates.
-  (corfu-scroll-margin 5)             ; Use scroll margins
-  (read-extended-command-predicate
- #'command-completion-default-include-p) ; Hide corfu commands from  being used via M-x
-
-  (corfu-cycle t)
-  (completion-cycle-threshold 3)      ; If there are only 3 candidates, no poup is shown.
-  (corfu-quit-at-boundary 'seperator) ; Quits at boundary unless a seperator is used.
-  (corfu-separator ?\s)               ; Use space
-  (corfu-quit-no-match 'separator)    ; Don't quit if there is `corfu-separator' inserted
-  (corfu-preview-current 'insert)     ; Preview first candidate. Insert on input if only one
-  (corfu-preselect-first t)           ; Preselect first candidate
-  (corfu-popupinfo-delay 0.1)           ; Show some documentation about the candidates.
-  (add-to-list 'savehist-additional-variables 'corfu-history)
-  ;; Other
-  (corfu-echo-documentation nil)      ; Already use corfu-doc
-  (lsp-completion-provider :none)     ; Use corfu instead for lsp completions
-  :init
-  (global-corfu-mode)
-  (corfu-popupinfo-mode)
-  (corfu-history-mode)
-  :hook (lsp-completion-mode . my-corfu-setup-lsp)
-  :config
-  ;; Setup lsp to use corfu for lsp completion
-  (defun my-corfu-setup-lsp ()
-    "Use orderless completion style with lsp-capf instead of the
-default lsp-passthrough."
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(orderless)))
-  )
-#+end_src
-
-** Orderless :MODE:
-
-Allow completion based on space-separated tokens, out of order.
-Config inspired by [[https://kristofferbalintona.me/posts/202202211546/][https://kristofferbalintona.me/posts/202202211546/]]
-
-#+begin_src emacs-lisp
-(use-package orderless
-  :custom
-  (completion-styles '(orderless))
-  (completion-category-defaults nil) ; I want to be in control!
-  (orderless-component-separator 'orderless-escapable-split-on-space)
-  (orderless-matching-styles
-   '(orderless-prefixes
-     orderless-literal
-     orderless-regexp
-     orderless-initialism
-     ))
-  (orderless-style-dispatchers
-    '(orderless-affix-dispatch))
-  (orderless-affix-dispatch-alist
-   '((33 . orderless-without-literal) ;; "!" at start/end excludes this word from the search
-     (37 . char-fold-to-regexp)       ;; "%" at start/end ignores inflections of the word
-     (44 . orderless-initialism)      ;; "," at start/end activates initalism
-     (61 . orderless-literal)         ;; "=" at start/end makes the word match literally
-     (126 . orderless-flex)))         ;; "~" at start/end activate flexible matching.
-  (read-file-name-completion-ignore-case t)
-  (read-buffer-completion-ignore-case t)
-  (completion-ignore-case t)
-  (completion-category-overrides '((file (styles . (partial-completion)))))
-  )
-#+end_src
-
-** LSP-Mode
-
-A few more niceties for our completion setup are provided by using the lsp-mode.
-It has a nice and quite useful wiki [[https://emacs-lsp.github.io/lsp-mode/][]]. The following config is derived from Tony Zorman's settings.
-
-#+begin_src emacs-lisp
-
-(use-package lsp-mode
-  :preface
-  (defun my-lsp-shutdown-last-workspaces ()
-    "Shut down the `lsp--last-active-workspaces'."
-    (interactive)
-    (mapc (lambda (ws)
-            (lsp--warn "Stopping %s" (lsp--workspace-print ws))
-            (with-lsp-workspace ws (lsp--shutdown-workspace)))
-          lsp--last-active-workspaces))
-  :hook
-  ((latex-mode LaTeX-mode) . lsp-deferred)
-  (lsp-mode . (lambda ()
-                (setq-local read-process-output-max (* 1024 1024))))
-  (lsp-completion-mode ; for corfu compatibility
-   . (lambda ()
-       (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-             '(flex))))
-  :commands (lsp-deferred lsp)
-  :bind (:map lsp-mode-map
-              ("C-c l i" . lsp-ui-imenu)
-              ("C-c C-r" . lsp-execute-code-action)
-              ("C-c C-d" . lsp-ui-doc-show)
-              ("C-c l s" . (lambda ()
-                             (interactive)
-                             (lsp-ui-sideline-enable (not lsp-ui-sideline-mode))))
-              ("C-c h"   . (lambda ()
-                             (interactive)
-                             (when lsp-lens-mode
-                               (lsp-lens-mode -1))
-                             (lsp-lens-hide)))
-              ("C-c d"   . (lambda ()
-                             (interactive)
-                             (when (not lsp-lens-mode)
-                               (lsp-lens-mode 1))
-                             (lsp-lens-show))))
-  :custom
-  (lsp-use-plists t)
-  (lsp-completion-provider :none)       ; Corfu
-  (lsp-keymap-prefix "C-c l")
-  (lsp-idle-delay 0.6)
-  ;; Disable things I don't care about
-  (lsp-headerline-breadcrumb-enable nil)
-  (lsp-modeline-code-actions-enable nil)
-  (lsp-modeline-diagnostics-enable nil)
-  (lsp-enable-symbol-highlighting nil)
-  )
-
-(use-package lsp-ui
-  :after lsp-mode
-  :commands lsp-ui-mode
-  :custom
-  (lsp-ui-doc-show-with-mouse nil)
-  (lsp-ui-sideline-enable nil)
-  (lsp-ui-peek-always-show t)
-  (lsp-ui-sideline-show-hover t)
-  )
-
-#+end_src
-
-** TODO YASnippet
-We use yasnippet in Latex mode
-
-#+begin_src emacs-lisp
-
-(use-package yasnippet
-  :demand t
-  :config (yas-global-mode)
-  :custom
-  (yas-inhibit-overlay-modification-protection nil))
-
-
-#+end_src
-
-** Benchmark
-
-#+begin_src emacs-lisp
-
-(my-report-time "Completion")
-
-#+end_src
-
 
 * Minibuffer & Modeline :INACTIVE:
 
@@ -3685,231 +3384,6 @@ We use yasnippet in Latex mode
 
 #+end_src
 
-** Consult :BINDING:
-
-We replace some of emacs functions with their consult equivalent
-
-#+begin_src emacs-lisp
-
-(require 'consult)
-
-(setq consult-preview-key nil) ; No live preview
-
-(bind-key "C-x C-r" #'consult-recent-file)
-(bind-key "C-x h"   #'consult-outline)
-(bind-key "C-x b"   #'consult-buffer)
-(bind-key "C-c h"   #'consult-history)
-;; (bind-key "M-:"     #'consult-complex-command)
-
-#+end_src
-
-For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ commands, we define our owns with live preview (independently of the [[help:consult-preview-key][consult-preview-key]])
-
-#+name: my-consult-line
-#+begin_src emacs-lisp
-
-(defun my-consult-line ()
-  "Consult line with live preview"
-
-  (interactive)
-  (let ((consult-preview-key 'any)
-        (mini-frame-resize 'grow-only)) ;; !! Important
-    (consult-line)))
-
-(bind-key "C-s"   #'my-consult-line)
-
-#+end_src
-#+name: my-consult-goto-line
-#+begin_src emacs-lisp
-
-(defun my-consult-goto-line ()
-  "Consult goto line with live preview"
-
-  (interactive)
-  (let ((consult-preview-key 'any))
-    (consult-goto-line)))
-
-(bind-key "M-g g"   #'my-consult-goto-line)
-(bind-key "M-g M-g" #'my-consult-goto-line)
-
-#+end_src
-** TODO Embark
-The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
-
-#+begin_src emacs-lisp
-(use-package embark
-  :bind (("C-." . embark-act)
-         :map minibuffer-local-completion-map
-         ("C-." . embark-act)
-         ("C->" . embark-become)
-         :map embark-region-map
-         ("a" . align-regexp)
-         ("C" . capitalize-dwim)
-         ("SPC" . whitespace-cleanup-region)
-         ("RET" . fill-region)
-         :map embark-symbol-map
-         ("." . embark-find-definition)
-         ("k" . describe-keymap)
-         )
-  :config
-  (setq prefix-help-command #'embark-prefix-help-command)
-  (setq embark-quit-after-action t)     ; XXX: Read the doc string!
-  (setq embark-confirm-act-all nil)
-  (setq embark-indicators
-        '(embark-mixed-indicator
-          embark-highlight-indicator))
-  ;; NOTE 2021-07-31: The mixed indicator starts out with a minimal view
-  ;; and then pops up the verbose buffer, so those variables matter.
-  (setq embark-verbose-indicator-excluded-actions
-        '("\\`customize-" "\\(local\\|global\\)-set-key"
-          set-variable embark-cycle embark-keymap-help embark-isearch))
-  (setq embark-verbose-indicator-buffer-sections
-        `(target "\n" shadowed-targets " " cycle "\n" bindings))
-  (setq embark-mixed-indicator-both nil)
-  (setq embark-mixed-indicator-delay 1.5)
-  ;;  NOTE 2021-07-28: This is used when `embark-indicator' is set to
-  ;;  `embark-mixed-indicator' or `embark-verbose-indicator'.  We can
-  ;;  specify the window parameters here, but I prefer to do that in my
-  ;;  `display-buffer-alist' (search this document) because it is easier
-  ;;  to keep track of all my rules in one place.
-  (setq embark-verbose-indicator-display-action nil)
-  )
-#+end_src
-
-** TODO Vertico :ADVICE:HOOK:BINDING:MODE:FACE:
-
-
-[[https://github.com/minad/vertico][Vertico]] provides a performant and minimalistic vertical completion UI based on the default completion system but aims to be highly flexible, extensible and modular.
-
-For informations on completion-at-point and completion-in-region see:
-https://github.com/minad/vertico#completion-at-point-and-completion-in-region
-The pointer for the currrent line is derived from: [[
-https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
-
-There is a hacky code which replaces the numbers in front of the matches with white spaces.
-However this assumes as of now that these are one-digit numbers.
-
-#+begin_src emacs-lisp
-(use-package vertico
-  :demand t                             ; Otherwise won't get loaded immediately
-  :straight (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
-                     :includes (vertico-indexed
-                                vertico-flat
-                                vertico-grid
-                                vertico-mouse
-                                vertico-quick
-                                vertico-buffer
-                                vertico-repeat
-                                vertico-reverse
-                                vertico-directory
-                                vertico-multiform
-                                vertico-unobtrusive
-                                ))
-  :bind (("M-." . vertico-repeat)
-         :map vertico-map
-         ("<tab>" . vertico-insert)
-         ("<escape>" . minibuffer-keyboard-quit)
-         ("?" . minibuffer-completion-help)
-         ( "<backtab>" . minibuffer-complete)
-         )
-  :hook ((rfn-eshadow-update-overlay . vertico-directory-tidy) ; Clean up file path when typing
-         (minibuffer-setup . vertico-repeat-save) ; Make sure vertico state is saved
-         )
-  :custom
-  (vertico-count 10)             ; At most 10 entries are shown
-  (vertico-count-format nil)     ; But we do not count them
-  (vertico-resize nil)           ; The size of the minbuffer is fixed
-  (vertico-cycle t)
-  ;; Extensions
-  (vertico-grid-separator "       ")
-  (vertico-grid-lookahead 50)
-  (vertico-buffer-display-action '(display-buffer-reuse-window))
-  (vertico-multiform-categories
-   '((file grid)
-     (consult-grep buffer)
-     )
-   )
-  (completion-in-region-function
-   (lambda (&rest args)
-     (apply (if vertico-mode
-                #'consult-completion-in-region
-              #'completion--in-region)
-            args)))
-  :init
-  :config
-  (vertico-mode)
-  ;; Extensions
-  (vertico-multiform-mode)
-  ;; Prefix the current candidate with “ ”. From
-  ;; https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow
-  (advice-add #'vertico--format-candidate :around
-              (lambda (orig cand prefix suffix index _start)
-                (setq cand (funcall orig cand prefix suffix index _start))
-                ;; (string-match "[[:digit:]]+" cand)
-                ;; ;; We replace (for now) one digit with a properly styled white space.
-                ;; (setq cand (replace-match (if (= vertico--index index)
-                ;;      (propertize " " 'face 'vertico-current)
-                ;;    t" ") nil t cand)) ; Change to multi-digit numbers
-                (concat
-                 (if (= vertico--index index)
-                     (propertize " " 'face 'vertico-current)
-                   t"  ")
-                 cand)))
-  :custom-face
-  (vertico-group-separator ((t (:strike-through t))))
-  (vertico-current ((t (:inherit 'nano-strong 'nano-subtle))))
-  (completions-first-difference ((t (:inherit 'nano-default))))
-  )
-#+end_src
-
-** Marginalia :MODE:
-
-See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-completion-and-orderless/#vertico
-We do not configure marginalia to much. Text on the right. Trying to not show file ages. That's it.
-
-#+begin_src emacs-lisp
-
-(defun vertico--prompt-selection ()
-  "Highlight the prompt"
-
-  (let ((inhibit-modification-hooks t))
-    (set-text-properties (minibuffer-prompt-end) (point-max)
-                         '(face (nano-strong nano-salient)))))
-
-(use-package marginalia
-  :init (marginalia-mode)
-  :bind (:map minibuffer-local-map
-              ("M-A" . marginalia-cycle))
-  :custom
-  (marginalia--ellipsis "…")      ; Nicer ellipsis
-  (marginalia-align 'right)       ; right alignment
-  (marginalia-align-offset -1)    ; one space on the right
-  (marginalia-max-relative-age 0) ; Supresses showing the file age
-  )
-#+end_src
-
-See https://github.com/minad/vertico/issues/145
-To enhance the visuals, we integrate all the icons into marginalia
-
-#+begin_src emacs-lisp
-
-(defun minibuffer-vertico-setup ()
-
-  (setq truncate-lines t)
-  (setq completion-in-region-function
-        (if vertico-mode
-            #'consult-completion-in-region
-          #'completion--in-region)))
-
-(add-hook 'vertico-mode-hook #'minibuffer-vertico-setup)
-(add-hook 'minibuffer-setup-hook #'minibuffer-vertico-setup)
-
-(use-package all-the-icons-completion
-  :after (marginalia all-the-icons)
-  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
-  :init
-  (all-the-icons-completion-mode))
-#+end_src
 
 ** Modeline :HOOK:MODE:FACE:
 
@@ -4301,6 +3775,14 @@ This function used as value for `resize-mini-frames' variable."
 #+end_src
 
 ** Setup :PERSONAL:BINDING:
+
+Is this needed?
+#+begin_src emacs-lisp
+
+(add-to-list 'load-path
+             "/usr/share/emacs/site-lisp/mu4e/mu4e.el")
+
+#+end_src
 
 Mu4e doesn't come with an autoload function, we declare it here.
 
