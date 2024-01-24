@@ -4,8 +4,8 @@
 #+STARTUP: show2levels indent hidestars
 #+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.emacs.d/init.el")))
 
-
-* Forewords
+* Documentation
+** Forewords
 
 This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It is inspired by the configurations:
 - [[https://github.com/rougier/dotemacs][Nicolas Rougier]] (main reference point),
@@ -14,16 +14,26 @@ This document is a literate configuration for GNU Emacs written in [[https://org
 
 To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ([[org-babel-tangle]]).
 
-* Documentation
+Each subsection may be tagged with:
 
-** [0/5] Open TODOs
+  * =:BINDING:=  The section defines some key binding
+  * =:FACE:=     The section modifies some face
+  * =:HOOK:=     The section installs some hook
+
+Aside frome these standard tags, there are two more tags, indicating some kind of unintended behaviour.
+  * =:BUGFIX:=   The section contains (temporary) bug fix code
+  * =:INACTIVE:= The content of the section won't be exported
+
+
+** [0/5] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
 - [ ] Use Werner's nomenclature in colour-coding instead of the hex values.
 - [ ] Change colour of org blocks. For example purplish-white (#f4f6fb).
 - [ ] Modify the Victor mono font to be compatible with Roboto mono.
-* Header
+
+** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
 
@@ -50,7 +60,7 @@ This will generate a header at the top of the tangled file to indicate it is gen
 
 #+end_src
 
-* Early init
+* Early init :HOOK:
 :PROPERTIES:
 :header-args:emacs-lisp: :tangle "~/.emacs.d/early-init.el"
 :END:
@@ -101,7 +111,7 @@ The early-init code is taken almost verbatim from [[https://protesilaos.com/emac
 
 Emacs does a lot of things at startup and here, we disable pretty much everything.
 
-* TODO Elpaca
+* TODO Elpaca :HOOK:
 
 We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manager for this config.
 A short summary of its functionality take from its documentation is as follows:
@@ -172,7 +182,7 @@ The elpaca-documentation suggests the following piece of code for the integratio
 (elpaca-wait)
 #+end_src
 
-* Fundamental and early settings
+* Fundamental and early settings :HOOK:
 Many of the ideas here are a mix of [[https://protesilaos.com/emacs/dotemacs#h:dae63bd9-93a8-41c4-af1b-d0f39ba50974][Prot's config]] and [[https://github.com/rougier/dotemacs][Rougier's config]].
 If other sources are used, they are specifically mentioned.
 
@@ -259,9 +269,6 @@ We can now configure recentf.
   (setq backup-directory-alist ; Alist of file name patterns and backup directory names
         `((".*" . ,(no-littering-expand-var-file-name "backups/")))))
 #+end_src
-*** Load path
-
-
 ** No custom files
 The poet said it best.
 
@@ -270,14 +277,23 @@ The poet said it best.
 (setq custom-file (make-temp-file "emacs-custom-"))
 #+end_src
 
-** Default input method and multilingual environments
+** Default input method, ergoemacs and and multilingual environments
+We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
+It provides a complete overhault of the standard keybindings and therefore has to be loaded prior to any other module.
+Additionally, we combine it multilingual setup.
 
 #+begin_src emacs-lisp
-(set-language-environment "English")           ; Set up multilingual environment
-(setq default-input-method "german"            ; need an umlaut? get an umlaut.
+(use-package ergoemacs-mode
+    :config
+    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
+    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
+    (ergoemacs-mode 1)                    ; Globally enables ergoemacs-mode
+    (set-language-environment "English")  ; Set up multilingual environment
+    (setq default-input-method "german"   ; need an umlaut? get an umlaut.
       default-transient-input-method "german")
+    )
+(elpaca-wait)
 #+end_src
-
 ** Enable and disable certain commands
 
 #+begin_src emacs-lisp
@@ -317,7 +333,6 @@ If Emacs or the computer crashes, you can recover the files you were editing at 
       auto-save-timeout 30       ; Number of seconds between auto-save
       auto-save-interval 200)    ; Number of keystrokes between auto-saves
 #+end_src
-
 
 ** History
 
@@ -435,9 +450,7 @@ Server start.
   (server-start))
 
 #+end_src
-
-
-* Design
+* Design :FACE:HOOK:BIND:
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
 ** Lambda theme
@@ -785,7 +798,8 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   (lambda-themes-set-italic-comments t)  ; Italic comments.
   (lambda-themes-set-italic-keywords t)  ; Italic keywords
   (lambda-themes-set-variable-pitch nil) ; Fixed pitch looks better to me.
-  :bind ("<f6>" . my-toggle-theme)
+  :bind (:map ergoemacs-override-keymap
+         ("<f6>" . my-toggle-theme))
   :config
   ;; load preferred theme
   (setq initial-scratch-message "")      ; Why would I ever want a scratch message?
@@ -946,9 +960,8 @@ The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]]. We
 )
 #+end_src
 
-* Packages
-
-** Cape
+* Completion :BIND:FACE:HOOK:
+** Cape :BIND:
 
 [[https://github.com/minad/cape][Cape: completion at point]] is a package by [[https://github.com/minad][Minad]] that enhances the completion ecosystem.
 Our configuration is based on a [[https://kristofferbalintona.me/posts/202203130102/][blog post]] by Kristoffer Balintona.
@@ -973,103 +986,61 @@ Our configuration is based on a [[https://kristofferbalintona.me/posts/202203130
          ("C-c p &" . cape-sgml)
          ("C-c p r" . cape-rfc1345))
   :init
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-history)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;;add-to-list 'completion-at-point-functions #'cape-dict)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
   (setq cape-dict-file "/usr/share/dict/en_GB.txt")
-  (defun my-cape-capf-setup-latex ()
-    (require 'company-auctex)
-    (require 'company-reftex)
-    (let ((result))
-      (dolist (element (list
-                        ;; First add `company-yasnippet'
-                        (cape-company-to-capf #'company-yasnippet)
-                        ;; Then add `cape-tex'
-                        #'cape-tex
-                        ;; Then add `company-auctex' in the order it adds its
-                        ;; backends.
-                        (cape-company-to-capf #'company-auctex-bibs)
-                        (cape-company-to-capf #'company-auctex-labels)
-                        (cape-company-to-capf #'company-reftex-citations)
-                        (cape-company-to-capf #'company-reftex-labels)
-                        (cape-company-to-capf
-                        (apply-partially #'company--multi-backend-adapter
-                                          '(company-auctex-macros
-                                            company-auctex-symbols
-                                            company-auctex-environments
-                                            company-reftex-citations
-                                            company-reftex-labels))))
-                       result)
-        (add-to-list 'completion-at-point-functions element))))
-  :hook (LaTeX-mode . my-cape-capf-setup-latex)
+  (defun my-cape-org-mode ()
+    (progn
+      (setq-local completion-at-point-functions '(cape-dabbrev cape-tex))
+      (add-to-list 'completion-at-point-functions (cape-company-to-capf #'company-org-block))
+      (add-to-list 'completion-at-point-functions (cape-company-to-capf #'company-yasnippet))))
+  (defun my-cape-latex-mode ()
+    (progn
+      (setq-local completion-at-point-functions '(cape-dabbrev cape-tex))))
+  (defun my-cape-lisp-mode ()
+    (progn
+      (setq-local completion-at-point-functions '(cape-elisp-symbol cape-line))
+      (add-to-list 'completion-at-point-functions (cape-company-to-capf #'company-yasnippet))))
   :custom
-  (cape-dabbrev-min-length 3))
+  (cape-dabbrev-min-length 3)
+  :hook ((latex-mode LaTeX-mode) . my-cape-latex-mode)
+         (org-mode               . my-cape-org-mode)
+         (lisp-mode              . my-cape-lisp-mode)
+         )
 
 #+end_src
+*** Company and its backends
+
+We will use the power of company but hide it under a cape.
+
+#+begin_src emacs-lisp
+(use-package company-org-block
+  :elpaca(company-org-block :type git :host github :repo "xenodium/company-org-block"))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package company-yasnippet
+  :elpaca(company-yasnippet :type git :host github :repo "company-mode/company-mode"))
+#+end_src
+
 ** TODO Consult
 We replace some of emacs functions with their consult equivalent
 
 #+begin_src emacs-lisp
 (use-package consult
   :elpaca (:type git :host github :repo "minad/consult")
-  :bind (("C-x C-r" . consult-recent-file)
-         ("C-x h"   . consult-outline)
+  :bind (:map ergoemacs-override-keymap
+          ("C-x C-r" . consult-recent-file)
          ("C-x b"   . consult-buffer)
          ("C-c h"   . consult-history)
          ("C-f"     . consult-line)
-         :map ergoemacs-override-keymap
-         ("C-x C-r" . consult-recent-file)
-         ("C-x h"   . consult-outline)
-         ("C-x b"   . consult-buffer)
-         ("C-c h"   . consult-history)
-         ("C-f"     . consult-line)
-         :map ergoemacs--emacs-command-emulation-map
-         ("C-a" . nil))
+         ("M-h"     . consult-outline))
   :config
   (setq consult-preview-key nil) ; No live preview
- )
-#+end_src
 
-For the [[help:consult-goto-line][consult-goto-line]] and ~consult-line~ commands, we define our owns with live preview (independently of the [[help:consult-preview-key][consult-preview-key]])
-
-#+name: my-consult-line
-#+begin_src emacs-lisp
-
-(defun my-consult-line ()
-  "Consult line with live preview"
-
-  (interactive)
-  (let ((consult-preview-key 'any)
-        (mini-frame-resize 'grow-only)) ;; !! Important
-    (consult-line)))
-
-(bind-key "C-s"   #'my-consult-line)
+  (message "Consult loaded")
+)
 
 #+end_src
-#+name: my-consult-goto-line
-#+begin_src emacs-lisp
 
-(defun my-consult-goto-line ()
-  "Consult goto line with live preview"
-
-  (interactive)
-  (let ((consult-preview-key 'any))
-    (consult-goto-line)))
-
-(bind-key "M-g g"   #'my-consult-goto-line)
-(bind-key "M-g M-g" #'my-consult-goto-line)
-
-#+end_src
 ** Corfu
 
 [[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
@@ -1148,7 +1119,7 @@ default lsp-passthrough."
 #+begin_src emacs-lisp
 (use-package dash)
 #+end_src
-** TODO Embark :INACTIVE:TEST:
+** TODO Embark :TEST:
 The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
 
 #+begin_src emacs-lisp
@@ -1191,19 +1162,8 @@ The following code is taken from the literate config of [[https://protesilaos.co
   )
 #+end_src
 
-** Ergoemacs
-We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
-Change of standard bindings are saved in _ergoemacs-override-keymap_.
-#+begin_src emacs-lisp
-(use-package ergoemacs-mode
-    :config
-    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
-    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
-    (ergoemacs-mode 1)                    ; Globally enables ergoemacs-mode
-    (setq initial-scratch-message ""))    ; Why is this needed?!?
-#+end_src
 
-** Marginalia :INACTIVE:TEST:
+** Marginalia :TEST:
 
 See https://kristofferbalintona.me/posts/vertico-marginalia-all-the-icons-completion-and-orderless/#vertico
 We do not configure marginalia to much. Text on the right. Trying to not show file ages. That's it.
@@ -1261,10 +1221,10 @@ Config inspired by a [[https://kristofferbalintona.me/posts/202202211546/#orderl
 (use-package orderless
   :elpaca (:type git :host github :repo "oantolin/orderless")
   :custom-face
-  (orderless-match-face-0 ((t (:foreground "black" :background nil))))
-  (orderless-match-face-1 ((t (:background nil))))
-  (orderless-match-face-2 ((t (:background nil))))
-  (orderless-match-face-3 ((t (:background nil))))
+  (orderless-match-face-0 ((t (:foreground "#71aa89" :background nil)))) ; verdiris-green
+  (orderless-match-face-1 ((t (:foreground "#97b578" :background nil)))) ; emerald-green
+  (orderless-match-face-2 ((t (:foreground "#98a760" :background nil)))) ; pistachio-green
+  (orderless-match-face-3 ((t (:foreground "#86996d" :background nil)))) ; grass-green
   :custom
   (completion-styles '(orderless))
   (completion-category-defaults nil) ; I want to be in control!
@@ -1356,7 +1316,7 @@ It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].T
   )
 #+end_src
 
-** TODO Vertico :INACTIVE:TEST:
+** TODO Vertico :TEST:
 
 
 [[https://github.com/minad/vertico][Vertico]] provides a performant and minimalistic vertical completion UI based on the default completion system but aims to be highly flexible, extensible and modular.
