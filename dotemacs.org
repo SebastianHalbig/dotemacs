@@ -450,6 +450,24 @@ Server start.
   (server-start))
 
 #+end_src
+* Helpers
+** Cus edit
+
+[[https://github.com/emacs-mirror/emacs/blob/master/lisp/cus-edit.el][Cus edit]] implements the code to create and edit customize buffers.
+#+begin_src emacs-lisp
+(use-package emacs
+  :elpaca nil
+  :config
+  (setq-default
+   custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
+   custom-unlispify-tag-names nil          ; Prefer kebab-case for symbols
+))
+#+end_src
+** Dash
+[[https://github.com/magnars/dash.el][Dash]] makes working with lists better.
+#+begin_src emacs-lisp
+(use-package dash)
+#+end_src
 * Design :FACE:HOOK:BIND:
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
@@ -1021,7 +1039,7 @@ We will use the power of company but hide it under a cape.
   :elpaca(company-yasnippet :type git :host github :repo "company-mode/company-mode"))
 #+end_src
 
-** TODO Consult
+** Consult
 We replace some of emacs functions with their consult equivalent
 
 #+begin_src emacs-lisp
@@ -1035,8 +1053,6 @@ We replace some of emacs functions with their consult equivalent
          ("M-h"     . consult-outline))
   :config
   (setq consult-preview-key nil) ; No live preview
-
-  (message "Consult loaded")
 )
 
 #+end_src
@@ -1054,7 +1070,6 @@ The following code is inspired by a [[https://kristofferbalintona.me/posts/20220
                  :repo "minad/corfu"
                  :files (:defaults "extensions/*")
                  :includes (corfu-info corfu-history corfu-popupinfo))
-  ;; :hook (lsp-completion-mode . my-corfu-setup-lsp) ; Use corfu for lsp completion
   :bind (:map corfu-map
               ("<escape>" . corfu-quit)
               ("<return>" . corfu-insert)
@@ -1068,7 +1083,7 @@ The following code is inspired by a [[https://kristofferbalintona.me/posts/20220
   (corfu-auto t)                      ; Enable autocompletion
   (corfu-auto-prefix 2)               ; Minimum length of prefix before completion.
   (corfu-auto-delay 20)               ; Delay before auto-completion shows up
-  (corfu-min-width 80)                ; Minimal width of corfu popup.
+  (corfu-min-width 60)                ; Minimal width of corfu popup.
   (corfu-max-width corfu-min-width)   ; Always have the same width
   (corfu-count 10)                    ; Maximal number of candidates.
   (corfu-scroll-margin 5)             ; Use scroll margins
@@ -1092,7 +1107,7 @@ The following code is inspired by a [[https://kristofferbalintona.me/posts/20220
   (corfu-popupinfo-mode)
   (corfu-history-mode)
   :hook (lsp-completion-mode . my-corfu-setup-lsp)
-  :config
+  :init
   ;; Setup lsp to use corfu for lsp completion
   (defun my-corfu-setup-lsp ()
     "Use orderless completion style with lsp-capf instead of the
@@ -1102,23 +1117,6 @@ default lsp-passthrough."
   )
 #+end_src
 
-** Cus edit
-
-[[https://github.com/emacs-mirror/emacs/blob/master/lisp/cus-edit.el][Cus edit]] implements the code to create and edit customize buffers.
-#+begin_src emacs-lisp
-(use-package emacs
-  :elpaca nil
-  :config
-  (setq-default
-   custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
-   custom-unlispify-tag-names nil          ; Prefer kebab-case for symbols
-))
-#+end_src
-** Dash
-[[https://github.com/magnars/dash.el][Dash]] makes working with lists better.
-#+begin_src emacs-lisp
-(use-package dash)
-#+end_src
 ** TODO Embark :TEST:
 The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
 
@@ -1402,6 +1400,7 @@ However this assumes as of now that these are one-digit numbers.
   )
 #+end_src
 
+* Other visuals
 ** Visual fill column and visual line mode
 
 We activate /visual-line-mode/ globally. Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
@@ -1432,6 +1431,7 @@ We use yasnippet in Latex mode
   (yas-inhibit-overlay-modification-protection nil))
 
 #+end_src
+
 
 * OLD :INACTIVE:
 
