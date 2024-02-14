@@ -1500,10 +1500,15 @@ https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
                                 ))
   :bind (("M-." . vertico-repeat)
          :map vertico-map
-         ("<tab>" . vertico-insert)
-         ("<escape>" . minibuffer-keyboard-quit)
-         ("?" . minibuffer-completion-help)
-         ( "<backtab>" . minibuffer-complete)
+         ("<tab>"      . vertico-insert)
+         ("<escape>"   . minibuffer-keyboard-quit)
+         ("?"          . minibuffer-completion-help)
+         ("<backtab>"  . minibuffer-complete)
+         ("<down>"     . vertico-next)
+         ("<up>"       . vertico-previous)
+         ("C-M-n"      . vertico-next-group)
+         ("C-M-p"      . vertico-previous-group)
+         ("C-<backspace>" . vertico-directory-delete-word)
          )
   :hook ((rfn-eshadow-update-overlay . vertico-directory-tidy) ; Clean up file path when typing
          (minibuffer-setup . vertico-repeat-save) ; Make sure vertico state is saved
@@ -1515,7 +1520,7 @@ https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
   (vertico-cycle t)
   ;; Extensions
   (vertico-grid-separator "       ")
-  (vertico-grid-lookahead 50)
+  (vertico-grid-lookahead 55)
   (vertico-buffer-display-action '(display-buffer-reuse-window))
   (vertico-multiform-categories
    '((file grid)
@@ -1528,7 +1533,6 @@ https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
                 #'consult-completion-in-region
               #'completion--in-region)
             args)))
-  :init
   :config
   (vertico-mode)
   ;; Extensions
@@ -1538,15 +1542,9 @@ https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
   (advice-add #'vertico--format-candidate :around
               (lambda (orig cand prefix suffix index _start)
                 (setq cand (funcall orig cand prefix suffix index _start))
-                ;; (string-match "[[:digit:]]+" cand)
-                ;; ;; We replace (for now) one digit with a properly styled white space.
-                ;; (setq cand (replace-match (if (= vertico--index index)
-                ;;      (propertize " " 'face 'vertico-current)
-                ;;    t" ") nil t cand)) ; Change to multi-digit numbers
                 (concat
-                 (if (= vertico--index index)
-                     (propertize " " 'face 'vertico-current)
-                   t"  ")
+                 (when (= vertico--index index)
+                     (propertize " " 'face 'vertico-current))
                  cand)))
   :custom-face
   (vertico-group-separator ((t (:strike-through t))))
@@ -1555,26 +1553,23 @@ https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
   )
 #+end_src
 
-* Other visuals
-** Visual fill column and visual line mode
 
-We activate /visual-line-mode/ globally. Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+
+*** Vertico truncate
 
 #+begin_src emacs-lisp
-(use-package visual-fill-column
-  :ensure adaptive-wrap
-  :init (global-visual-line-mode)
-  :custom (visual-fill-column-center-text t)
-          (visual-fill-column-enable-sensible-window-split t)
-  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
-          )
+(use-package vertico-truncate
+  :demand t                             ; Otherwise won't get loaded immediately
+  :elpaca (:type git :host github :repo "jdtsmith/vertico-truncate")
+  :config
+  (vertico-truncate-mode 1)
   )
 #+end_src
-Changing the symbol for truncation (…) and wrap (↩).
-
 ** YASnippet
-We use yasnippet in Latex mode
+We use [[https://github.com/joaotavora/yasnippet][yasnippet]] in Latex mode.
+#+begin_quote
+YASnippet is a template system for Emacs. It allows you to type an abbreviation and automatically expand it into function templates. Bundled language templates include: C, C++, C#, Perl, Python, Ruby, SQL, LaTeX, HTML, CSS and more. The snippet syntax is inspired from TextMate's syntax, you can even import most TextMate templates to YASnippet.
+#+end_quote
 
 #+begin_src emacs-lisp
 
