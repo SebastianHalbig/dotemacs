@@ -1,0 +1,365 @@
+/*
+ * Cascading stylesheet for GNU Emacs org mode
+ * Nicolas P. Rougier - September 2020
+ * Released under a Creative Commons CC-BY 4.0 licence
+ */
+
+@charset "utf-8";
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300,400,500');
+
+
+body {
+    font-family: "Roboto Mono", monospace;
+    font-size: 14px;
+    font-weight: 300;
+    color:  rgba(20, 20, 30, 1.00);
+    line-height: 1.4em;
+    font-weight: light;
+    counter-reset: section;
+    counter-reset: toc-section;
+    counter-increment: toc-section;
+}
+
+a, a:visited {
+    text-decoration: none;
+    color: #4477AA;
+}
+.org-bold {
+    font-weight: 500;
+}
+i, i a {
+    color: #333633;
+    font-style: normal;
+    font-weight: normal;
+}
+
+.org-italic, .org-org-meta-line {
+    color: rgba(48,63,159, 0.75);
+    font-style: normal;
+}
+.org-face-salient {
+    font-weight: 400;
+}
+
+.underline {
+    text-decoration:
+        underline; }
+
+/* Blinking cursor when strike-through */
+.custom {animation: blinker 1s linear infinite; }
+@keyframes blinker { 50% { opacity: 0; } }
+
+
+/* --- Side notes --- */
+div.side-note::before {
+    content: "Note";
+    color: rgba(0,0,0,.75);
+    font-weight: 400;
+}
+
+div.side-note {
+    color: rgba(0,0,0,.5);
+    float: left;
+    font-size: .85em;
+    line-height: 1.25em;
+    margin-left: -24em;
+    width: 20em;
+}
+
+/* --- Table of contents --- */
+#table-of-contents {
+    padding-top: 0em;
+    margin-top: 0em;
+    text-transform: uppercase;
+}
+
+#table-of-contents ul {
+    padding: 0;
+    font-weight: 400;
+    counter-reset: list 0;
+}
+
+#table-of-contents ul ul {
+    padding-left:0em;
+    font-weight: 300;
+    font-size: 95%;
+    line-height: 1.5em;
+    margin-top: 0em;
+    margin-bottom: 1em;
+    padding-left: 3em;
+}
+
+#table-of-contents h2:before {
+    content: "";
+    counter-reset: section;
+}
+
+#table-of-contents ul li {
+    vertical-align: top;
+    display: inline-block;
+    width: 75%;
+}
+
+#table-of-contents ul li:before {
+    display: inline-block;
+    counter-increment: list;
+    width: 2.0em;
+    margin-left: -2.0em;
+    text-align: right;
+    text-transform: uppercase;
+    color: #4477AA;
+}
+
+#table-of-contents ul li ul,
+#table-of-contents ul li ul li {
+    display: static;
+    width: 100%;
+    padding-left: 8px;
+    line-height: 1.35em;
+}
+
+#table-of-contents ul li ul li:before {
+    content: ""
+}
+
+#table-of-contents h2 {
+    font-size: 1em;
+    font-weight: 400;
+    padding-top: 5em;
+}
+
+#table-of-contents ul li a span {
+    display: none;
+}
+
+#table-of-contents ul li a code {
+    display: none;
+}
+
+blockquote {
+    color: #999999;
+    padding-top: 0;
+    margin-left: 1em;
+    padding-left: 1em;
+    border-left: 3px solid #cccccc;
+}
+
+.org-right {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: right;
+    padding-right: 10px;
+}
+
+.org-left {
+    margin-left: 0px;
+    margin-right: auto;
+    text-align: left;
+    padding-left: 10px;
+    border-style: none none none dashed;
+    border-width: 1px
+}
+.org-center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center; }
+
+ul.org-ul {
+    padding-left: 2em
+
+}
+ul.org-ul li  {
+    list-style-type: circle;
+    margin-bottom: .5em;
+}
+
+ul.org-ul li p {
+    display: inline-block;
+    margin-top: 0em;
+    margin-bottom: 0em;
+}
+
+ol.org-ol {
+    padding-left: 0;
+    margin-left: 2em;
+    list-style: none;
+    counter-reset: li;
+}
+.org-ol li  {
+    counter-increment: li;
+    margin-bottom: .25em;
+}
+.org-ol li::before {
+    content: counter(li) ". ";
+    color: #999999;
+    display: inline-block;
+    width: 2em;
+    margin-left: -2em;
+}
+
+h1.title {
+    font-size: 1.5em;
+    margin-top: 4em;
+    margin-bottom: 0em;
+    font-weight: 400;
+    text-align: center;
+}
+
+span.subtitle {
+    display: inline-block;
+    margin-top: .25em;
+    font-size: 74.5%;
+    font-weight: 300;
+    color: #999999;
+}
+
+
+h1, h2, h3, h4 {
+    color: black;
+    font-size: 1em;
+    font-weight: 400;
+    /* font-variant: all-small-caps; */
+    text-transform: uppercase;
+    text-align: left;
+}
+
+h2, h3 {
+    padding-top: 3em;
+}
+
+[class^="section-number"] {
+    display: none;
+}
+
+body {
+    counter-reset: section;
+}
+
+h2 {
+    counter-reset: subsection;
+}
+
+h2::before, h3::before {
+    color: #555555;
+    float: left;
+    text-align: right;
+    font-weight: 350;
+}
+
+h2::before {
+    width: 7.5em;
+    margin-left: -8.0em;
+    counter-increment: section;
+    content: "Kapitel " counter(section) " ";
+}
+
+h3::before {
+    width: 2.5em;
+    margin-left: -3.0em;
+    counter-increment: subsection;
+    content: counter(section) "." counter(subsection) " ";
+}
+
+
+code {
+    font-weight: 400;
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+code.code{
+    color: #4477AA;
+}
+
+code.verbatim{
+    color: #BB5566;
+}
+
+.src{
+background: #e9e8f1;
+}
+
+/* --- Table --- */
+table { min-width: 100%; }
+table, tbody, td, tr, th, colgroup, thead {
+    border: 0;
+    /*    padding: 0;*/
+}
+table {
+    margin-top: 2em;
+}
+thead {
+    border-bottom: 1px dashed black;
+}
+th {
+    text-align: left;
+    font-weight: 400;
+    padding: 0;
+    margin-bottom: 0.25em;
+    padding-bottom: 0.25em;
+}
+td {
+    padding: 0;
+}
+
+tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+tbody {
+     border-bottom: 1px dashed black;
+}
+
+/* tags and todos */
+
+.tag, .todo {
+    background-color: #f5f7f7;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    font-size: 100%;
+    font-weight: 300; }
+
+
+.organisation, .feedback, .intern {
+    color: #111A1A
+}
+
+.action, .TODO {
+    color: #CC6677
+}
+
+.todo.WAITING {
+    color: #EE8866
+}
+
+
+#content, #postamble {
+    margin: 0 auto;
+    max-width: 720px;
+    margin-top: 2.5%;
+    margin-bottom: 2.5%;
+}
+
+#postamble p, #preamble p {
+    font-size: 90%;
+    margin: .2em;
+}
+
+#postamble {
+    /*    border-top: 1px solid #999999; */
+    padding-top: 1.5em;
+}
+#postamble p, #postamble a {
+    color: #999999;
+    line-height: 1.25em;
+    margin: 0;
+    text-align: right;
+}
