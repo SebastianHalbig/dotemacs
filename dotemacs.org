@@ -210,13 +210,37 @@ The elpaca-documentation suggests the following piece of code for the integratio
 (elpaca-wait)
 #+end_src
 
+** Early-loading of org
+We use the main branch of org. Due to the high dependence of other packages on org, one needs to load it as soon as possible. The real configuration of org is in the section called "[[Org mode][Org mode]]".
+However we can reference it using [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][noweb]] syntax.
+#+begin_src emacs-lisp :noweb yes
+(use-package org
+  :elpaca ( :package "org"
+            :local-repo "org"
+            :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
+            :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
+            :autoloads "org-loaddefs.el"
+            :build (:not elpaca--generate-autoloads-async)
+            :files (:defaults ("etc/styles/"
+		                       "etc/styles/*" "doc/*.texi")))
+  :config
+    <<org-config>>
+  :hook
+    (org-mode . org-indent-mode)
+  :custom-face
+  (org-document-title ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
+  )
+#+end_src
+
 * Fundamental and early settings :HOOK:
+
 Many of the ideas here are a mix of [[https://protesilaos.com/emacs/dotemacs#h:dae63bd9-93a8-41c4-af1b-d0f39ba50974][Prot's config]] and [[https://github.com/rougier/dotemacs][Rougier's config]].
 If other sources are used, they are specifically mentioned.
 
 ** Keeping emacs.d clean: Recentf and no-littering
 
 [[https://vincent.demeester.fr/articles/emacs_keep_it_clean][Vincent Demeester]] is, according to his bio, a developer working at "Red Hat". He has probably forgotten more about good code that what I will ever know so I will follow his advice.
+
 *** Recentf
 
 The following code will allow for an integration between dired and recentf.
@@ -885,6 +909,15 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
                               (left-fringe . 0)
                               (right-fringe . 0)))
   (setq initial-frame-alist default-frame-alist)
+  :custom-face
+  (outline-1 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-2 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-3 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-4 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-5 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-6 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-7 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
+  (outline-8 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
   )
 #+end_src
 
@@ -1581,6 +1614,825 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
   (yas-inhibit-overlay-modification-protection nil))
 
 #+end_src
+
+* Org mode
+
+[[https://orgmode.org/][Org mode]] is arguably one of the best features of emacs.
+
+#+begin_quote
+A GNU Emacs major mode for keeping notes, authoring documents, computational notebooks, literate programming, maintaining to-do lists, planning projects, and more — in a fast and effective plain text system.
+#+end_quote
+
+A extensive documentation can be found [[https://orgmode.org/org.html][here]].
+
+** General settings
+
+#+NAME: org-config
+#+begin_src emacs-lisp
+(setq-default org-directory "~/Documents/org-files"
+              org-tags-column 0                            ; Tags next to header title
+              org-hide-emphasis-markers t                  ; Hide markers
+              org-cycle-separator-lines 1                  ; Number of empty lines between sections
+              org-use-tag-inheritance t                    ; Tags ARE inherited
+              org-use-property-inheritance t               ; Properties ARE inherited
+              org-indent-indentation-per-level 2           ; Indentation per level
+              org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
+              org-fontify-quote-and-verse-blocks t         ; Specific face for quote and verse blocks
+              org-return-follows-link nil                  ; Follow links when hitting return
+              org-image-actual-width nil                   ; Resize image to window width
+              org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
+              org-outline-path-complete-in-steps nil       ; No steps in path display
+              org-fold-catch-invisible-edits 'smart        ; Check if in invisible region
+              org-insert-heading-respect-content nil       ; Insert new heading at point.
+              org-pretty-entities t                        ; Show entities as UTF-8 characters
+              org-ellipsis " …"                            ; Short ellipsis
+              org-emphasis-alist
+                '(("*" bold)
+                  ("/" italic)
+                  ("_" underline)
+                  ("=" lambda-strong)
+                  ("~" lambda-focus)
+                  ("-" (:strike-through t))
+                  ("+" (:box t)))
+                org-export-with-broken-links t)            ; Allow export of broken links
+#+end_src
+
+
+*** A short elisp helper
+
+A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
+
+#+begin_src emacs-lisp
+
+(require 'org-tempo)
+(add-to-list 'org-structure-template-alist
+             '("S" . "src emacs-lisp"))
+
+#+end_src
+
+** Modern Org mode
+#+begin_src emacs-lisp
+
+;; Modern org mode
+(use-package org-modern
+  :elpaca (:type git :host github :repo "minad/org-modern")
+  :demand t
+  :config
+  (setq org-todo-keywords
+        '((sequence "TODO(t)"   "NEXT(n)"                 "|" "DONE(d)")
+          (sequence "|" "CANCELED(C)")))
+  (global-org-modern-mode)
+  :custom
+  org-modern-todo-faces
+              '(("TODO"        :background "#fdf096" :weight semi-bold) ;;straw-yellow
+                ("NEXT"        :background "#d65848" :weight bold)      ;;aurora-red
+                ("DONE"        :background "#97b578" :weight semi-bold) ;;emerald-green
+                ("CANCELED"    :background "#DDDDDD" :weight normal)))
+#+end_src
+*** Org appear mode
+
+#+begin_src emacs-lisp
+(use-package org-appear
+  :elpaca (org-appear :type git :host github :repo "awth13/org-appear")
+  :hook (org-modern-mode . org-appear-mode)
+  :custom
+  (org-appear-autoemphasis t)  ;
+  (org-appear-autolinks t)     ;
+  (org-appear-autosubmarkers t);
+  (org-appear-autoentities t)  ;
+  (org-appear-autokeywords t)  ;
+  (org-appear-inside-latex t)  ;
+  )
+#+end_src
+** TODO HTML-Export
+
+We treat ~code~ and =verbatim= faces differently among export.
+
+#+begin_src emacs-lisp
+
+(setq org-html-text-markup-alist '(
+       (bold           . "<b>%s</b>")
+       (code           . "<code class=\"code\">%s</code>")
+       (italic         . "<i>%s</i>")
+       (strike-through . "<del>%s</del>")
+       (underline      . "<span class=\"underline\">%s</span>")
+       (verbatim       . "<code class=\"verbatim\">%s</code>")))
+
+#+end_src
+
+In order to have a nice page after exporting, we want to include some css code.
+
+#+begin_src emacs-lisp
+(defvar org-theme-css-dir "~/.emacs.org/org-css/") ; location of the css files
+#+end_src
+
+Retrieve the theme.
+
+#+begin_src emacs-lisp
+(defun my-org-current-html-theme ()
+  "Retrive the css-file for org export."
+  (interactive)
+  (let* ((cssdir org-theme-css-dir)
+         (css-choices (directory-files cssdir nil ".css$"))
+         (css (completing-read "theme: " css-choices nil t)))
+    (concat cssdir css)))
+#+end_src
+
+Set the style for the file.
+
+#+begin_src emacs-lisp
+(defun set-org-html-style (&optional backend)
+  "Include the css-file in the exportet html file."
+  (interactive)
+  (when (or (null backend) (eq backend 'html))
+    (let ((f (or (and (boundp 'org-theme-css) org-theme-css) (my-org-current-html-theme))))
+      (if (file-exists-p f)
+          (progn
+            (set (make-local-variable 'org-theme-css) f)
+            (set (make-local-variable 'org-html-head)
+                 (with-temp-buffer
+                   (insert "<style type=\"text/css\">\n<!--/*--><![CDATA[/*><!--*/\n")
+                   (insert-file-contents f)
+                   (goto-char (point-max))
+                   (insert "\n/*]]>*/-->\n</style>\n")
+                   (buffer-string)))
+            (set (make-local-variable 'org-html-head-include-default-style)
+                 nil)
+            (message "Set custom style from %s" f))
+        (message "Custom header file %s doesnt exist")))))
+
+
+#+end_src
+
+#+begin_src emacs-lisp
+(add-hook 'org-export-before-parsing-hook 'set-org-html-style)
+#+end_src
+
+** Babel :INACTIVE:
+
+#+begin_src emacs-lisp
+
+(setq-default org-src-fontify-natively t         ; Fontify code in code blocks.
+              org-adapt-indentation nil          ; Adaptive indentation
+              org-src-tab-acts-natively t        ; Tab acts as in source editing
+              org-confirm-babel-evaluate nil     ; No confirmation before executing code
+              org-edit-src-content-indentation 0 ; No relative indentation for code blocks
+              org-fontify-whole-block-delimiter-line t) ; Fontify whole block
+
+#+end_src
+
+** Agenda :DEFER:INACTIVE:
+:PROPERTIES:
+:header-args:emacs-lisp: :prologue "(with-eval-after-load 'org-agenda" :epilogue ")"
+:END:
+
+#+begin_src emacs-lisp
+(setq org-agenda-files '("~/Documents/org-files/agenda"))
+(setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
+
+(setq org-agenda-start-with-log-mode t
+              org-log-done 'time
+              org-log-into-drawer t)
+
+#+end_src
+
+
+#+begin_src emacs-lisp
+;;  Auto-update tags whenever the state is changed
+  (setq org-tag-alist
+        '((:startgroup)
+          ("mandatory"   . ?a)
+          ("dispensable" . ?d)   ; Put mutually exclusive tags here
+          (:endgroup)
+          ("bureaucracy" . ?b)
+          ("leisure"     . ?l)
+          ("music"       . ?m)
+          ("orga"        . ?o)
+          ("progn"       . ?p)
+          ("research"    . ?r)
+          ("sports"      . ?s)
+          ("teaching"    . ?t)
+          (""            . ?x)
+          ))
+
+#+end_src
+
+#+begin_src emacs-lisp
+(setq  org-agenda-start-with-log-mode t)
+(setq org-agenda-deadline-faces
+      '((1.0001 . org-warning)              ; due yesterday or before
+        (0.0    . org-upcoming-deadline)))  ; due today or later
+
+(setq org-agenda-breadcrumbs-separator " ❱ "
+      org-agenda-current-time-string " ┈┈┈┈┈┈┈┈┈┈┈┈┈ now"
+      org-agenda-time-grid '((weekly today require-timed)
+                             (800 1000 1200 1400 1600 1800 2000)
+                             "---" "┈┈┈┈┈┈┈┈┈┈┈┈┈")
+      org-agenda-prefix-format '((agenda . "%i %-12:c%?-12t%b% s")
+                                 (todo . " %i %-12:c")
+                                 (tags . " %i %-12:c")
+                                 (search . " %i %-12:c")))
+
+(setq org-agenda-format-date (lambda (date) (concat "\n" (make-string (window-width) 9472)
+                                                    "\n"
+                                                    (org-agenda-format-date-aligned date))))
+(setq org-cycle-separator-lines 2)
+
+;; (add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
+
+
+(use-package org-recur
+  :hook ((org-mode . org-recur-mode)
+         (org-agenda-mode . org-recur-agenda-mode))
+  :demand t
+  :config
+  (define-key org-recur-mode-map (kbd "C-c d") 'org-recur-finish)
+
+  ;; Rebind the 'd' key in org-agenda (default: `org-agenda-day-view').
+  (define-key org-recur-agenda-mode-map (kbd "d") 'org-recur-finish)
+  (define-key org-recur-agenda-mode-map (kbd "C-c d") 'org-recur-finish)
+
+  (setq org-recur-finish-done t
+        org-recur-finish-archive t))
+
+;; Refresh org-agenda after rescheduling a task.
+(defun org-agenda-refresh ()
+  "Refresh all `org-agenda' buffers."
+  (dolist (buffer (buffer-list))
+    (with-current-buffer buffer
+      (when (derived-mode-p 'org-agenda-mode)
+        (org-agenda-maybe-redo)))))
+
+(defadvice org-schedule (after refresh-agenda activate)
+  "Refresh org-agenda."
+  (org-agenda-refresh))
+
+;; Log time a task was set to Done.
+(setq org-log-done (quote time))
+
+;; Don't log the time a task was rescheduled or redeadlined.
+(setq org-log-redeadline nil)
+(setq org-log-reschedule nil)
+
+(setq org-read-date-prefer-future 'time)
+
+
+#+end_src
+
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+
+(setq my-section-start-time (current-time))
+
+#+end_src
+
+*** General
+
+Load libraries.
+
+#+begin_src emacs-lisp
+
+(require 'org-agenda)
+(require 'org-agenda-property)
+
+#+end_src
+
+Open agenda(s)
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+
+(bind-key "C-c a" #'org-agenda)
+
+#+end_src
+
+Settings
+
+#+begin_src emacs-lisp
+
+(use-package org-agenda
+  :hook (org-agenda-finalize-hook . my-org-agenda-mode-hook)
+  :config
+  (setq org-agenda-skip-scheduled-if-done t
+        org-agenda-skip-deadline-if-done t
+        org-agenda-include-deadlines t
+        org-agenda-compact-blocks t
+        org-agenda-start-day nil ;; i.e. today
+        org-agenda-span 3
+        org-agenda-start-on-weekday nil
+        org-agenda-window-setup 'current-window
+        org-agenda-restore-windows-after-quit t
+        org-agenda-show-all-dates nil
+        org-agenda-time-in-grid t
+        org-agenda-show-current-time-in-grid t
+        org-agenda-block-separator nil
+        org-agenda-category-icon-alist nil
+        org-agenda-sticky t)
+  (setq org-agenda-prefix-format
+        '((agenda . "%i %?-12t%s")
+          (todo .   "%i")
+          (tags .   "%i")
+          (search . "%i")))
+  (setq org-agenda-sorting-strategy
+        '((agenda deadline-down scheduled-down todo-state-up time-up
+                  habit-down priority-down category-keep)
+          (todo   priority-down category-keep)
+          (tags   timestamp-up priority-down category-keep)
+          (search category-keep)))
+  (setq org-agenda-time-grid
+        '((daily today require-timed)
+          ()
+          "......" "----------------"))
+
+  (setq org-agenda-current-time-string "   now"))
+
+#+end_src
+
+A small function to cancel a meeting
+
+#+begin_src emacs-lisp
+
+(defun my-org-cancel-meeting ()
+  (interactive)
+  (org-entry-put (point) "CATEGORY" "cancelled")
+  (org-entry-put (point) "NOTE" "Cancelled")
+  (org-set-tags ":CANCELLED:"))
+
+#+end_src
+
+We activate hl line mode in agenda buffers.
+#+begin_src emacs-lisp
+
+(defun my-org-agenda-mode-hook ()
+  (hl-line-mode t)
+  (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
+  (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
+  (setq cursor-type nil))
+
+#+end_src
+
+*** Holidays :HOOK:PERSONAL:
+
+#+begin_src emacs-lisp
+
+(require 'cal-iso)
+(require 'holidays)
+
+
+(setq calendar-date-style 'european         ; European style calenders
+      calendar-week-start-day '1             ; The week starts on Monday
+      calendar-mark-diary-entries-flag nil) ; Do not show diary entries
+
+
+(add-hook 'calendar-today-visible-hook  #'calendar-mark-today); Mark today in calendar
+
+#+end_src
+
+Week day name with holidays
+
+#+name: my-org-agenda-format-date
+#+begin_src emacs-lisp
+
+(defun my-org-agenda-format-date (date)
+  "Org agenda date format displaying holidays"
+  (let* ((dayname (calendar-day-name date))
+	     (day (cadr date))
+	     (month (car date))
+	     (monthname (calendar-month-name month))
+	     (year (nth 2 date))
+         (holidays (calendar-check-holidays date)))
+    (concat "\n"
+            dayname " "
+            (format "%d " day)
+            monthname " "
+            (format "%d" year)
+            (if holidays (format " (%s)" (nth 0 holidays)))
+            "\n")))
+
+(setq org-agenda-format-date #'my-org-agenda-format-date)
+
+#+end_src
+
+*** Daily agenda :HOOK:ADVICE:BINDING:
+
+The daily agenda
+
+#+begin_src emacs-lisp
+
+(use-package org-super-agenda
+  :after org-agenda
+  :init
+  (setq org-super-agenda-groups
+       '(;; Each group has an implicit boolean OR operator between its selectors.
+         (:name "Today"           ; section name
+                :time-grid t      ; Items that appear on the time grid
+                :scheduled today
+                :deadline today)
+         (:name "Outlook"
+                :and (:scheduled future :priority>= "B")
+                :and (:deadline future :priority>= "B")
+                )
+         (:name "Next"
+                :todo "NEXT")
+         (:name "Short"
+                :tag "short")
+         ;; After the last group, the agenda will display items that didn't
+         ;; match any of these groups, with the default order position of 99
+         ))
+  (setq org-agenda-custom-commands
+        '(("g" "GTD view"
+           ((agenda "" ((org-agenda-overriding-header "")
+                        (org-super-agenda-groups
+                         '((:discard (:not (:scheduled today
+                                            :deadline today)))
+                           (:name "📅 Today\n"           ; section name
+                                  :time-grid t      ; Items that appear on the time grid
+                                  :scheduled today
+                                  :deadline today
+                                  :order 1)
+                           ))))
+            (alltodo "" ((org-agenda-overriding-header "")
+                         (org-super-agenda-groups
+                          '((:log t)
+                            (:name "🕮 Research\n"
+                                   :tag "research"
+                                   :order 2)
+                            (:name "🗨 Upcoming teaching\n"
+                                   :tag "teaching"
+                                   :order 3)
+                            (:name "📧 Mail\n"
+                                   :tag "mail"
+                                   :order 4)
+                            (:name "🎙 Talks\n"
+                                   :tag "talk"
+                                   :order 5)
+                            (:name "💬 Meetings"
+                                    :tag "meeting"
+                                    :order 6)
+                            (:name "📝 Administrative tasks"
+                                    :tag "admin"
+                                    :order 7)
+                            (:name "⚠ Overdue \n"
+                                   :deadline past
+                                   :order 8)
+                            (:name "✩ Important \n"
+                                   :priority "A"
+                                   :order 9)
+                            (:name "🗏 Scheduled soon \n"
+                                   :scheduled future
+                                   :order 10)
+                            (:discard (:not (:todo "TODO")))))))))))
+:config
+(org-super-agenda-mode))
+
+#+end_src
+
+Some decorations for the agenda
+
+#+name: my-org-agenda-highlight-todo
+#+begin_src emacs-lisp
+
+(defun my-org-agenda-highlight-todo (x)
+  (let* ((done (string-match-p (regexp-quote ":DONE:") x))
+         (canceled (string-match-p (regexp-quote "~") x))
+         (x (replace-regexp-in-string ":TODO:" "" x))
+         (x (replace-regexp-in-string ":DONE:" "" x))
+         (x (replace-regexp-in-string "~" "if canceled" (propertize x 'face 'nano-faded) x)))
+    x))
+
+(advice-add 'org-agenda-highlight-todo
+            :filter-return #'my-org-agenda-highlight-todo)
+
+#+end_src
+
+
+
+*** Update :TIMER:
+
+We install a time to refresh the daily agenda (a) at regular intervals such that the current time is up to date.
+
+#+begin_src emacs-lisp
+
+(defvar my-org-agenda-update-delay 60)
+(defvar my-org-agenda-update-timer nil)
+
+(defun my-org-agenda-update ()
+  "Refresh daily agenda view"
+
+  (when my-org-agenda-update-timer
+    (cancel-timer my-org-agenda-update-timer))
+
+  (let ((window (get-buffer-window "*Org Agenda(a)*" t)))
+    (when window
+      (with-selected-window window
+        (let ((inhibit-message t))
+          (org-agenda-redo)))))
+
+  (setq my-org-agenda-update-timer
+        (run-with-idle-timer
+         (time-add (current-idle-time) my-org-agenda-update-delay)
+         nil
+         'my-org-agenda-update)))
+
+(run-with-idle-timer my-org-agenda-update-delay t 'my-org-agenda-update)
+
+#+end_src
+
+*** Refile
+
+Set refile targets according to my setup
+
+#+begin_src emacs-lisp
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path nil)
+(setq org-refile-targets
+      '(
+        ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 2)
+        ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 3)
+        ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 2)
+        ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 2)
+        ))
+
+#+end_src
+
+#+RESULTS:
+: ((~/Documents/org-files/agenda/maths.org :maxlevel . 5) (~/Documents/org-files/agenda/leisure.org :maxlevel . 5) ())
+
+*** Capture :ADVICE:BINDING:
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+
+(setq org-capture-templates
+      `(("i" "Inbox" entry  (file+headline "./agenda/inbox.org" "Miscellaneous")
+        ,(concat "* TODO %?\n"
+                 "/Entered on/ %U"))
+        ("m" "Meeting" entry  (file+headline "./agenda/inbox.org" "Meetings")
+        ,(concat "* %? :meeting:\n"
+                 "SCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+1d\"))"))
+        ("n" "Note" entry  (file+headline "./agenda/inbox.org" "Notes")
+        ,(concat "* Note (%a)\n"
+                 "/Entered on/ %U\n" "\n" "%?"))
+        ("@" "Inbox [mu4e]" entry (file+headline "./agenda/inbox.org" "Mails")
+        ,(concat "* TODO Reply to \"%a\" %?\n"
+                 "/Entered on/ %U"))))
+
+
+#+end_src
+
+Assign key
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+
+(bind-key "C-c c" #'org-capture)
+
+(defun my-org-capture-meeting ()
+  (interactive)
+  (org-capture nil "m"))
+
+(bind-key "C-c m" #'my-org-capture-meeting)
+
+(defun my-org-capture-inbox ()
+  (interactive)
+  (org-capture nil "i"))
+
+(bind-key "C-c i" #'my-org-capture-inbox)
+
+
+(defun org-capture-mail ()
+  (interactive)
+  (call-interactively 'org-store-link)
+  (org-capture nil "@"))
+
+(require 'mu4e)
+(define-key mu4e-headers-mode-map (kbd "C-c i") 'org-capture-mail)
+(define-key mu4e-view-mode-map    (kbd "C-c i") 'org-capture-mail)
+
+#+end_src
+
+Here we orverwrite the [[help:org-capture-place-template][org-capture-place-template]] to have the capture window below the current one. There must be a better way to do that but I did not find it yet. Since we are in org-agenda deferred mode, we need to cancel epiloque/prologue.
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+
+(with-eval-after-load 'org-capture
+
+  (defun org-capture-place-template (&optional inhibit-wconf-store)
+    "Insert the template at the target location, and display the buffer.
+when `inhibit-wconf-store', don't store the window configuration, as it
+may have been stored before."
+    (unless inhibit-wconf-store
+      (org-capture-put :return-to-wconf (current-window-configuration)))
+    ;; (delete-other-windows)
+    ;; (org-switch-to-buffer-other-window
+    ;;  (org-capture-get-indirect-buffer (org-capture-get :buffer) "CAPTURE"))
+    (select-window (split-window-below -6))
+    (switch-to-buffer
+     (org-capture-get-indirect-buffer (org-capture-get :buffer) "CAPTURE"))
+    (widen)
+    (org-show-all)
+    (goto-char (org-capture-get :pos))
+    (setq-local outline-level 'org-outline-level)
+    (pcase (org-capture-get :type)
+      ((or `nil `entry) (org-capture-place-entry))
+      (`table-line (org-capture-place-table-line))
+      (`plain (org-capture-place-plain-text))
+      (`item (org-capture-place-item))
+      (`checkitem (org-capture-place-item)))
+    (setq-local org-capture-current-plist org-capture-plist)
+    (org-capture-mode 1)))
+
+#+end_src
+
+*** Capture 2 :ADVICE:BINDING:
+
+#+begin_src emacs-lisp
+
+(defun my-org-capture-frame (orig-fun &optional goto keys)
+  (if (not (org-capture-get :description))
+      (funcall orig-fun goto keys))
+  (progn
+    (select-frame (my-mini-frame 8))
+    (let ((split-width-threshold nil)
+          (split-height-threshold 0))
+      (funcall orig-fun goto keys))
+    (delete-other-windows)
+    (setq word-wrap nil)
+    (setq truncate-lines nil)
+    (nano-modeline--update-selected-window)
+    (let* ((left (concat (propertize " "
+                                     'face '(nano-subtle)
+                                     'display '(raise +0.20))
+                         (propertize " Capture"
+                                     'face '(nano-strong nano-subtle))
+                         (propertize " "
+                                     'face 'nano-subtle
+                                     'display '(raise -0.30))
+                         (propertize (org-capture-get :description)
+                                     'face 'nano-default)))
+           (right (propertize "C-c C-c: capture, C-c C-k: abort "
+                              'face '(:inherit (nano-faded nano-subtle)
+                                               :weight light)))
+           (spacer (propertize (make-string (- (window-width)
+                                               (length left)
+                                               (length right)
+                                               0) ?\ )
+                               'face 'nano-subtle))
+           (header (concat left spacer right " ")))
+      (setq-local header-line-format header))
+
+    (set-window-dedicated-p nil t)
+    (set-frame-parameter (selected-frame) 'height 5)
+    (face-remap-add-relative 'mode-line :background (face-background 'highlight))
+    (save-excursion
+      (goto-char (point-min))
+      (let ((overlay (make-overlay
+                      (line-beginning-position) (line-end-position))))
+        (overlay-put overlay 'display '(raise -0.5))))))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+(defun my-org-capture (goto key)
+  (interactive)
+  (unwind-protect
+      (progn
+        (advice-add 'org-capture :around #'my-org-capture-frame)
+        (org-capture goto key))
+    (advice-remove 'org-capture #'my-org-capture-frame)))
+
+(require 'org-capture)
+
+;; (bind-key "C-c m" #'(lambda ()
+;;                       (interactive)
+;;                       (my-org-capture nil "m")))
+
+;; (bind-key "C-c i" #'(lambda ()
+;;                       (interactive)
+;;                       (my-org-capture nil "i")))
+
+;; (bind-key "C-g" #'org-capture-kill 'org-capture-mode-map)
+
+#+end_src
+
+*** Navigation :ADVICE:
+
+The default [[help:org-agenda-goto][org-agenda-goto]], which is used when =tab= key is pressed or when follow mode (F) is active open a window at a non specific place. Here, we make sure the window is opened where we want. In this case, this is below the agenda window.
+
+#+begin_src emacs-lisp
+
+(defun my-org-agenda-goto (buffer args)
+  "Open a headline in a window below the current window"
+
+  (setq-local mode-line-format nil)
+  (select-window (or (window-in-direction 'below (selected-window))
+                     (split-window nil -6 'below)))
+  (switch-to-buffer buffer)
+  (setq-local header-line-format
+              '((:eval
+                 (let ((nano-modeline-prefix 'none)
+                       (nano-modeline-prefix-padding 0)
+                       (outline-path (org-with-point-at (org-get-at-bol'org-marker)
+                                       (org-display-outline-path nil nil " » " t))))
+                   (nano-modeline-render
+                    ""
+                    (file-name-nondirectory
+                     (buffer-file-name (buffer-base-buffer)))
+                    (format "/ %s" (substring-no-properties outline-path))
+                    "")))))
+  (selected-window))
+
+#+end_src
+
+Install the new function as an advice around [[help:org-agenda-goto][org-agenda-goto]] and apply a narrow to subtree after
+
+#+begin_src emacs-lisp
+
+(define-advice org-agenda-goto (:around (orig-fn &rest args) "my-org-agenda-goto")
+  (let ((display-buffer-overriding-action '(my-org-agenda-goto)))
+    (apply orig-fn args)
+    (org-narrow-to-subtree)))
+
+#+end_src
+
+
+Finally, we disable [[help:org-agenda-show-outline-path][org-agenda-show-outline-path]] since this is now redundant with the header line.
+
+#+begin_src emacs-lisp
+
+(setq org-agenda-show-outline-path nil)
+
+#+end_src
+
+*** Nano agenda :BINDING:
+
+#+header: :prologue "" :epilogue ""
+#+begin_src emacs-lisp
+
+(bind-key "C-c n" #'nano-agenda)
+
+#+end_src
+
+*** Calendar
+We want to sync the agenda/calendar over multiple devices. Since we're lazy we will use gcal.
+
+#+begin_src emacs-lisp
+(use-package org-gcal
+  :config
+  (setq org-gcal-client-id         "609704434601-f52c59f8oo68jg4nfkkrbhfrf3senhbl.apps.googleusercontent.com"
+        org-gcal-client-secret     "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"
+        org-gcal-fetch-file-alist '(("sebastianhalbig77@googlemail.com" .  "~/Documents/org-files/calendar.org"))
+        plstore-cache-passphrase-for-symmetric-encryption t)
+  (org-gcal-reload-client-id-secret))
+#+end_src
+
+* Other visuals
+** TODO Nerd icons
+
+[[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
+
+#+begin_quote
+Nerd-icons.el is a library for easily using Nerd Font icons inside Emacs, an alternative to all-the-icons.
+
+It works on both GUI and terminal! You only need a Nerd Font installed on your system.
+
+It is inspired by all-the-icons, icons-in-terminal, vim-devicons, and nvim-web-devicons.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package nerd-icons
+   :custom
+    (nerd-icons-font-family "Roboto Mono Nerd Font")
+  )
+#+end_src
+
+There is an integration into the completion framework, called [[https://github.com/rainstormstudio/nerd-icons-completion][nerd icons completion]].
+
+#+begin_src emacs-lisp
+(use-package nerd-icons-completion
+  :elpaca (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
+  :after marginalia
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
+  :config
+  (nerd-icons-completion-mode))
+#+end_src
+
+** Visual fill column and visual line mode
+
+We activate /visual-line-mode/ globally. Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+
+#+begin_src emacs-lisp
+(use-package visual-fill-column
+  :ensure adaptive-wrap
+  :init (global-visual-line-mode)
+  :custom (visual-fill-column-center-text t)
+          (visual-fill-column-enable-sensible-window-split t)
+  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
+          )
+  )
+#+end_src
+Changing the symbol for truncation (…) and wrap (↩).
+
+
 
 
 * OLD :INACTIVE:
@@ -3864,7 +4716,7 @@ The following code is taken from the literate config of [[https://protesilaos.co
   )
 #+end_src
 
-** TODO Vertico :ADVICE:HOOK:BINDING:MODE:FACE:
+** Vertico :ADVICE:HOOK:BINDING:MODE:FACE:
 
 
 [[https://github.com/minad/vertico][Vertico]] provides a performant and minimalistic vertical completion UI based on the default completion system but aims to be highly flexible, extensible and modular.
@@ -6583,777 +7435,6 @@ An autoload function for my-config (that will load org mode).
 
 #+end_src
 
-
-** Org :DEFER:
-:PROPERTIES:
-:header-args:emacs-lisp: :prologue "(with-eval-after-load 'org" :epilogue ")"
-:END:
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** General :HOOK:
-
-#+begin_src emacs-lisp
-
-(setq-default org-directory "~/Documents/org-files"
-              org-tags-column 1                            ; Tags next to header title
-              org-hide-emphasis-markers t                  ; Hide markers
-              org-cycle-separator-lines 2                  ; Number of empty lines between sections
-              org-use-tag-inheritance t                    ; Tags ARE inherited
-              org-use-property-inheritance t               ; Properties ARE inherited
-              org-indent-indentation-per-level 2           ; Indentation per level
-              org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
-              org-fontify-quote-and-verse-blocks t         ; Specific face for quote and verse blocks
-              org-return-follows-link nil                  ; Follow links when hitting return
-              org-image-actual-width nil                   ; Resize image to window width
-              org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
-              org-outline-path-complete-in-steps nil      ; No steps in path display
-              org-catch-invisible-edits 'show-and-error
-              org-insert-heading-respect-content t
-              org-pretty-entities t)
-
-#+end_src
-
-Always indent org-files
-
-#+begin_src emacs-lisp
-
-(add-hook 'org-mode-hook 'org-indent-mode)
-
-#+end_src
-
-Better latex preview (see https://stackoverflow.com/questions/30151338)
-
-#+begin_src emacs-lisp
-
-(setq org-latex-create-formula-image-program 'dvisvgm)
-
-#+end_src
-
-We adapt fill functions according to the indent level.
-
-#+begin_src emacs-lisp
-
-(defun my-calc-offset-on-org-level ()
-  "Calculate offset (in chars) on current level in org mode file."
-
-  (* (or (org-current-level) 0) org-indent-indentation-per-level))
-
-(defun my-org-fill-paragraph (&optional justify region)
-  "Calculate apt fill-column value and fill paragraph."
-
-  (let* ((fill-column (- fill-column (my-calc-offset-on-org-level))))
-    (org-fill-paragraph justify region)))
-
-(defun my-org-auto-fill-function ()
-  "Calculate apt fill-column value and do auto-fill"
-
-  (let* ((fill-column (- fill-column (my-calc-offset-on-org-level))))
-    (org-auto-fill-function)))
-
-(defun my-org-mode-hook ()
-  (setq fill-paragraph-function #'my-org-fill-paragraph
-        normal-auto-fill-function #'my-org-auto-fill-function))
-
-(add-hook 'org-load-hook 'my-org-mode-hook)
-(add-hook 'org-mode-hook 'my-org-mode-hook)
-
-#+end_src
-
-A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
-
-#+begin_src emacs-lisp
-
-(require 'org-tempo)
-(add-to-list 'org-structure-template-alist
-             '("S" . "src emacs-lisp"))
-
-#+end_src
-
-
-** Modern Org mode
-#+begin_src emacs-lisp
-
-;; Modern org mode
-(use-package org
-  :pin gnu
-  :commands (org-capture org-agenda)
-  :config
-  (setq org-ellipsis " …")
-  (setq org-agenda-start-with-log-mode t)
-  (setq org-log-done 'time)
-  (setq org-log-into-drawer t)
-  (setq org-agenda-files '("~/Documents/org-files/agenda"))
-  (setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
-
-  (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-          (sequence "SKETCH(s)" "DETAIL(D)" "WRITE-UP(w)" "|" "COMPLETED(c)")
-          ("INVESTIGATE(i)" "REPORT(r)"   "|" "FINISHED(f)")
-          (sequence "|" "CANCELED(C)")))
-
-  ;;  Auto-update tags whenever the state is changed
-  (setq org-tag-alist
-        '((:startgroup)
-          ("mandatory"   . ?a)
-          ("dispensable" . ?d)   ; Put mutually exclusive tags here
-          (:endgroup)
-          ("bureaucracy" . ?b)
-          ("leisure"     . ?l)
-          ("music"       . ?m)
-          ("orga"        . ?o)
-          ("progn"       . ?p)
-          ("research"    . ?r)
-          ("sports"      . ?s)
-          ("teaching"    . ?t)
-          (""            . ?x)
-          ))
-
-(setq pale-blue   '"#BBCCEE"
-      pale-cyan   '"#CCEEFF"
-      pale-green  '"#CCDDAA"
-      pale-yellow '"#EEEEBB"
-      pale-red    '"#FFCCCC"
-      pale-gray   '"#DDDDDD")
-
-  (setq org-todo-keyword-faces
-        '(("TODO " :background "#EEEEBB" :weight semi-bold)
-          ("NEXT " :background "#FFCCCC" :weight bold)
-          ("DONE " :background "#CCDDAA":weight semi-bold)
-          ("SKETCH " :background "#BBCCEE" :weight normal)
-          ("DETAIL " :background "#CCEEFF" :weight normal)
-          ("WRITE-UP " :background "#EEEEBB" :weight normal)
-          ("COMPLETED " :background "#DDDDDD" :weight normal)
-          ("INVESTIGATE " :background "#BBCCEE" :weight normal)
-          ("REPORT " :background "#CCEEFF" :weight normal)
-          ("FINISHED " :background "#DDDDDD" :weight normal)
-          ("CANCELED " :background "#DDDDDD" :weight normal)))
-
-  (global-org-modern-mode)
-  )
-#+end_src
-** TODO HTML-Export :CUSTOM:
-
-We treat ~code~ and =verbatim= faces differently among export
-
-#+begin_src emacs-lisp
-
-(setq org-html-text-markup-alist '(
-       (bold           . "<b>%s</b>")
-       (code           . "<code class=\"code\">%s</code>")
-       (italic         . "<i>%s</i>")
-       (strike-through . "<del>%s</del>")
-       (underline      . "<span class=\"underline\">%s</span>")
-       (verbatim       . "<code class=\"verbatim\">%s</code>")))
-
-#+end_src
-
-** Babel
-
-#+begin_src emacs-lisp
-
-(setq-default org-src-fontify-natively t         ; Fontify code in code blocks.
-              org-adapt-indentation nil          ; Adaptive indentation
-              org-src-tab-acts-natively t        ; Tab acts as in source editing
-              org-confirm-babel-evaluate nil     ; No confirmation before executing code
-              org-edit-src-content-indentation 0 ; No relative indentation for code blocks
-              org-fontify-whole-block-delimiter-line t) ; Fontify whole block
-
-#+end_src
-
-** Benchmark
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(my-report-time "Org")
-
-#+end_src
-
-
-
-
-** Agenda :DEFER:
-:PROPERTIES:
-:header-args:emacs-lisp: :prologue "(with-eval-after-load 'org-agenda" :epilogue ")"
-:END:
-
-#+begin_src emacs-lisp
-(setq  org-agenda-start-with-log-mode t)
-(setq org-agenda-deadline-faces
-      '((1.0001 . org-warning)              ; due yesterday or before
-        (0.0    . org-upcoming-deadline)))  ; due today or later
-
-(setq org-agenda-breadcrumbs-separator " ❱ "
-      org-agenda-current-time-string " ┈┈┈┈┈┈┈┈┈┈┈┈┈ now"
-      org-agenda-time-grid '((weekly today require-timed)
-                             (800 1000 1200 1400 1600 1800 2000)
-                             "---" "┈┈┈┈┈┈┈┈┈┈┈┈┈")
-      org-agenda-prefix-format '((agenda . "%i %-12:c%?-12t%b% s")
-                                 (todo . " %i %-12:c")
-                                 (tags . " %i %-12:c")
-                                 (search . " %i %-12:c")))
-
-(setq org-agenda-format-date (lambda (date) (concat "\n" (make-string (window-width) 9472)
-                                                    "\n"
-                                                    (org-agenda-format-date-aligned date))))
-(setq org-cycle-separator-lines 2)
-
-;; (add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
-
-
-(use-package org-recur
-  :hook ((org-mode . org-recur-mode)
-         (org-agenda-mode . org-recur-agenda-mode))
-  :demand t
-  :config
-  (define-key org-recur-mode-map (kbd "C-c d") 'org-recur-finish)
-
-  ;; Rebind the 'd' key in org-agenda (default: `org-agenda-day-view').
-  (define-key org-recur-agenda-mode-map (kbd "d") 'org-recur-finish)
-  (define-key org-recur-agenda-mode-map (kbd "C-c d") 'org-recur-finish)
-
-  (setq org-recur-finish-done t
-        org-recur-finish-archive t))
-
-;; Refresh org-agenda after rescheduling a task.
-(defun org-agenda-refresh ()
-  "Refresh all `org-agenda' buffers."
-  (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (when (derived-mode-p 'org-agenda-mode)
-        (org-agenda-maybe-redo)))))
-
-(defadvice org-schedule (after refresh-agenda activate)
-  "Refresh org-agenda."
-  (org-agenda-refresh))
-
-;; Log time a task was set to Done.
-(setq org-log-done (quote time))
-
-;; Don't log the time a task was rescheduled or redeadlined.
-(setq org-log-redeadline nil)
-(setq org-log-reschedule nil)
-
-(setq org-read-date-prefer-future 'time)
-
-
-#+end_src
-
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** General
-
-Load libraries.
-
-#+begin_src emacs-lisp
-
-(require 'org-agenda)
-(require 'org-agenda-property)
-
-#+end_src
-
-Open agenda(s)
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(bind-key "C-c a" #'org-agenda)
-
-#+end_src
-
-Settings
-
-#+begin_src emacs-lisp
-
-(use-package org-agenda
-  :hook (org-agenda-finalize-hook . my-org-agenda-mode-hook)
-  :config
-  (setq org-agenda-skip-scheduled-if-done t
-        org-agenda-skip-deadline-if-done t
-        org-agenda-include-deadlines t
-        org-agenda-compact-blocks t
-        org-agenda-start-day nil ;; i.e. today
-        org-agenda-span 3
-        org-agenda-start-on-weekday nil
-        org-agenda-window-setup 'current-window
-        org-agenda-restore-windows-after-quit t
-        org-agenda-show-all-dates nil
-        org-agenda-time-in-grid t
-        org-agenda-show-current-time-in-grid t
-        org-agenda-block-separator nil
-        org-agenda-category-icon-alist nil
-        org-agenda-sticky t)
-  (setq org-agenda-prefix-format
-        '((agenda . "%i %?-12t%s")
-          (todo .   "%i")
-          (tags .   "%i")
-          (search . "%i")))
-  (setq org-agenda-sorting-strategy
-        '((agenda deadline-down scheduled-down todo-state-up time-up
-                  habit-down priority-down category-keep)
-          (todo   priority-down category-keep)
-          (tags   timestamp-up priority-down category-keep)
-          (search category-keep)))
-  (setq org-agenda-time-grid
-        '((daily today require-timed)
-          ()
-          "......" "----------------"))
-
-  (setq org-agenda-current-time-string "   now"))
-
-#+end_src
-
-A small function to cancel a meeting
-
-#+begin_src emacs-lisp
-
-(defun my-org-cancel-meeting ()
-  (interactive)
-  (org-entry-put (point) "CATEGORY" "cancelled")
-  (org-entry-put (point) "NOTE" "Cancelled")
-  (org-set-tags ":CANCELLED:"))
-
-#+end_src
-
-We activate hl line mode in agenda buffers.
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-mode-hook ()
-  (hl-line-mode t)
-  (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
-  (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
-  (setq cursor-type nil))
-
-#+end_src
-
-** Holidays :HOOK:PERSONAL:
-
-#+begin_src emacs-lisp
-
-(require 'cal-iso)
-(require 'holidays)
-
-
-(setq calendar-date-style 'european         ; European style calenders
-      calendar-week-start-day '1             ; The week starts on Monday
-      calendar-mark-diary-entries-flag nil) ; Do not show diary entries
-
-
-(add-hook 'calendar-today-visible-hook  #'calendar-mark-today); Mark today in calendar
-
-#+end_src
-
-Week day name with holidays
-
-#+name: my-org-agenda-format-date
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-format-date (date)
-  "Org agenda date format displaying holidays"
-  (let* ((dayname (calendar-day-name date))
-	     (day (cadr date))
-	     (month (car date))
-	     (monthname (calendar-month-name month))
-	     (year (nth 2 date))
-         (holidays (calendar-check-holidays date)))
-    (concat "\n"
-            dayname " "
-            (format "%d " day)
-            monthname " "
-            (format "%d" year)
-            (if holidays (format " (%s)" (nth 0 holidays)))
-            "\n")))
-
-(setq org-agenda-format-date #'my-org-agenda-format-date)
-
-#+end_src
-
-** Daily agenda :HOOK:ADVICE:BINDING:
-
-The daily agenda
-
-#+begin_src emacs-lisp
-
-(use-package org-super-agenda
-  :after org-agenda
-  :init
-  (setq org-super-agenda-groups
-       '(;; Each group has an implicit boolean OR operator between its selectors.
-         (:name "Today"           ; section name
-                :time-grid t      ; Items that appear on the time grid
-                :scheduled today
-                :deadline today)
-         (:name "Outlook"
-                :and (:scheduled future :priority>= "B")
-                :and (:deadline future :priority>= "B")
-                )
-         (:name "Next"
-                :todo "NEXT")
-         (:name "Short"
-                :tag "short")
-         ;; After the last group, the agenda will display items that didn't
-         ;; match any of these groups, with the default order position of 99
-         ))
-  (setq org-agenda-custom-commands
-        '(("g" "GTD view"
-           ((agenda "" ((org-agenda-overriding-header "")
-                        (org-super-agenda-groups
-                         '((:discard (:not (:scheduled today
-                                            :deadline today)))
-                           (:name "📅 Today\n"           ; section name
-                                  :time-grid t      ; Items that appear on the time grid
-                                  :scheduled today
-                                  :deadline today
-                                  :order 1)
-                           ))))
-            (alltodo "" ((org-agenda-overriding-header "")
-                         (org-super-agenda-groups
-                          '((:log t)
-                            (:name "🕮 Research\n"
-                                   :tag "research"
-                                   :order 2)
-                            (:name "🗨 Upcoming teaching\n"
-                                   :tag "teaching"
-                                   :order 3)
-                            (:name "📧 Mail\n"
-                                   :tag "mail"
-                                   :order 4)
-                            (:name "🎙 Talks\n"
-                                   :tag "talk"
-                                   :order 5)
-                            (:name "💬 Meetings"
-                                    :tag "meeting"
-                                    :order 6)
-                            (:name "📝 Administrative tasks"
-                                    :tag "admin"
-                                    :order 7)
-                            (:name "⚠ Overdue \n"
-                                   :deadline past
-                                   :order 8)
-                            (:name "✩ Important \n"
-                                   :priority "A"
-                                   :order 9)
-                            (:name "🗏 Scheduled soon \n"
-                                   :scheduled future
-                                   :order 10)
-                            (:discard (:not (:todo "TODO")))))))))))
-:config
-(org-super-agenda-mode))
-
-#+end_src
-
-Some decorations for the agenda
-
-#+name: my-org-agenda-highlight-todo
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-highlight-todo (x)
-  (let* ((done (string-match-p (regexp-quote ":DONE:") x))
-         (canceled (string-match-p (regexp-quote "~") x))
-         (x (replace-regexp-in-string ":TODO:" "" x))
-         (x (replace-regexp-in-string ":DONE:" "" x))
-         (x (replace-regexp-in-string "~" "if canceled" (propertize x 'face 'nano-faded) x)))
-    x))
-
-(advice-add 'org-agenda-highlight-todo
-            :filter-return #'my-org-agenda-highlight-todo)
-
-#+end_src
-
-
-
-** Update :TIMER:
-
-We install a time to refresh the daily agenda (a) at regular intervals such that the current time is up to date.
-
-#+begin_src emacs-lisp
-
-(defvar my-org-agenda-update-delay 60)
-(defvar my-org-agenda-update-timer nil)
-
-(defun my-org-agenda-update ()
-  "Refresh daily agenda view"
-
-  (when my-org-agenda-update-timer
-    (cancel-timer my-org-agenda-update-timer))
-
-  (let ((window (get-buffer-window "*Org Agenda(a)*" t)))
-    (when window
-      (with-selected-window window
-        (let ((inhibit-message t))
-          (org-agenda-redo)))))
-
-  (setq my-org-agenda-update-timer
-        (run-with-idle-timer
-         (time-add (current-idle-time) my-org-agenda-update-delay)
-         nil
-         'my-org-agenda-update)))
-
-(run-with-idle-timer my-org-agenda-update-delay t 'my-org-agenda-update)
-
-#+end_src
-
-** Refile
-
-Set refile targets according to my setup
-
-#+begin_src emacs-lisp
-(setq org-outline-path-complete-in-steps nil)
-(setq org-refile-use-outline-path nil)
-(setq org-refile-targets
-      '(
-        ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 2)
-        ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 3)
-        ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 2)
-        ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 2)
-        ))
-
-#+end_src
-
-#+RESULTS:
-: ((~/Documents/org-files/agenda/maths.org :maxlevel . 5) (~/Documents/org-files/agenda/leisure.org :maxlevel . 5) ())
-
-** Capture :ADVICE:BINDING:
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(setq org-capture-templates
-      `(("i" "Inbox" entry  (file+headline "./agenda/inbox.org" "Miscellaneous")
-        ,(concat "* TODO %?\n"
-                 "/Entered on/ %U"))
-        ("m" "Meeting" entry  (file+headline "./agenda/inbox.org" "Meetings")
-        ,(concat "* %? :meeting:\n"
-                 "SCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+1d\"))"))
-        ("n" "Note" entry  (file+headline "./agenda/inbox.org" "Notes")
-        ,(concat "* Note (%a)\n"
-                 "/Entered on/ %U\n" "\n" "%?"))
-        ("@" "Inbox [mu4e]" entry (file+headline "./agenda/inbox.org" "Mails")
-        ,(concat "* TODO Reply to \"%a\" %?\n"
-                 "/Entered on/ %U"))))
-
-
-#+end_src
-
-Assign key
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(bind-key "C-c c" #'org-capture)
-
-(defun my-org-capture-meeting ()
-  (interactive)
-  (org-capture nil "m"))
-
-(bind-key "C-c m" #'my-org-capture-meeting)
-
-(defun my-org-capture-inbox ()
-  (interactive)
-  (org-capture nil "i"))
-
-(bind-key "C-c i" #'my-org-capture-inbox)
-
-
-(defun org-capture-mail ()
-  (interactive)
-  (call-interactively 'org-store-link)
-  (org-capture nil "@"))
-
-(require 'mu4e)
-(define-key mu4e-headers-mode-map (kbd "C-c i") 'org-capture-mail)
-(define-key mu4e-view-mode-map    (kbd "C-c i") 'org-capture-mail)
-
-#+end_src
-
-Here we orverwrite the [[help:org-capture-place-template][org-capture-place-template]] to have the capture window below the current one. There must be a better way to do that but I did not find it yet. Since we are in org-agenda deferred mode, we need to cancel epiloque/prologue.
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(with-eval-after-load 'org-capture
-
-  (defun org-capture-place-template (&optional inhibit-wconf-store)
-    "Insert the template at the target location, and display the buffer.
-when `inhibit-wconf-store', don't store the window configuration, as it
-may have been stored before."
-    (unless inhibit-wconf-store
-      (org-capture-put :return-to-wconf (current-window-configuration)))
-    ;; (delete-other-windows)
-    ;; (org-switch-to-buffer-other-window
-    ;;  (org-capture-get-indirect-buffer (org-capture-get :buffer) "CAPTURE"))
-    (select-window (split-window-below -6))
-    (switch-to-buffer
-     (org-capture-get-indirect-buffer (org-capture-get :buffer) "CAPTURE"))
-    (widen)
-    (org-show-all)
-    (goto-char (org-capture-get :pos))
-    (setq-local outline-level 'org-outline-level)
-    (pcase (org-capture-get :type)
-      ((or `nil `entry) (org-capture-place-entry))
-      (`table-line (org-capture-place-table-line))
-      (`plain (org-capture-place-plain-text))
-      (`item (org-capture-place-item))
-      (`checkitem (org-capture-place-item)))
-    (setq-local org-capture-current-plist org-capture-plist)
-    (org-capture-mode 1)))
-
-#+end_src
-
-** Capture 2 :ADVICE:BINDING:
-
-#+begin_src emacs-lisp
-
-(defun my-org-capture-frame (orig-fun &optional goto keys)
-  (if (not (org-capture-get :description))
-      (funcall orig-fun goto keys))
-  (progn
-    (select-frame (my-mini-frame 8))
-    (let ((split-width-threshold nil)
-          (split-height-threshold 0))
-      (funcall orig-fun goto keys))
-    (delete-other-windows)
-    (setq word-wrap nil)
-    (setq truncate-lines nil)
-    (nano-modeline--update-selected-window)
-    (let* ((left (concat (propertize " "
-                                     'face '(nano-subtle)
-                                     'display '(raise +0.20))
-                         (propertize " Capture"
-                                     'face '(nano-strong nano-subtle))
-                         (propertize " "
-                                     'face 'nano-subtle
-                                     'display '(raise -0.30))
-                         (propertize (org-capture-get :description)
-                                     'face 'nano-default)))
-           (right (propertize "C-c C-c: capture, C-c C-k: abort "
-                              'face '(:inherit (nano-faded nano-subtle)
-                                               :weight light)))
-           (spacer (propertize (make-string (- (window-width)
-                                               (length left)
-                                               (length right)
-                                               0) ?\ )
-                               'face 'nano-subtle))
-           (header (concat left spacer right " ")))
-      (setq-local header-line-format header))
-
-    (set-window-dedicated-p nil t)
-    (set-frame-parameter (selected-frame) 'height 5)
-    (face-remap-add-relative 'mode-line :background (face-background 'highlight))
-    (save-excursion
-      (goto-char (point-min))
-      (let ((overlay (make-overlay
-                      (line-beginning-position) (line-end-position))))
-        (overlay-put overlay 'display '(raise -0.5))))))
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(defun my-org-capture (goto key)
-  (interactive)
-  (unwind-protect
-      (progn
-        (advice-add 'org-capture :around #'my-org-capture-frame)
-        (org-capture goto key))
-    (advice-remove 'org-capture #'my-org-capture-frame)))
-
-(require 'org-capture)
-
-;; (bind-key "C-c m" #'(lambda ()
-;;                       (interactive)
-;;                       (my-org-capture nil "m")))
-
-;; (bind-key "C-c i" #'(lambda ()
-;;                       (interactive)
-;;                       (my-org-capture nil "i")))
-
-;; (bind-key "C-g" #'org-capture-kill 'org-capture-mode-map)
-
-#+end_src
-
-** Navigation :ADVICE:
-
-The default [[help:org-agenda-goto][org-agenda-goto]], which is used when =tab= key is pressed or when follow mode (F) is active open a window at a non specific place. Here, we make sure the window is opened where we want. In this case, this is below the agenda window.
-
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-goto (buffer args)
-  "Open a headline in a window below the current window"
-
-  (setq-local mode-line-format nil)
-  (select-window (or (window-in-direction 'below (selected-window))
-                     (split-window nil -6 'below)))
-  (switch-to-buffer buffer)
-  (setq-local header-line-format
-              '((:eval
-                 (let ((nano-modeline-prefix 'none)
-                       (nano-modeline-prefix-padding 0)
-                       (outline-path (org-with-point-at (org-get-at-bol'org-marker)
-                                       (org-display-outline-path nil nil " » " t))))
-                   (nano-modeline-render
-                    ""
-                    (file-name-nondirectory
-                     (buffer-file-name (buffer-base-buffer)))
-                    (format "/ %s" (substring-no-properties outline-path))
-                    "")))))
-  (selected-window))
-
-#+end_src
-
-Install the new function as an advice around [[help:org-agenda-goto][org-agenda-goto]] and apply a narrow to subtree after
-
-#+begin_src emacs-lisp
-
-(define-advice org-agenda-goto (:around (orig-fn &rest args) "my-org-agenda-goto")
-  (let ((display-buffer-overriding-action '(my-org-agenda-goto)))
-    (apply orig-fn args)
-    (org-narrow-to-subtree)))
-
-#+end_src
-
-
-Finally, we disable [[help:org-agenda-show-outline-path][org-agenda-show-outline-path]] since this is now redundant with the header line.
-
-#+begin_src emacs-lisp
-
-(setq org-agenda-show-outline-path nil)
-
-#+end_src
-
-** Nano agenda :BINDING:
-
-#+header: :prologue "" :epilogue ""
-#+begin_src emacs-lisp
-
-(bind-key "C-c n" #'nano-agenda)
-
-#+end_src
-
-** Calendar
-We want to sync the agenda/calendar over multiple devices. Since we're lazy we will use gcal.
-
-#+begin_src emacs-lisp
-(use-package org-gcal
-  :config
-  (setq org-gcal-client-id         "609704434601-f52c59f8oo68jg4nfkkrbhfrf3senhbl.apps.googleusercontent.com"
-        org-gcal-client-secret     "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"
-        org-gcal-fetch-file-alist '(("sebastianhalbig77@googlemail.com" .  "~/Documents/org-files/calendar.org"))
-        plstore-cache-passphrase-for-symmetric-encryption t)
-  (org-gcal-reload-client-id-secret))
-#+end_src
-** Benchmark
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(my-report-time "Agenda")
-
-#+end_src
 
 
 ** Versioning
