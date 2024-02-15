@@ -1253,8 +1253,34 @@ The available commands are:
 )
 
 #+end_src
+If you use the grepping commands from the Consult package, consult-grep, consult-git-grep or consult-ripgrep, then you should install the embark-consult package, which adds support for exporting a list of grep results to an honest grep-mode buffer, on which you can even use wgrep if you wish.
 
+Consult and embark functionalities can be integrated into each other, as described in the embark [[https://github.com/oantolin/embark/tree/master][manual]].
 
+#+begin_quote
+[Embark-consult] provides exporters for several Consult commands and also tweaks the behavior of many Consult commands when used as actions with embark-act in subtle ways that you may not even notice, but make for a smoother experience. You need only install it to get these benefits: Embark will automatically load it after Consult if found.
+
+The embark-consult package provides the following exporters:
+
+ + You can use embark-export from consult-line, consult-outline, or consult-mark to obtain an occur-mode buffer. As with the built-in occur command you use that buffer to jump to a match and after that, you can then use next-error and previous-error to navigate to other matches. You can also press e to activate occur-edit-mode and edit the matches in place!
+ + You can export from any of the Consult asynchronous search commands, consult-grep, consult-git-grep, or consult-ripgrep to get a grep-mode buffer. Here too you can use next-error and previous-error to navigate among matches, and, if you install the wgrep package, you can use it to edit the matches in place.
+
+In both cases, pressing g will rerun the Consult command you had exported from and re-enter the input you had typed (which is similar to reverting but a little more flexible). You can then proceed to re-export if that’s what you want, but you can also edit the input changing the search terms or simply cancel if you see you are done with that search.
+
+The embark-consult also contains some candidates collectors that allow you to run embark-live to get a live-updating table of contents for your buffer:
+
+    + embark-consult-outline-candidates produces the outline headings of the current buffer, using consult-outline.
+    + embark-consult-imenu-candidates produces the imenu items of the current buffer, using consult-imenu.
+    + embark-consult-imenu-or-outline-candidates is a simple combination of the two previous functions: it produces imenu items in buffers deriving from prog-mode and otherwise outline headings.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package embark-consult
+  :elpaca(:type git :host github :repo "oantolin/embark")
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
 
 ** Corfu :BIND:HOOK:
 
