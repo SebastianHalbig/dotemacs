@@ -30,7 +30,7 @@ Its aim is to make emacs my digital companion for my everyday life. That means
  + Writing sketches (org and its export functionalities)
  + Many big and small goodies such as being able to control spotify from within emacs.
 
-To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ( [[help:org-babel-tangle][org-babel-tangle]]).
+To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ([[help:org-babel-tangle][org-babel-tangle]]).
 
 Each subsection may be tagged with:
 
@@ -54,7 +54,7 @@ This philosophy results in relatively short explanations and at least tries to a
 
 
 
-** [0/6] Open Tasks
+** [0/7] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
@@ -62,6 +62,7 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] Change colour of org blocks. For example purplish-white (#f4f6fb).
 - [ ] Modify the Victor mono font to be compatible with Roboto mono.
 - [ ] Write a transient (i.e. 21st century) date-picker.
+- [ ] Create/use a template system for latex-based projects.
 
 ** Header
 
@@ -1323,9 +1324,17 @@ Corfu is a small package, which relies on the Emacs completion facilities and co
 
 ** TODO Embark :BIND:
 The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
-It could use a lot(!) of work to optimise embark.
+It could use a lot(!) of work to optimise [[https://github.com/oantolin/embark/tree/master][embark]].
+
+A short description taken from the manual is:
+
+#+begin_quote
+Embark makes it easy to choose a command to run based on what is near point, both during a minibuffer completion session (in a way familiar to Helm or Counsel users) and in normal buffers. Bind the command embark-act to a key and it acts like prefix-key for a keymap of actions (commands) relevant to the target around point. With point on an URL in a buffer you can open the URL in a browser or eww or download the file it points to. If while switching buffers you spot an old one, you can kill it right there and continue to select another. Embark comes preconfigured with over a hundred actions for common types of targets such as files, buffers, identifiers, s-expressions, sentences; and it is easy to add more actions and more target types. Embark can also collect all the candidates in a minibuffer to an occur-like buffer or export them to a buffer in a major-mode specific to the type of candidates, such as dired for a set of files, ibuffer for a set of buffers, or customize for a set of variables.
+#+end_quote
+
 #+begin_src emacs-lisp
 (use-package embark
+  :elpaca(:type git :host github :repo "oantolin/embark")
   :bind (("C-." . embark-act)
          :map minibuffer-local-completion-map
          ("C-." . embark-act)
@@ -1378,6 +1387,7 @@ The annotations are added based on the completion category. For example find-fil
 
 #+begin_src emacs-lisp
 (use-package marginalia
+  :elpaca(:type git :host github :repo "minad/marginalia")
   :init (marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle))
@@ -1438,11 +1448,12 @@ A completion style is a back-end for completion and is used from a front-end tha
 
 ** LSP-Mode :BIND:HOOK:
 
-A few more niceties for our completion setup are provided by using the lsp-mode.
+A few more niceties for our completion setup are provided by using the [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].The following config is derived from Tony Zorman's settings.
 
 #+begin_src emacs-lisp
 (use-package lsp-mode
+  :elpaca(:type git :host github :repo "emacs-lsp/lsp-mode")
   :preface
   (defun my-lsp-shutdown-last-workspaces ()
     "Shut down the `lsp--last-active-workspaces'."
@@ -1599,7 +1610,8 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
   )
 #+end_src
 ** YASnippet
-We use [[https://github.com/joaotavora/yasnippet][yasnippet]] in Latex mode.
+
+We use [[https://github.com/joaotavora/yasnippet][yasnippet]] mostely for Latex.
 #+begin_quote
 YASnippet is a template system for Emacs. It allows you to type an abbreviation and automatically expand it into function templates. Bundled language templates include: C, C++, C#, Perl, Python, Ruby, SQL, LaTeX, HTML, CSS and more. The snippet syntax is inspired from TextMate's syntax, you can even import most TextMate templates to YASnippet.
 #+end_quote
@@ -1730,7 +1742,7 @@ Retrieve the theme.
 
 #+begin_src emacs-lisp
 (defun my-org-current-html-theme ()
-  "Retrive the css-file for org export."
+  "Retrieve the css-file for org export."
   (interactive)
   (let* ((cssdir org-theme-css-dir)
          (css-choices (directory-files cssdir nil ".css$"))
