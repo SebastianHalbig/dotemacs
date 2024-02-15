@@ -30,7 +30,7 @@ Its aim is to make emacs my digital companion for my everyday life. That means
  + Writing sketches (org and its export functionalities)
  + Many big and small goodies such as being able to control spotify from within emacs.
 
-To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ([[org-babel-tangle]]).
+To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ( [[help:org-babel-tangle][org-babel-tangle]]).
 
 Each subsection may be tagged with:
 
@@ -334,7 +334,7 @@ We can now configure recentf.
 We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
 It provides a complete overhaul of the standard keybindings and therefore has to be loaded prior to any other module.
 Additionally, we combine it with a multilingual input setup.
-To switch between input methods use [[toggle-input-method]] which is bound to "C-\".
+To switch between input methods use [[help:toggle-input-method][toggle-input-method]] which is bound to "C-\".
 
 #+begin_src emacs-lisp
 (use-package ergoemacs-mode
@@ -941,8 +941,7 @@ Roboto Mono Nerd                           Roboto Mono
 
 Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
 
-
-#+begin_src lisp
+#+begin_src emacs-lisp
 
 (set-face-attribute 'default nil
                     :family "Roboto Mono "
@@ -1254,6 +1253,8 @@ The available commands are:
 
 #+end_src
 
+
+
 ** Corfu :BIND:HOOK:
 
 [[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
@@ -1511,8 +1512,7 @@ Vertico provides a performant and minimalistic vertical completion UI based on t
 
 For informations on completion-at-point and completion-in-region see:
 https://github.com/minad/vertico#completion-at-point-and-completion-in-region
-The pointer for the currrent line is derived from: [[
-https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
+The pointer for the currrent line is derived from: [[https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
 
 
 #+begin_src emacs-lisp
@@ -2793,15 +2793,6 @@ A set of mail (mu4e) related functions.
 
 #+end_src
 
-** TODO Better search :BINDING:
-
-Bound to  =C-f=, this function provides an integrated search and regexp-replace environment. Invoking it once opens the search with the active region as its default input. Typing a new string, deletes the default query and replaces it. If there is no default input, the arrow keys allow to navigate the search history (of the active buffer). Iterated calling of ~my-search()~, toggles between search and regexp-replace mode.
-
-#+begin_src emacs-lisp
-
-(bind-key "C-f" #'my-consult-line `ergoemacs-override-keymap)
-
-#+end_src
 
 ** TODO Configuration :BINDING:HOOK:DEFER:
 # :PROPERTIES:
@@ -4046,7 +4037,7 @@ Roboto Mono Nerd                     Roboto Mono
 Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): \copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
 
 
-#+begin_src lisp
+#+begin_src emacs-lisp
 (set-face-attribute 'default nil
                     :family "Roboto Mono"
                     :weight 'light
@@ -4723,8 +4714,7 @@ The following code is taken from the literate config of [[https://protesilaos.co
 
 For informations on completion-at-point and completion-in-region see:
 https://github.com/minad/vertico#completion-at-point-and-completion-in-region
-The pointer for the currrent line is derived from: [[
-https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
+The pointer for the currrent line is derived from: [[https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow]]
 
 There is a hacky code which replaces the numbers in front of the matches with white spaces.
 However this assumes as of now that these are one-digit numbers.
