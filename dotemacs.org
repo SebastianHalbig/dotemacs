@@ -1746,6 +1746,12 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 
 We treat ~code~ and =verbatim= faces differently among export.
 
+Hereto we require the newest version of htmlize.
+#+begin_src emacs-lisp
+(use-package htmlize
+  :elpaca (:type git :host github :repo "hniksic/emacs-htmlize"))
+#+end_src
+
 #+begin_src emacs-lisp
 
 (setq org-html-text-markup-alist '(
