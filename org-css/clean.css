@@ -6,16 +6,16 @@
 
 @charset "utf-8";
 @import url('https://fonts.googleapis.com/css?family=Roboto+Mono:300,400,500');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400;1,500&display=swap');
 
 
 body {
-    font-family: "Roboto Mono", monospace;
+    font-family: "Fira Sans", sans-serif;
     font-size: 18px;
     font-weight: 300;
     color:  #424451;
     background: #fbfdf8;
-    line-height: 1.2em;
-    font-weight: light;
+    line-height: 1.1em;
     counter-reset: section;
     counter-reset: toc-section;
     counter-increment: toc-section;
@@ -74,19 +74,23 @@ div.side-note {
     text-transform: uppercase;
 }
 
+#text-table-of-contents{
+    column-count: 3;
+    column-gap: 40px;
+}
+
 #table-of-contents ul {
     padding: 0;
     font-weight: 400;
     counter-reset: list 0;
+    margin-top: 0em;
 }
 
-#table-of-contents ul ul {
+#table-of-contents ul  ul {
     padding-left:0em;
     font-weight: 300;
     font-size: 95%;
     line-height: 1.5em;
-    margin-top: 0em;
-    margin-bottom: 1em;
     padding-left: 3em;
 }
 
@@ -99,6 +103,7 @@ div.side-note {
     vertical-align: top;
     display: inline-block;
     width: 75%;
+    margin-bottom: 1em;
 }
 
 #table-of-contents ul li:before {
@@ -117,6 +122,7 @@ div.side-note {
     width: 100%;
     padding-left: 8px;
     line-height: 1.35em;
+    margin-bottom: 0em;
 }
 
 #table-of-contents ul li ul li:before {
@@ -215,6 +221,10 @@ span.subtitle {
     color: #999999;
 }
 
+h1:not(.title), h2, h3 {
+    padding-bottom: 0.2em;
+    border-bottom: 3px solid #cccccc;
+}
 
 h1, h2, h3, h4 {
     color: black;
@@ -280,6 +290,7 @@ code.verbatim{
 }
 
 .src{
+    font-family: Roboto Mono;
     padding-top: 20px;
     padding-bottom: 20px;
     background: #f9f8f5;
