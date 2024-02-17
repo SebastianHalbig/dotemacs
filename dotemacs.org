@@ -221,7 +221,7 @@ However we can reference it using [[https://orgmode.org/manual/Noweb-Reference-S
   :config
     <<org-config>>
   :hook
-    (org-mode . org-indent-mode)
+    <<org-hooks>>
   :custom-face
   (org-document-title ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
   )
@@ -1660,7 +1660,7 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
 ** General settings
 
 #+NAME: org-config
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :noweb yes :tangle no
 (setq-default org-directory "~/Documents/org-files"
               org-tags-column 0                            ; Tags next to header title
               org-hide-emphasis-markers t                  ; Hide markers
@@ -1687,6 +1687,44 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
                   ("-" (:strike-through t))
                   ("+" (:box t)))
                 org-export-with-broken-links t)            ; Allow export of broken links
+
+<<org-faces>>
+#+end_src
+
+
+We want code-blocks and quotations to stand out.
+
+#+NAME: org-faces
+#+begin_src emacs-lisp :tangle no
+(defun my-org-blocks-light ()
+  "Colourise org-blocks in a light theme."
+  (progn
+    (set-face-attribute 'org-block nil :background "#f9f7f0");;large wild conv.(slight darker)
+    (set-face-attribute 'org-quote nil :background "#f9f7f0");;large wild conv.(slight darker)
+    ))
+
+(defun my-org-blocks-dark ()
+  "Colourise org-blocks in a dark theme."
+  (progn
+    (set-face-attribute 'org-block nil :background "#424451") ;;greyish-black
+    (set-face-attribute 'org-quote nil :background "#424451") ;;greyish-black
+    ))
+
+(defun my-org-colourise ()
+  "Coulourise org-blocks depending on dark or light theme"
+  (progn
+     (if (eq lambda-themes-active-theme 'light) (my-org-blocks-light) (my-org-blocks-dark))))
+
+(add-hook 'lambda-themes-after-load-theme-hook #'my-org-colourise)
+#+end_src
+
+Finally, we have some hooks to add.
+
+#+NAME: org-hooks
+#+begin_src emacs-lisp :tangle no
+(org-mode . org-indent-mode)                              ; use indentations
+(org-mode . my-org-colourise)                             ; colourise blocks
+(lambda-themes-after-load-theme-hook .my-org-colourise)   ; change colours if the theme changes
 #+end_src
 
 
@@ -1811,7 +1849,7 @@ Set the style for the file.
 #+begin_src emacs-lisp
 
 (setq-default org-src-fontify-natively t         ; Fontify code in code blocks.
-              org-adapt-indentation nil          ; Adaptive indentation
+              org-adapt-indentation nil          ; No adaptive indentation
               org-src-tab-acts-natively t        ; Tab acts as in source editing
               org-confirm-babel-evaluate nil     ; No confirmation before executing code
               org-edit-src-content-indentation 0 ; No relative indentation for code blocks
@@ -1819,10 +1857,9 @@ Set the style for the file.
 
 #+end_src
 
-** Agenda :DEFER:INACTIVE:
-:PROPERTIES:
-:header-args:emacs-lisp: :prologue "(with-eval-after-load 'org-agenda" :epilogue ")"
-:END:
+** Agenda :INACTIVE:
+
+*** General settings
 
 #+begin_src emacs-lisp
 (setq org-agenda-files '("~/Documents/org-files/agenda"))
@@ -2192,8 +2229,6 @@ Set refile targets according to my setup
 
 #+end_src
 
-#+RESULTS:
-: ((~/Documents/org-files/agenda/maths.org :maxlevel . 5) (~/Documents/org-files/agenda/leisure.org :maxlevel . 5) ())
 
 *** Capture :ADVICE:BINDING:
 
