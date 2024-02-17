@@ -2490,7 +2490,12 @@ There is an integration into the completion framework, called [[https://github.c
 
 ** Visual fill column and visual line mode
 
-We activate /visual-line-mode/ globally. Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+We activate [[help:visual-line-mode][visual-line-mode]] globally.
+Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+
+#+begin_quote
+visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fill-column in visual-line-mode. Instead of wrapping lines at the window edge, which is the standard behaviour of visual-line-mode, it wraps lines at fill-column (or visual-fill-column-width, if set). That is, it turns the view on the left into the view on the right, without changing the contents of the file.
+#+end_quote
 
 #+begin_src emacs-lisp
 (use-package visual-fill-column
