@@ -53,7 +53,6 @@ The documentation of each package-based (sub-)section is build like follows:
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
 
 
-
 ** [0/7] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
@@ -63,7 +62,6 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] Modify the Victor mono font to be compatible with Roboto mono.
 - [ ] Write a transient (i.e. 21st century) date-picker.
 - [ ] Create/use a template system for latex-based projects.
-
 ** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
@@ -90,7 +88,6 @@ This will generate a header at the top of the tangled file to indicate it is gen
 ;; see <https://www.gnu.org/licenses/>.
 
 #+end_src
-
 * Early init :HOOK:
 :PROPERTIES:
 :header-args:emacs-lisp: :tangle "~/.emacs.d/early-init.el"
@@ -138,11 +135,10 @@ The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.
 (add-hook 'after-init-hook
           #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
 #+end_src
-
 * Elpaca :HOOK:
 
 We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manager for this config.
-A short summary of its functionality take from its documentation is as follows:
+A short summary of its functionality taken from its documentation is as follows:
 
 #+BEGIN_QUOTE
   Elpaca is an elisp package manager. It allows users to find, install, update, and remove third-party packages for Emacs. It is a replacement for the built-in Emacs package manager, package.el.
@@ -195,7 +191,6 @@ Like straight, one needs to bootstrap elpaca.
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
 #+end_src
-
 ** use-package integration
 
 We will use elpaca in conjunction with use-package.
@@ -210,7 +205,6 @@ The elpaca-documentation suggests the following piece of code for the integratio
 
 (elpaca-wait)
 #+end_src
-
 ** Early-loading of org
 We use the main branch of org. Due to the high dependence of other packages on org, one needs to load it as soon as possible. The real configuration of org is in the section called "[[Org mode][Org mode]]".
 However we can reference it using [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][noweb]] syntax.
@@ -2478,8 +2472,7 @@ Changing the symbol for truncation (…) and wrap (↩).
 
 
 
-
-* OLD :INACTIVE:
+* OLD :INACTIVE:noexport:
 
 ** Stuff maybe not needed?
 *** String related
