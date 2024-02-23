@@ -7,10 +7,10 @@
 * Documentation
 ** Forewords
 
-This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It is inspired by the configurations:
+This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. Its main sources of inspiration are
 - [[https://github.com/rougier/dotemacs][Nicolas Rougier]] (main reference point),
 - [[https://protesilaos.com/emacs/dotemacs#][Protesilaos Stavrou]], and
-- [[https://gitlab.com/slotThe/dotfiles/-/tree/master/emacs][Tony Zorman]] (from whom I learnt that I want emacs).
+- [[https://gitlab.com/slotThe/dotfiles/-/tree/master/emacs][Tony Zorman]] (from whom I learnt about emacs).
 
 Its aim is to make emacs my digital companion for my everyday life. That means
  + Offering a comprehensive (La)TeX ecosystem

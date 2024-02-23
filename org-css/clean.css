@@ -13,8 +13,8 @@ body {
     font-family: "Fira Sans", sans-serif;
     font-size: 18px;
     font-weight: 300;
-    color:  #424451;
-    background: #fbfdf8;
+    color:  #424451; /*greyish-black*/
+    background: #fbfdf8; /*greenish-white*/
     line-height: 1.1em;
     counter-reset: section;
     counter-reset: toc-section;
@@ -23,7 +23,7 @@ body {
 
 a, a:visited {
     text-decoration: none;
-    color: #4477AA;
+    color: #475da0; /*Indigo blue */
 }
 .org-bold {
     font-weight: 500;
@@ -115,7 +115,7 @@ div.side-note {
     margin-left: -2.0em;
     text-align: right;
     text-transform: uppercase;
-    color: #4477AA;
+    color: #475da0; /*Indigo blue */
 }
 
 #table-of-contents ul li ul,
@@ -146,11 +146,11 @@ div.side-note {
 }
 
 blockquote {
-    color: #10143e;
+    color: #110d32; /*scotch-blue*/
     padding-top: 0;
     margin-left: 1em;
     padding-left: 1em;
-    border-left: 3px solid #10143e;
+    border-left: 3px solid #110d32; /*scotch-blue*/
     font-style: italic;
 }
 
@@ -201,7 +201,7 @@ ol.org-ol {
 }
 .org-ol li::before {
     content: counter(li) ". ";
-    color: #999999;
+    color: #828d96; /*greenish-grey*/
     display: inline-block;
     width: 2em;
     margin-left: -2em;
@@ -220,16 +220,16 @@ span.subtitle {
     margin-top: .25em;
     font-size: 75%;
     font-weight: 300;
-    color: #999999;
+    color: #828d96; /*greenish-grey*/
 }
 
 h1:not(.title), h2, h3 {
     padding-bottom: 0.2em;
-    border-bottom: 3px solid #d1d8dd;
+    border-bottom: 3px solid #d1d8dd; /*french wood ashes*/
 }
 
 h1, h2, h3, h4 {
-    color: black;
+    color: #110d32; /*scotch-blue*/;
     font-size: 100%;
     font-weight: 400;
     /* font-variant: all-small-caps; */
@@ -254,7 +254,7 @@ h2 {
 }
 
 h2::before, h3::before {
-    color: #555555;
+    color: #424451; /*greyish-black*/
     float: left;
     text-align: right;
     font-weight: 350;
@@ -276,25 +276,25 @@ h3::before {
 
 
 span.meek{
-    color: #d1d8dd;
+    color: #d1d8dd; /*french wood ashes*/
 }
 
 span.urgent{
-    color: #BB5566;
+    color: #d65848; /*aurora-red*/
 }
 span.boxed-text{
-    background-color: #d1d8dd
+    background-color: #d1d8dd /*french wood ashes*/
 }
 
 .src{
     font-family: Roboto Mono;
     padding-top: 20px;
     padding-bottom: 20px;
-    background: #f9f8f5;
+    background: #f9f8f5; /*greenish-white*/
     font-size: 90%;
     margin-left: 1em;
     padding-left: 1em;
-    border-left: 3px solid #d1d8dd;
+    border-left: 3px solid #d1d8dd; /*french wood ashes*/
     font-weight: 400;
 }
 
@@ -308,7 +308,8 @@ table {
     margin-top: 2em;
 }
 thead {
-    border-bottom: 1px dashed black;
+    border-bottom: 1px solid #110d32; /*scotch-blue*/;
+    padding-top: 0.25em;
 }
 th {
     text-align: left;
@@ -317,20 +318,20 @@ th {
     margin-bottom: 0.25em;
     padding-bottom: 0.25em;
 }
+
 td {
     padding: 0;
 }
 
 tr:nth-child(even) {
-    background: #f9f9f9;
+    background: #f0ede6; /*french wood ashes*/
 }
 
 tr:nth-child(odd) {
-    background: #ffffff;
 }
 
 tbody {
-     border-bottom: 1px dashed black;
+     border-bottom: 1px solid #110d32; /*scotch-blue*/;
 }
 
 /* tags and todos */
@@ -343,19 +344,6 @@ tbody {
     padding-bottom: 0px;
     font-size: 100%;
     font-weight: 300; }
-
-
-.organisation, .feedback, .intern {
-    color: #111A1A
-}
-
-.action, .TODO {
-    color: #CC6677
-}
-
-.todo.WAITING {
-    color: #EE8866
-}
 
 
 #content, #postamble {
