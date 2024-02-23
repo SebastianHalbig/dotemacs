@@ -1,6 +1,6 @@
 #+TITLE: Emacs literate configuration
 #+AUTHOR: Sebastian Halbig
-#+DATE: 01/2023
+#+DATE: 03/2024
 #+STARTUP: show2levels indent hidestars
 #+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.emacs.d/init.el")))
 
@@ -1090,7 +1090,6 @@ On top-for some specific settings, we have
 + LSP-mode
 + YASnippet
 
-
 ** Cape :BIND:HOOK:
 
 [[https://github.com/minad/cape][Cape: completion at point]] is a package by [[https://github.com/minad][Minad]] that enhances the completion ecosystem.
@@ -1679,15 +1678,13 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
               org-pretty-entities t                        ; Show entities as UTF-8 characters
               org-ellipsis " …"                            ; Short ellipsis
               org-emphasis-alist
-                '(("*" bold)
-                  ("/" italic)
-                  ("_" underline)
-                  ("=" lambda-strong)
-                  ("~" lambda-focus)
-                  ("-" (:strike-through t))
-                  ("+" (:box t)))
-                org-export-with-broken-links t)            ; Allow export of broken links
-
+              '(("*" (:weight bold :inherit lambda-focus))
+                ("/" italic)
+                ("_" underline)
+                ("=" (:weight bold :inherit lambda-urgent))
+                ("~" (lambda-meek))
+                ("+" (:box t :inverse-video t)))
+              org-export-with-broken-links t)            ; Allow export of broken links
 <<org-faces>>
 #+end_src
 
@@ -1784,15 +1781,22 @@ Hereto we require the newest version of htmlize.
   :elpaca (:type git :host github :repo "hniksic/emacs-htmlize"))
 #+end_src
 
+Alist of HTML expressions to convert text markup.
+
+The key must be a symbol among bold, code, italic,
+strike-through, underline and verbatim.  The value is
+a formatting string to wrap fontified text with.
+
+
 #+begin_src emacs-lisp
 
 (setq org-html-text-markup-alist '(
        (bold           . "<b>%s</b>")
-       (code           . "<code class=\"code\">%s</code>")
+       (code           . "<span class=\"meek\">%s</span>")
        (italic         . "<i>%s</i>")
-       (strike-through . "<del>%s</del>")
+       (strike-through . "<span class=\"boxed-text\">%s</del>")
        (underline      . "<span class=\"underline\">%s</span>")
-       (verbatim       . "<code class=\"verbatim\">%s</code>")))
+       (verbatim       . "<span class=\"urgent\">%s</span>")))
 
 #+end_src
 

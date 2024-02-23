@@ -29,9 +29,11 @@ a, a:visited {
     font-weight: 500;
 }
 i, i a {
-    color: #333633;
-    font-style: normal;
-    font-weight: normal;
+    font-style: italic;
+}
+
+b {
+    font-weight: 400;
 }
 
 .org-italic, .org-org-meta-line {
@@ -223,7 +225,7 @@ span.subtitle {
 
 h1:not(.title), h2, h3 {
     padding-bottom: 0.2em;
-    border-bottom: 3px solid #cccccc;
+    border-bottom: 3px solid #d1d8dd;
 }
 
 h1, h2, h3, h4 {
@@ -273,20 +275,15 @@ h3::before {
 }
 
 
-code {
-    font-weight: 400;
-    padding-left: 0px;
-    padding-right: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
+span.meek{
+    color: #d1d8dd;
 }
 
-code.code{
-    color: #4477AA;
-}
-
-code.verbatim{
+span.urgent{
     color: #BB5566;
+}
+span.boxed-text{
+    background-color: #d1d8dd
 }
 
 .src{
@@ -297,7 +294,7 @@ code.verbatim{
     font-size: 90%;
     margin-left: 1em;
     padding-left: 1em;
-    border-left: 3px solid #cccccc;
+    border-left: 3px solid #d1d8dd;
     font-weight: 400;
 }
 
