@@ -2472,20 +2472,20 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
 ** Magit
 
 #+begin_src emacs-lisp
-  (use-package magit
-    :elpaca (:type git
-             :host github
-             :repo "magit/magit")
-    :config
-    (setq magit-display-buffer-function 'switch-to-buffer)
-    (setq magit-diff-refine-hunk 'all)
-    :custom-face
-    (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
-    (magit-header-line ((t (:foreground unspecified :background unspecified))))
-    )
+(use-package magit
+  :elpaca (:type git
+           :host github
+           :repo "magit/magit")
+  :config
+  (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+  (setq magit-diff-refine-hunk 'all)
+  :custom-face
+  (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
+  (magit-header-line ((t (:foreground unspecified :background unspecified))))
+  )
 #+end_src
 
-** Abridge
+** Abridge :INACTIVE:
 In order to handles long lines in diffs, which happens in LaTeX-documents quite freqently, we use visual clues about actual changes.
 
 #+begin_quote
