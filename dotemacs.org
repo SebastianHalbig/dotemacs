@@ -114,7 +114,7 @@ The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.
       ad-redefinition-action 'accept            ; Silence warnings for redefinition
       read-process-output-max (* 1024 1024)     ; Increase read size per process
       confirm-kill-processes nil)               ; Emacs should not ask for confiration to
-                                                ;kill a process
+                                                ; kill a process
 
 (menu-bar-mode -1)   ; Disable menu-bar
 (scroll-bar-mode -1) ; Disable scroll-bar
@@ -131,7 +131,6 @@ The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.
 ;;As suggested in the manual, we disable the standard package manager at startup.
 (setq package-enable-at-startup nil)
 
-
 ;; Reset garbage collector limit after init process has ended (8Mo)
 (add-hook 'after-init-hook
           #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
@@ -141,12 +140,13 @@ We specify the skeleton for our fundamental emacs configurations such as our cho
 The actual code-blocks will be found in different sections and inserted once the document is tangled.
 
 #+begin_src emacs-lisp :noweb yes
- <<elpaca-bootstrap>>
+<<elpaca-bootstrap>>
 
 (use-package emacs
   :demand t
   :config
   <<elpaca-use-package-integration>>
+  <<emacs-defaults>>
   <<no-custom-files>>
   <<enable-disable-commands>>
   <<encoding>>
@@ -169,15 +169,15 @@ We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manag
 A short summary of its functionality taken from its documentation is as follows:
 
 #+BEGIN_quote
-  Elpaca is an elisp package manager. It allows users to find, install, update, and remove third-party packages for Emacs. It is a replacement for the built-in Emacs package manager, package.el.
+Elpaca is an elisp package manager. It allows users to find, install, update, and remove third-party packages for Emacs. It is a replacement for the built-in Emacs package manager, package.el.
 
-  Elpaca:
+Elpaca:
 
-  + Installs packages asynchronously, in parallel for fast, non-blocking installations.
-  + Includes a flexible UI for finding and operating on packages.
-  + Downloads packages from their sources for convenient elisp development.
-  + Supports thousands of elisp packages out of the box (MELPA, NonGNU/GNU ELPA, Org/org-contrib).
-  + Makes it easy for users to create their own ELPAs.
++ Installs packages asynchronously, in parallel for fast, non-blocking installations.
++ Includes a flexible UI for finding and operating on packages.
++ Downloads packages from their sources for convenient elisp development.
++ Supports thousands of elisp packages out of the box (MELPA, NonGNU/GNU ELPA, Org/org-contrib).
++ Makes it easy for users to create their own ELPAs.
 #+end_quote
 
 Like straight, one needs to bootstrap elpaca.
@@ -244,6 +244,14 @@ We use the main branch of org. Due to the high dependence of other packages on o
 Many of the ideas here are a mix of [[https://protesilaos.com/emacs/dotemacs#h:dae63bd9-93a8-41c4-af1b-d0f39ba50974][Prot's config]] and [[https://github.com/rougier/dotemacs][Rougier's config]].
 If other sources are used, they are specifically mentioned.
 
+** Emacs defaults
+
+#+NAME: emacs-defaults
+#+begin_src emacs-lisp :noweb yes :tangle no
+(setq-default indent-tabs-mode nil        ; Stop using tabs to indent
+              tab-always-indent 'complete ; Indent first then try completions
+              tab-width 2)                ; Smaller width for tab characters
+#+end_src
 ** Keeping emacs.d clean: Recentf and no-littering
 
 [[https://vincent.demeester.fr/articles/emacs_keep_it_clean][Vincent Demeester]] is, according to his bio, a developer working at "Red Hat". He has probably forgotten more about good code that what I will ever know so I will follow his advice.
@@ -267,9 +275,9 @@ The following code will allow for an integration between dired and recentf.
   "Change the OLDNAME of a file in the recentf list to NEWNAME"
   (setq recentf-list
         (--map (if (string-equal it oldname)
-                      newname
-                    oldname)
-                recentf-list))
+                   newname
+                 oldname)
+               recentf-list))
   recentf-cleanup)
 #+end_src
 
@@ -282,9 +290,9 @@ The following code will allow for an integration between dired and recentf.
   ;; oldname is a prefix of the element.
   (setq recentf-list
         (--map (if (string-prefix-p oldname it)
-                      (concat newname (substring it (length oldname)))
-                    it)
-                recentf-list))
+                   (concat newname (substring it (length oldname)))
+                 it)
+               recentf-list))
   recentf-cleanup)
 #+end_src
 We can now configure recentf.
@@ -355,14 +363,14 @@ To switch between input methods use [[help:toggle-input-method][toggle-input-met
 
 #+begin_src emacs-lisp
 (use-package ergoemacs-mode
-    :config
-    (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
-    (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
-    (ergoemacs-mode 1)                    ; Globally enables ergoemacs-mode
-    (set-language-environment "English")  ; Set up multilingual environment
-    (setq default-input-method "german"   ; need an umlaut? get an umlaut.
-      default-transient-input-method "german")
-    )
+  :config
+  (setq ergoemacs-theme nil)            ; Uses Standard Ergoemacs keyboard theme
+  (setq ergoemacs-keyboard-layout "us") ; Assumes QWERTY keyboard layout
+  (ergoemacs-mode 1)                    ; Globally enables ergoemacs-mode
+  (set-language-environment "English")  ; Set up multilingual environment
+  (setq default-input-method "german"   ; need an umlaut? get an umlaut.
+        default-transient-input-method "german")
+  )
 (elpaca-wait)
 #+end_src
 
@@ -404,7 +412,7 @@ If Emacs or the computer crashes, you can recover the files you were editing at 
 #+Name: auto-save
 #+begin_src emacs-lisp :tangle no
 (setq auto-save-list-file-prefix ; Prefix for generating auto-save-list-file-name
-               (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
+      (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
       auto-save-default t        ; Auto-save every buffer that visits a file
       auto-save-timeout 30       ; Number of seconds between auto-save
       auto-save-interval 200)    ; Number of keystrokes between auto-saves
@@ -556,8 +564,8 @@ We run emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Em
 #+NAME: cus-edit
 #+begin_src emacs-lisp :tangle no
 (setq-default
-custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
-custom-unlispify-tag-names nil)         ; Prefer kebab-case for symbols
+ custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
+ custom-unlispify-tag-names nil)         ; Prefer kebab-case for symbols
 #+end_src
 ** Dash
 [[https://github.com/magnars/dash.el][
@@ -583,234 +591,234 @@ We will use these colours at various places.
 #+begin_src emacs-lisp
 ;; whites
 (defvar snow-white
-    "#f9faf8" "snow-drop")
+  "#f9faf8" "snow-drop")
 (defvar reddish-white
-    "#faf9fa" "back of the christmas rose")
+  "#faf9fa" "back of the christmas rose")
 (defvar purplish-white
-    "#f4f6fb" "white geranium or storks bill")
+  "#f4f6fb" "white geranium or storks bill")
 (defvar yellowish-white
-    "#fbfbf6" "hawthorn blossom")
+  "#fbfbf6" "hawthorn blossom")
 (defvar orange-white
-    "#fcfaf5" "large wild convolvulus")
+  "#fcfaf5" "large wild convolvulus")
 (defvar greenish-white
-    "#fbfdf8" "polyanthus narcissus")
+  "#fbfdf8" "polyanthus narcissus")
 (defvar skimmed-milk-white
-    "#edf0f2" "back of the petals of blue hepatica")
+  "#edf0f2" "back of the petals of blue hepatica")
 (defvar greyish-white
-    "#e7ecef" "white hamburgh grapes")
+  "#e7ecef" "white hamburgh grapes")
 ;; greys
 (defvar ash-grey
-    "#d1d8dd" "french wood ashes")
+  "#d1d8dd" "french wood ashes")
 (defvar smoke-grey
-    "#c0c7d3")
+  "#c0c7d3")
 (defvar french-grey
-    "#c1cad8")
+  "#c1cad8")
 (defvar pearl-grey
-    "#b8c0ce" "back of petals of purple hepatica")
+  "#b8c0ce" "back of petals of purple hepatica")
 (defvar yellowish-grey
-    "#b9bba9" "stems of the barberry")
+  "#b9bba9" "stems of the barberry")
 (defvar bluish-grey
-    "#9aa3b7")
+  "#9aa3b7")
 (defvar greenish-grey
-    "#828d96" "bark of ash tree")
+  "#828d96" "bark of ash tree")
 (defvar blackish-grey
-    "#494f67" "old stems of hawthorn")
+  "#494f67" "old stems of hawthorn")
 ;; blacks
 (defvar greyish-black
-    "#424451")
+  "#424451")
 (defvar bluish-black
-    "#2c2e3e" "crowberry")
+  "#2c2e3e" "crowberry")
 (defvar greenish-black
-    "#30343e")
+  "#30343e")
 (defvar pitch-or-brownish-black
-    "#2b272e")
+  "#2b272e")
 (defvar reddish-black
-    "#2b242a" "berry of fuchsia coccinea")
+  "#2b242a" "berry of fuchsia coccinea")
 (defvar ink-black
-    "#0b0b13" "berry of deadly night shade")
+  "#0b0b13" "berry of deadly night shade")
 (defvar velvet-black
-    "#0a0a0f" "black of red and black west-indian peas")
+  "#0a0a0f" "black of red and black west-indian peas")
 ;; blues
 (defvar scotch-blue
-    "#110d32" "stamina of single purple anemone")
+  "#110d32" "stamina of single purple anemone")
 (defvar prussian-blue
-    "#060740" "stamina of bluish purple anemone")
+  "#060740" "stamina of bluish purple anemone")
 (defvar indigo-blue
-    "#475da0")
+  "#475da0")
 (defvar china-blue
-    "#262a6b" "back parts of gentian flowers")
+  "#262a6b" "back parts of gentian flowers")
 (defvar azure-blue
-    "#5465a5" "grape hyacinth. gentian")
+  "#5465a5" "grape hyacinth. gentian")
 (defvar ultramarine-blue
-    "#6077e2" "borrage")
+  "#6077e2" "borrage")
 (defvar flax-flower-blue
-    "#6d8ad2" "flax flower")
+  "#6d8ad2" "flax flower")
 (defvar berlin-blue
-    "#7b99dc" "hepatica")
+  "#7b99dc" "hepatica")
 (defvar verditter-blue
-    "#80c0d6")
+  "#80c0d6")
 (defvar greenish-blue
-    "#78a2c0" "great fennel flower")
+  "#78a2c0" "great fennel flower")
 (defvar greyish-blue
-    "#8da9c6" "small fennel flower")
+  "#8da9c6" "small fennel flower")
 ;; purples
 (defvar bluish-lilac-purple
-    "#d9ebfe" "blue lilac")
+  "#d9ebfe" "blue lilac")
 (defvar bluish-purple
-    "#7b8eca" "parts of white and purple crocus")
+  "#7b8eca" "parts of white and purple crocus")
 (defvar violet-purple
-    "#1e1753" "purple aster")
+  "#1e1753" "purple aster")
 (defvar pansy-purple
-    "#1e1b48" "sweet-scented violet")
+  "#1e1b48" "sweet-scented violet")
 (defvar campanula-purple
-    "#5b61a8" "canterbury bell. campanula persicifolia")
+  "#5b61a8" "canterbury bell. campanula persicifolia")
 (defvar imperial-purple
-    "#3f3982" "deep parts of flower ofsaffron crocus")
+  "#3f3982" "deep parts of flower ofsaffron crocus")
 (defvar auricula-purple
-    "#361e53" "largest purple auricula")
+  "#361e53" "largest purple auricula")
 (defvar plum-purple
-    "#29205a" "plum")
+  "#29205a" "plum")
 (defvar red-lilac-purple
-    "#c1c9e8" "red lilac. pale purple primrose")
+  "#c1c9e8" "red lilac. pale purple primrose")
 (defvar lavendar-purple
-    "#686c8e" "dried lavendar flowers")
+  "#686c8e" "dried lavendar flowers")
 (defvar pale-bluish-purple
-    "#32335f")
+  "#32335f")
 ;; greens
 (defvar celandine-green
-    "#b6bdae" "back of tussilage leaves")
+  "#b6bdae" "back of tussilage leaves")
 (defvar mountain-green
-    "#aeb197" "thick leaved cudweed, silver leaved almond")
+  "#aeb197" "thick leaved cudweed, silver leaved almond")
 (defvar leek-green
-    "#919682" "sea kale, leaves of leeks in winter")
+  "#919682" "sea kale, leaves of leeks in winter")
 (defvar blackish-green
-    "#4b5059" "dark streaks on leaves of cayenne pepper")
+  "#4b5059" "dark streaks on leaves of cayenne pepper")
 (defvar verdigris-green
-    "#71aa89")
+  "#71aa89")
 (defvar bluish-green
-    "#a4b3a6" "under disk of wild rose leaves")
+  "#a4b3a6" "under disk of wild rose leaves")
 (defvar apple-green
-    "#abb796")
+  "#abb796")
 (defvar emerald-green
-    "#97b578")
+  "#97b578")
 (defvar grass-green
-    "#86996d" "general appearance of grass fields. sweet sugar pear")
+  "#86996d" "general appearance of grass fields. sweet sugar pear")
 (defvar duck-green
-    "#334429" "upper disk of yew leaves")
+  "#334429" "upper disk of yew leaves")
 (defvar sap-green
-    "#829249" "upper disk of leaves of woody night shade")
+  "#829249" "upper disk of leaves of woody night shade")
 (defvar pistachio-green
-    "#98a760" "ripe pound pear. hypnum like saxifrage")
+  "#98a760" "ripe pound pear. hypnum like saxifrage")
 (defvar asparagus-green
-    "#d0d9b9" "variegated horse-shoe geranium")
+  "#d0d9b9" "variegated horse-shoe geranium")
 (defvar olive-green
-    "#6d7f75" "foliage of lignum vitæ")
+  "#6d7f75" "foliage of lignum vitæ")
 (defvar oil-green
-    "#ad9f61" "nonpareil apple from the wall")
+  "#ad9f61" "nonpareil apple from the wall")
 (defvar siskin-green
-    "#d7e090" "ripe coalmar pear. irish pitcher apple")
+  "#d7e090" "ripe coalmar pear. irish pitcher apple")
 ;; yellows
 (defvar sulphur-yellow
-    "#e2d943" "various coloured snap dragon")
+  "#e2d943" "various coloured snap dragon")
 (defvar primrose-yellow
-    "#fffeb2" "wild primrose")
+  "#fffeb2" "wild primrose")
 (defvar wax-yellow
-    "#bd9e32" "greenish parts of nonpareil apple")
+  "#bd9e32" "greenish parts of nonpareil apple")
 (defvar lemon-yellow
-    "#f0dd5d" "shrubby goldylocks")
+  "#f0dd5d" "shrubby goldylocks")
 (defvar gamboge-yellow
-    "#fbef4e" "yellow jasmine")
+  "#fbef4e" "yellow jasmine")
 (defvar kings-yellow
-    "#fff762" "yellow tulip. cinque foil")
+  "#fff762" "yellow tulip. cinque foil")
 (defvar saffron-yellow
-    "#dea916" "anthers of saffron crocus")
+  "#dea916" "anthers of saffron crocus")
 (defvar gallstone-yellow
-    "#a56700" "marigold apple")
+  "#a56700" "marigold apple")
 (defvar honey-yellow
-    "#ad8404")
+  "#ad8404")
 (defvar straw-yellow
-    "#fdf096" "oat straw")
+  "#fdf096" "oat straw")
 (defvar wine-yellow
-    "#e5db75" "white currants")
+  "#e5db75" "white currants")
 (defvar sienna-yellow
-    "#fdec85" "stamina of honey-suckle")
+  "#fdec85" "stamina of honey-suckle")
 (defvar ochre-yellow
-    "#fbe573")
+  "#fbe573")
 (defvar cream-yellow
-    "#fff6ba")
+  "#fff6ba")
 ;; orange
 (defvar dutch-orange
-    "#f3af00" "common marigold. seedpod of spindle-tree")
+  "#f3af00" "common marigold. seedpod of spindle-tree")
 (defvar buff-orange
-    "#fecf19" "stamina of the large white cistus")
+  "#fecf19" "stamina of the large white cistus")
 (defvar orpiment-orange
-    "#e27000" "indian cress")
+  "#e27000" "indian cress")
 (defvar brownish-orange
-    "#a62500" "style of the orange lily")
+  "#a62500" "style of the orange lily")
 (defvar reddish-orange
-    "#d16200" "hemimeris buff hibiscus")
+  "#d16200" "hemimeris buff hibiscus")
 (defvar deep-reddish-orange
-    "#cc4700" "scarlet leadington apple")
+  "#cc4700" "scarlet leadington apple")
 ;; red
 (defvar tile-red
-    "#d05438" "shrubby pimpernel")
+  "#d05438" "shrubby pimpernel")
 (defvar hyacinth-red
-    "#af3b23" "red on the golden rennette apple")
+  "#af3b23" "red on the golden rennette apple")
 (defvar scarlet-red
-    "#ba1f21" "large red oriental poppy, red parts of red and black indian peas")
+  "#ba1f21" "large red oriental poppy, red parts of red and black indian peas")
 (defvar vermillion-red
-    "#bc2d27" "love apple")
+  "#bc2d27" "love apple")
 (defvar aurora-red
-    "#d65848" "red on the naked apple")
+  "#d65848" "red on the naked apple")
 (defvar arterial-blood-red
-    "#730004" "corn poppy. cherry")
+  "#730004" "corn poppy. cherry")
 (defvar flesh-red
-    "#fed0a4" "larkspur")
+  "#fed0a4" "larkspur")
 (defvar rose-red
-    "#fff2dc" "common garden rose")
+  "#fff2dc" "common garden rose")
 (defvar peach-blossom-red
-    "#ffe1d6" "peach blossom")
+  "#ffe1d6" "peach blossom")
 (defvar carmine-red
-    "#ec153e" "raspberry, cocks comb, carnation pink")
+  "#ec153e" "raspberry, cocks comb, carnation pink")
 (defvar lake-red
-    "#da0d44" "red tulip, rose officinalus")
+  "#da0d44" "red tulip, rose officinalus")
 (defvar crimson-red
-    "#e03d55")
+  "#e03d55")
 (defvar purplish-red
-    "#8b0013" "dark crimson officinal garden rose")
+  "#8b0013" "dark crimson officinal garden rose")
 (defvar cochineal-red
-    "#a70c17" "under disk of decayed leaves of none-so-pretty")
+  "#a70c17" "under disk of decayed leaves of none-so-pretty")
 (defvar veinous-blood-red
-    "#630108" "musk flower or dark purple scaious")
+  "#630108" "musk flower or dark purple scaious")
 (defvar brownish-purple-red
-    "#c03c45" "flower of deadly nightshade")
+  "#c03c45" "flower of deadly nightshade")
 (defvar chocolate-red
-    "#750209" "brown disk of common marigold")
+  "#750209" "brown disk of common marigold")
 (defvar brownish-red
-    "#9a0407")
+  "#9a0407")
 ;; browns
 (defvar deep-orange-coloured-brown
-    "#723b16" "female spike of catstail reed")
+  "#723b16" "female spike of catstail reed")
 (defvar deep-reddish-brown
-    "#4d2a17" "dead leaves of green panic grass")
+  "#4d2a17" "dead leaves of green panic grass")
 (defvar umber-brown
-    "#443116" "disk of rubeckia")
+  "#443116" "disk of rubeckia")
 (defvar chesnut-brown
-    "#69411d" "chesnuts")
+  "#69411d" "chesnuts")
 (defvar yellowish-brown
-    "#87662a")
+  "#87662a")
 (defvar wood-brown
-    "#c0a666" "hazel nuts")
+  "#c0a666" "hazel nuts")
 (defvar liver-brown
-    "#3f3114")
+  "#3f3114")
 (defvar hair-brown
-    "#827748")
+  "#827748")
 (defvar broccoli-brown
-    "#958762")
+  "#958762")
 (defvar olive-brown
-    "#6b5c3d" "stems of black currant bush")
+  "#6b5c3d" "stems of black currant bush")
 (defvar blackish-brown
-    "#342e14")
+  "#342e14")
 
 #+end_src
 
@@ -923,7 +931,7 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   (lambda-themes-set-italic-keywords t)  ; Italic keywords
   (lambda-themes-set-variable-pitch nil) ; Fixed pitch looks better to me.
   :bind (:map ergoemacs-override-keymap
-         ("<f6>" . my-toggle-theme))
+              ("<f6>" . my-toggle-theme))
   :config
   ;; load preferred theme
   (setq initial-scratch-message "")      ; Why would I ever want a scratch message?
@@ -1017,10 +1025,10 @@ To get a list of all character sets type "M-x list-character-sets"
   :demand t
   :config
   ( --map (set-fontset-font t (-first-item it) (-second-item it))
-       '((unicode "Roboto Mono Nerd Font")
-         (symbol  "Roboto Mono Nerd Font")
-         (emoji   "Roboto Mono Nerd Font")
-         ))
+    '((unicode "Roboto Mono Nerd Font")
+      (symbol  "Roboto Mono Nerd Font")
+      (emoji   "Roboto Mono Nerd Font")
+      ))
   )
 #+end_src
 
@@ -1051,7 +1059,7 @@ Information displayed depends on major mode. Not all segments display in every m
 We customise it at bit.
 
 *** Prelude: A thin (bottom) modeline
- We will have a status line at the top of the frames and therefore disable the modeline at the bottom (except for a thin seperator line).
+We will have a status line at the top of the frames and therefore disable the modeline at the bottom (except for a thin seperator line).
 
 #+begin_src emacs-lisp
 (defun my-thin-modeline ()
@@ -1101,7 +1109,7 @@ We customise it at bit.
   (lambda-line-mode)
   (my-thin-modeline)
   (my-lambda-light-werner)
-)
+  )
 #+end_src
 
 * Completion :BIND:FACE:HOOK:
@@ -1136,7 +1144,7 @@ You can register the cape-* functions in the completion-at-point-functions list.
 #+begin_src emacs-lisp
 (use-package cape
   :elpaca (:type git :host github :repo "minad/cape")
-   :bind (("C-c p p" . completion-at-point) ; capf
+  :bind (("C-c p p" . completion-at-point) ; capf
          ("C-c p t" . complete-tag)         ; etags
          ("C-c p d" . cape-dabbrev)         ; or dabbrev-completion
          ("C-c p h" . cape-history)
@@ -1171,9 +1179,9 @@ You can register the cape-* functions in the completion-at-point-functions list.
   :custom
   (cape-dabbrev-min-length 3)
   :hook ((latex-mode LaTeX-mode) . my-cape-latex-mode)
-         (org-mode               . my-cape-org-mode)
-         (lisp-mode              . my-cape-lisp-mode)
-         )
+  (org-mode               . my-cape-org-mode)
+  (lisp-mode              . my-cape-lisp-mode)
+  )
 
 #+end_src
 *** Company and its backends
@@ -1251,7 +1259,7 @@ The available commands are:
               ;; History
               ("C-c h"   . consult-history)
               ;; Register
-         :map goto-map
+              :map goto-map
               ;; Compilation
               ("e" . consult-compile-error)
               ("f" . consult-flymake)
@@ -1259,9 +1267,9 @@ The available commands are:
               ("l" . consult-line)
               ("o" . consult-outline)
               ;;Org-specific
-         :map org-mode-map
+              :map org-mode-map
               ("M-h"     . consult-org-heading)
-         )
+              )
   :config
   (setq consult-preview-key nil)      ; No live preview
   (setq consult-fontify-preserve nil) ; No fontification (e.g. in consult-lines).
@@ -1286,16 +1294,16 @@ Consult and embark functionalities can be integrated into each other, as describ
 
 The embark-consult package provides the following exporters:
 
- + You can use embark-export from consult-line, consult-outline, or consult-mark to obtain an occur-mode buffer. As with the built-in occur command you use that buffer to jump to a match and after that, you can then use next-error and previous-error to navigate to other matches. You can also press e to activate occur-edit-mode and edit the matches in place!
- + You can export from any of the Consult asynchronous search commands, consult-grep, consult-git-grep, or consult-ripgrep to get a grep-mode buffer. Here too you can use next-error and previous-error to navigate among matches, and, if you install the wgrep package, you can use it to edit the matches in place.
++ You can use embark-export from consult-line, consult-outline, or consult-mark to obtain an occur-mode buffer. As with the built-in occur command you use that buffer to jump to a match and after that, you can then use next-error and previous-error to navigate to other matches. You can also press e to activate occur-edit-mode and edit the matches in place!
++ You can export from any of the Consult asynchronous search commands, consult-grep, consult-git-grep, or consult-ripgrep to get a grep-mode buffer. Here too you can use next-error and previous-error to navigate among matches, and, if you install the wgrep package, you can use it to edit the matches in place.
 
 In both cases, pressing g will rerun the Consult command you had exported from and re-enter the input you had typed (which is similar to reverting but a little more flexible). You can then proceed to re-export if that’s what you want, but you can also edit the input changing the search terms or simply cancel if you see you are done with that search.
 
 The embark-consult also contains some candidates collectors that allow you to run embark-live to get a live-updating table of contents for your buffer:
 
-    + embark-consult-outline-candidates produces the outline headings of the current buffer, using consult-outline.
-    + embark-consult-imenu-candidates produces the imenu items of the current buffer, using consult-imenu.
-    + embark-consult-imenu-or-outline-candidates is a simple combination of the two previous functions: it produces imenu items in buffers deriving from prog-mode and otherwise outline headings.
++ embark-consult-outline-candidates produces the outline headings of the current buffer, using consult-outline.
++ embark-consult-imenu-candidates produces the imenu items of the current buffer, using consult-imenu.
++ embark-consult-imenu-or-outline-candidates is a simple combination of the two previous functions: it produces imenu items in buffers deriving from prog-mode and otherwise outline headings.
 #+end_quote
 
 #+begin_src emacs-lisp
@@ -1319,57 +1327,57 @@ Corfu is a small package, which relies on the Emacs completion facilities and co
 
 
 #+begin_src emacs-lisp
-  (use-package corfu
-    :elpaca (corfu :type git
-                   :host github
-                   :repo "minad/corfu"
-                   :files (:defaults "extensions/*")
-                   :includes (corfu-info corfu-history corfu-popupinfo))
-    :bind (:map corfu-map
-                ("<escape>" . corfu-quit)
-                ("<return>" . corfu-insert)
-                ("M-d" . corfu-show-documentation)
-                ("M-l" . corfu-show-location))
-    :custom
-    ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
-    ;; want to perform completion
-    (tab-always-indent 'complete)       ; Allows for indetation AND completion on <tab>.
-    (completion-cycle-threshold nil)    ; Always show candidates in menu
-    (corfu-auto t)                      ; Enable autocompletion
-    (corfu-auto-prefix 2)               ; Minimum length of prefix before completion.
-    (corfu-auto-delay 20)               ; Delay before auto-completion shows up
-    (corfu-min-width 60)                ; Minimal width of corfu popup.
-    (corfu-max-width corfu-min-width)   ; Always have the same width
-    (corfu-count 10)                    ; Maximal number of candidates.
-    (corfu-scroll-margin 5)             ; Use scroll margins
-    (read-extended-command-predicate
+(use-package corfu
+  :elpaca (corfu :type git
+                 :host github
+                 :repo "minad/corfu"
+                 :files (:defaults "extensions/*")
+                 :includes (corfu-info corfu-history corfu-popupinfo))
+  :bind (:map corfu-map
+              ("<escape>" . corfu-quit)
+              ("<return>" . corfu-insert)
+              ("M-d" . corfu-show-documentation)
+              ("M-l" . corfu-show-location))
+  :custom
+  ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
+  ;; want to perform completion
+  (tab-always-indent 'complete)       ; Allows for indetation AND completion on <tab>.
+  (completion-cycle-threshold nil)    ; Always show candidates in menu
+  (corfu-auto t)                      ; Enable autocompletion
+  (corfu-auto-prefix 2)               ; Minimum length of prefix before completion.
+  (corfu-auto-delay 20)               ; Delay before auto-completion shows up
+  (corfu-min-width 60)                ; Minimal width of corfu popup.
+  (corfu-max-width corfu-min-width)   ; Always have the same width
+  (corfu-count 10)                    ; Maximal number of candidates.
+  (corfu-scroll-margin 5)             ; Use scroll margins
+  (read-extended-command-predicate
    #'command-completion-default-include-p) ; Hide corfu commands from  being used via M-x
 
-    (corfu-cycle t)
-    (completion-cycle-threshold 3)      ; If there are only 3 candidates, no poup is shown.
-    (corfu-quit-at-boundary 'seperator) ; Quits at boundary unless a seperator is used.
-    (corfu-separator ?\s)               ; Use space
-    (corfu-quit-no-match 'separator)    ; Don't quit if there is `corfu-separator' inserted
-    (corfu-preview-current 'insert)     ; Preview first candidate. Insert on input if only one
-    (corfu-preselect-first t)           ; Preselect first candidate
-    (corfu-popupinfo-delay 0.1)           ; Show some documentation about the candidates.
-    (add-to-list 'savehist-additional-variables 'corfu-history)
-    ;; Other
-    (corfu-echo-documentation nil)      ; Already use corfu-doc
-    (lsp-completion-provider :none)     ; Use corfu instead for lsp completions
-    :init
-    (global-corfu-mode)
-    (corfu-popupinfo-mode)
-    (corfu-history-mode)
-    :hook (lsp-completion-mode . my-corfu-setup-lsp)
-    :init
-    ;; Setup lsp to use corfu for lsp completion
-    (defun my-corfu-setup-lsp ()
-      "Use orderless completion style with lsp-capf instead of the
-  default lsp-passthrough."
-      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-            '(orderless)))
-    )
+  (corfu-cycle t)
+  (completion-cycle-threshold 3)      ; If there are only 3 candidates, no poup is shown.
+  (corfu-quit-at-boundary 'seperator) ; Quits at boundary unless a seperator is used.
+  (corfu-separator ?\s)               ; Use space
+  (corfu-quit-no-match 'separator)    ; Don't quit if there is `corfu-separator' inserted
+  (corfu-preview-current 'insert)     ; Preview first candidate. Insert on input if only one
+  (corfu-preselect-first t)           ; Preselect first candidate
+  (corfu-popupinfo-delay 0.1)           ; Show some documentation about the candidates.
+  (add-to-list 'savehist-additional-variables 'corfu-history)
+  ;; Other
+  (corfu-echo-documentation nil)      ; Already use corfu-doc
+  (lsp-completion-provider :none)     ; Use corfu instead for lsp completions
+  :init
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  (corfu-history-mode)
+  :hook (lsp-completion-mode . my-corfu-setup-lsp)
+  :init
+  ;; Setup lsp to use corfu for lsp completion
+  (defun my-corfu-setup-lsp ()
+    "Use orderless completion style with lsp-capf instead of the
+default lsp-passthrough."
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless)))
+  )
 #+end_src
 
 ** TODO Embark :BIND:
@@ -1446,7 +1454,7 @@ The annotations are added based on the completion category. For example find-fil
   (marginalia-align 'right)       ; right alignment
   (marginalia-align-offset -1)    ; one space on the right
   (marginalia-max-relative-age 0) ; Supresses showing the file age
-)
+  )
 #+end_src
 
 ** Orderless :FACE:
@@ -1482,7 +1490,7 @@ A completion style is a back-end for completion and is used from a front-end tha
      orderless-initialism
      ))
   (orderless-style-dispatchers
-    '(orderless-affix-dispatch))
+   '(orderless-affix-dispatch))
   (orderless-affix-dispatch-alist
    '((33  . orderless-without-literal) ; "!" at start/end excludes this word from the search
      (37  . char-fold-to-regexp)       ; "%" at start/end ignores inflections of the word
@@ -1548,7 +1556,7 @@ It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].T
   (lsp-modeline-code-actions-enable nil)
   (lsp-modeline-diagnostics-enable nil)
   (lsp-enable-symbol-highlighting nil)
-)
+  )
 #+end_src
 
 #+begin_src emacs-lisp
@@ -1580,18 +1588,18 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
 (use-package vertico
   :demand t                             ; Otherwise won't get loaded immediately
   :elpaca (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
-                     :includes (vertico-indexed
-                                vertico-flat
-                                vertico-grid
-                                vertico-mouse
-                                vertico-quick
-                                vertico-buffer
-                                vertico-repeat
-                                vertico-reverse
-                                vertico-directory
-                                vertico-multiform
-                                vertico-unobtrusive
-                                ))
+                   :includes (vertico-indexed
+                              vertico-flat
+                              vertico-grid
+                              vertico-mouse
+                              vertico-quick
+                              vertico-buffer
+                              vertico-repeat
+                              vertico-reverse
+                              vertico-directory
+                              vertico-multiform
+                              vertico-unobtrusive
+                              ))
   :bind (("M-." . vertico-repeat)
          :map vertico-map
          ("<tab>"      . vertico-insert)
@@ -1638,7 +1646,7 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
                 (setq cand (funcall orig cand prefix suffix index _start))
                 (concat
                  (when (= vertico--index index)
-                     (propertize " " 'face 'vertico-current))
+                   (propertize " " 'face 'vertico-current))
                  cand)))
   :custom-face
   (vertico-group-separator ((t (:strike-through t))))
@@ -1691,49 +1699,56 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
 
 #+NAME: org-config
 #+begin_src emacs-lisp :noweb yes :tangle no
-  (use-package org
-    :elpaca ( :package "org"
-              :local-repo "org"
-              :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
-              :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
-              :autoloads "org-loaddefs.el"
-              :build (:not elpaca--generate-autoloads-async)
-              :files (:defaults ("etc/styles/"
-  		               "etc/styles/*" "doc/*.texi")))
-    :config
-    (setq-default org-directory "~/Documents/org-files"
-                  org-tags-column 0                            ; Tags next to header title
-                  org-hide-emphasis-markers t                  ; Hide markers
-                  org-cycle-separator-lines 1                  ; Number of empty lines between sections
-                  org-use-tag-inheritance t                    ; Tags ARE inherited
-                  org-use-property-inheritance t               ; Properties ARE inherited
-                  org-indent-indentation-per-level 2           ; Indentation per level
-                  org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
-                  org-fontify-quote-and-verse-blocks t         ; Specific face for quote and verse blocks
-                  org-return-follows-link nil                  ; Follow links when hitting return
-                  org-image-actual-width nil                   ; Resize image to window width
-                  org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
-                  org-outline-path-complete-in-steps nil       ; No steps in path display
-                  org-fold-catch-invisible-edits 'smart        ; Check if in invisible region
-                  org-insert-heading-respect-content nil       ; Insert new heading at point.
-                  org-pretty-entities t                        ; Show entities as UTF-8 characters
-                  org-ellipsis " …"                            ; Short ellipsis
-                  org-emphasis-alist
-                  '(("*" (:weight bold :inherit lambda-focus))
-                    ("/" italic)
-                    ("_" underline)
-                    ("=" (:weight bold :inherit lambda-urgent))
-                    ("~" (lambda-meek))
-                    ("+" (:box t :inverse-video t)))
-                  org-export-with-broken-links t)            ; Allow export of broken links
-    <<org-faces>>
-    :hook
-    <<org-hooks>>
-    :custom-face
-    (org-document-title ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
-    )
-
-
+(use-package org
+  :elpaca ( :package "org"
+            :local-repo "org"
+            :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
+            :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
+            :autoloads "org-loaddefs.el"
+            :build (:not elpaca--generate-autoloads-async)
+            :files (:defaults ("etc/styles/"
+                               "etc/styles/*" "doc/*.texi")))
+  :config
+  (setq-default org-directory "~/Documents/org-files"
+                org-tags-column 0                    ; Tags next to header title
+                org-hide-emphasis-markers t          ; Hide markers
+                org-cycle-separator-lines 1          ; Number of empty lines between sections
+                org-use-tag-inheritance t            ; Tags ARE inherited
+                org-use-property-inheritance t       ; Properties ARE inherited
+                org-indent-indentation-per-level 2   ; Indentation per level
+                org-src-fontify-natively t           ; Fontify code in code blocks.
+                org-adapt-indentation nil            ; No adaptive indentation
+                org-src-tab-acts-natively t          ; Tab acts as in source editing
+                org-confirm-babel-evaluate nil       ; No confirmation before executing code
+                org-edit-src-content-indentation 0   ; No relative indentation for code blocks
+                org-fontify-whole-block-delimiter-line t     ; Fontify whole block
+                org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal
+                                        ; links
+                org-fontify-quote-and-verse-blocks t ; Specific face for quote and verse blocks
+                org-return-follows-link nil          ; Follow links when hitting return
+                org-image-actual-width nil           ; Resize image to window width
+                org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a
+                                        ; new window
+                org-outline-path-complete-in-steps nil       ; No steps in path display
+                org-fold-catch-invisible-edits 'smart        ; Check if in invisible region
+                org-insert-heading-respect-content nil       ; Insert new heading at point.
+                org-pretty-entities t                        ; Show entities as UTF-8
+                                        ; characters
+                org-ellipsis " …"                            ; Short ellipsis
+                org-emphasis-alist                           ; Faces used for the emphasise
+                '(("*" (:weight bold :inherit lambda-focus)) ; characters.
+                  ("/" italic)                               ; Note that no other characters
+                  ("_" underline)                            ; can be added.
+                  ("=" (:weight bold :inherit lambda-urgent))
+                  ("~" (lambda-meek))
+                  ("+" (:box t :inverse-video t)))
+                org-export-with-broken-links t)              ; Allow export of broken links
+  <<org-faces>>
+  :hook
+  <<org-hooks>>
+  :custom-face
+  (org-document-title ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
+  )
 #+end_src
 
 
@@ -1758,7 +1773,7 @@ We want code-blocks and quotations to stand out.
 (defun my-org-colourise ()
   "Coulourise org-blocks depending on dark or light theme"
   (progn
-     (if (eq lambda-themes-active-theme 'light) (my-org-blocks-light) (my-org-blocks-dark))))
+    (if (eq lambda-themes-active-theme 'light) (my-org-blocks-light) (my-org-blocks-dark))))
 
 (add-hook 'lambda-themes-after-load-theme-hook #'my-org-colourise)
 #+end_src
@@ -1799,10 +1814,10 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
   (global-org-modern-mode)
   :custom
   org-modern-todo-faces
-              '(("TODO"        :background "#fdf096" :weight semi-bold) ;;straw-yellow
-                ("NEXT"        :background "#d65848" :weight bold)      ;;aurora-red
-                ("DONE"        :background "#97b578" :weight semi-bold) ;;emerald-green
-                ("CANCELED"    :background "#DDDDDD" :weight normal)))
+  '(("TODO"        :background "#fdf096" :weight semi-bold) ;;straw-yellow
+    ("NEXT"        :background "#d65848" :weight bold)      ;;aurora-red
+    ("DONE"        :background "#97b578" :weight semi-bold) ;;emerald-green
+    ("CANCELED"    :background "#DDDDDD" :weight normal)))
 #+end_src
 *** Org appear mode
 
@@ -1839,12 +1854,12 @@ a formatting string to wrap fontified text with.
 #+begin_src emacs-lisp
 
 (setq org-html-text-markup-alist '(
-       (bold           . "<b>%s</b>")
-       (code           . "<span class=\"meek\">%s</span>")
-       (italic         . "<i>%s</i>")
-       (strike-through . "<span class=\"boxed-text\">%s</del>")
-       (underline      . "<span class=\"underline\">%s</span>")
-       (verbatim       . "<span class=\"urgent\">%s</span>")))
+                                   (bold           . "<b>%s</b>")
+                                   (code           . "<span class=\"meek\">%s</span>")
+                                   (italic         . "<i>%s</i>")
+                                   (strike-through . "<span class=\"boxed-text\">%s</del>")
+                                   (underline      . "<span class=\"underline\">%s</span>")
+                                   (verbatim       . "<span class=\"urgent\">%s</span>")))
 
 #+end_src
 
@@ -1918,29 +1933,29 @@ Set the style for the file.
 (setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
 
 (setq org-agenda-start-with-log-mode t
-              org-log-done 'time
-              org-log-into-drawer t)
+      org-log-done 'time
+      org-log-into-drawer t)
 
 #+end_src
 
 
 #+begin_src emacs-lisp
 ;;  Auto-update tags whenever the state is changed
-  (setq org-tag-alist
-        '((:startgroup)
-          ("mandatory"   . ?a)
-          ("dispensable" . ?d)   ; Put mutually exclusive tags here
-          (:endgroup)
-          ("bureaucracy" . ?b)
-          ("leisure"     . ?l)
-          ("music"       . ?m)
-          ("orga"        . ?o)
-          ("progn"       . ?p)
-          ("research"    . ?r)
-          ("sports"      . ?s)
-          ("teaching"    . ?t)
-          (""            . ?x)
-          ))
+(setq org-tag-alist
+      '((:startgroup)
+        ("mandatory"   . ?a)
+        ("dispensable" . ?d)   ; Put mutually exclusive tags here
+        (:endgroup)
+        ("bureaucracy" . ?b)
+        ("leisure"     . ?l)
+        ("music"       . ?m)
+        ("orga"        . ?o)
+        ("progn"       . ?p)
+        ("research"    . ?r)
+        ("sports"      . ?s)
+        ("teaching"    . ?t)
+        (""            . ?x)
+        ))
 
 #+end_src
 
@@ -2122,10 +2137,10 @@ Week day name with holidays
 (defun my-org-agenda-format-date (date)
   "Org agenda date format displaying holidays"
   (let* ((dayname (calendar-day-name date))
-	     (day (cadr date))
-	     (month (car date))
-	     (monthname (calendar-month-name month))
-	     (year (nth 2 date))
+         (day (cadr date))
+         (month (car date))
+         (monthname (calendar-month-name month))
+         (year (nth 2 date))
          (holidays (calendar-check-holidays date)))
     (concat "\n"
             dayname " "
@@ -2149,67 +2164,67 @@ The daily agenda
   :after org-agenda
   :init
   (setq org-super-agenda-groups
-       '(;; Each group has an implicit boolean OR operator between its selectors.
-         (:name "Today"           ; section name
-                :time-grid t      ; Items that appear on the time grid
-                :scheduled today
-                :deadline today)
-         (:name "Outlook"
-                :and (:scheduled future :priority>= "B")
-                :and (:deadline future :priority>= "B")
-                )
-         (:name "Next"
-                :todo "NEXT")
-         (:name "Short"
-                :tag "short")
-         ;; After the last group, the agenda will display items that didn't
-         ;; match any of these groups, with the default order position of 99
-         )
-       (setq org-agenda-custom-commands
-             '(("g" "GTD view"
-                ((agenda "" ((org-agenda-overriding-header "")
-                             (org-super-agenda-groups
-                              '((:discard (:not (:scheduled today
-                                                 :deadline today)))
-                                (:name "📅 Today\n"           ; section name
-                                       :time-grid t      ; Items that appear on the time grid
-                                       :scheduled today
-                                       :deadline today
-                                       :order 1)
-                                ))))
-                 (alltodo "" ((org-agenda-overriding-header "")
+        '(;; Each group has an implicit boolean OR operator between its selectors.
+          (:name "Today"           ; section name
+                 :time-grid t      ; Items that appear on the time grid
+                 :scheduled today
+                 :deadline today)
+          (:name "Outlook"
+                 :and (:scheduled future :priority>= "B")
+                 :and (:deadline future :priority>= "B")
+                 )
+          (:name "Next"
+                 :todo "NEXT")
+          (:name "Short"
+                 :tag "short")
+          ;; After the last group, the agenda will display items that didn't
+          ;; match any of these groups, with the default order position of 99
+          )
+        (setq org-agenda-custom-commands
+              '(("g" "GTD view"
+                 ((agenda "" ((org-agenda-overriding-header "")
                               (org-super-agenda-groups
-                               '((:log t)
-                                 (:name "🕮 Research\n"
-                                        :tag "research"
-                                        :order 2)
-                                 (:name "🗨 Upcoming teaching\n"
-                                        :tag "teaching"
-                                        :order 3)
-                                 (:name "📧 Mail\n"
-                                        :tag "mail"
-                                        :order 4)
-                                 (:name "🎙 Talks\n"
-                                        :tag "talk"
-                                        :order 5)
-                                 (:name "💬 Meetings"
+                               '((:discard (:not (:scheduled today
+                                                             :deadline today)))
+                                 (:name "📅 Today\n"           ; section name
+                                        :time-grid t      ; Items that appear on the time grid
+                                        :scheduled today
+                                        :deadline today
+                                        :order 1)
+                                 ))))
+                  (alltodo "" ((org-agenda-overriding-header "")
+                               (org-super-agenda-groups
+                                '((:log t)
+                                  (:name "🕮 Research\n"
+                                         :tag "research"
+                                         :order 2)
+                                  (:name "🗨 Upcoming teaching\n"
+                                         :tag "teaching"
+                                         :order 3)
+                                  (:name "📧 Mail\n"
+                                         :tag "mail"
+                                         :order 4)
+                                  (:name "🎙 Talks\n"
+                                         :tag "talk"
+                                         :order 5)
+                                  (:name "💬 Meetings"
                                          :tag "meeting"
                                          :order 6)
-                                 (:name "📝 Administrative tasks"
+                                  (:name "📝 Administrative tasks"
                                          :tag "admin"
                                          :order 7)
-                                 (:name "⚠ Overdue \n"
-                                        :deadline past
-                                        :order 8)
-                                 (:name "✩ Important \n"
-                                        :priority "A"
-                                        :order 9)
-                                 (:name "🗏 Scheduled soon \n"
-                                        :scheduled future
-                                        :order 10)
-                                 (:discard (:not (:todo "TODO")))))))))))
-:config
-(org-super-agenda-mode)))
+                                  (:name "⚠ Overdue \n"
+                                         :deadline past
+                                         :order 8)
+                                  (:name "✩ Important \n"
+                                         :priority "A"
+                                         :order 9)
+                                  (:name "🗏 Scheduled soon \n"
+                                         :scheduled future
+                                         :order 10)
+                                  (:discard (:not (:todo "TODO")))))))))))
+        :config
+        (org-super-agenda-mode)))
 
 #+end_src
 
@@ -2288,17 +2303,17 @@ Set refile targets according to my setup
 
 (setq org-capture-templates
       `(("i" "Inbox" entry  (file+headline "./agenda/inbox.org" "Miscellaneous")
-        ,(concat "* TODO %?\n"
-                 "/Entered on/ %U"))
+         ,(concat "* TODO %?\n"
+                  "/Entered on/ %U"))
         ("m" "Meeting" entry  (file+headline "./agenda/inbox.org" "Meetings")
-        ,(concat "* %? :meeting:\n"
-                 "SCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+1d\"))"))
+         ,(concat "* %? :meeting:\n"
+                  "SCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+1d\"))"))
         ("n" "Note" entry  (file+headline "./agenda/inbox.org" "Notes")
-        ,(concat "* Note (%a)\n"
-                 "/Entered on/ %U\n" "\n" "%?"))
+         ,(concat "* Note (%a)\n"
+                  "/Entered on/ %U\n" "\n" "%?"))
         ("@" "Inbox [mu4e]" entry (file+headline "./agenda/inbox.org" "Mails")
-        ,(concat "* TODO Reply to \"%a\" %?\n"
-                 "/Entered on/ %U"))))
+         ,(concat "* TODO Reply to \"%a\" %?\n"
+                  "/Entered on/ %U"))))
 
 
 #+end_src
@@ -2521,27 +2536,27 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
 
 #+NAME: magit-add-remove-face-font-lock
 #+begin_src emacs-lisp :tangle no
-  (defun my-magit-add-remove-face-font-lock ()
-    "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
-    (add-to-list 'font-lock-extra-managed-props 'display)
-    (font-lock-add-keywords 'nil
-    			  '(("\\(^-\\)" 1 '(face nil display
-  						 #("│" 0 1 (face (:inherit lambda-red)))))))
-    (font-lock-add-keywords 'nil
-  			  '(("\\(^ \\)" 1 '(face nil display
-  						 #("│" 0 1 (face (:inherit lambda-meek)))))))
-    (font-lock-add-keywords nil
-    			  '(("\\(^+\\)" 1 '(face nil display
-  						 #("│" 0 1 (face (:inherit lambda-green)))))))
-    )
+(defun my-magit-add-remove-face-font-lock ()
+  "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
+  (add-to-list 'font-lock-extra-managed-props 'display)
+  (font-lock-add-keywords 'nil
+                          '(("\\(^-\\)" 1 '(face nil display
+                                                 #("│" 0 1 (face (:inherit lambda-red)))))))
+  (font-lock-add-keywords 'nil
+                          '(("\\(^ \\)" 1 '(face nil display
+                                                 #("│" 0 1 (face (:inherit lambda-meek)))))))
+  (font-lock-add-keywords nil
+                          '(("\\(^+\\)" 1 '(face nil display
+                                                 #("│" 0 1 (face (:inherit lambda-green)))))))
+  )
 
 #+end_src
 
 #+begin_src emacs-lisp :noweb yes
 (use-package magit
   :elpaca (:type git
-           :host github
-           :repo "magit/magit")
+                 :host github
+                 :repo "magit/magit")
   :config
   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
   (setq magit-diff-refine-hunk 'all)
@@ -2551,17 +2566,17 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
   (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
   (magit-header-line ((t (:foreground unspecified :background unspecified))))
   (magit-diff-removed  ((t (:foreground unspecified
-  					:background unspecified
-  					:inherit lambda-meek))))
+                                        :background unspecified
+                                        :inherit lambda-meek))))
   (magit-diff-removed-highlight ((t (:foreground unspecified
-  						 :background unspecified
-  						 :inherit lambda-red))))
+                                                 :background unspecified
+                                                 :inherit lambda-red))))
   (magit-diff-added    ((t (:foreground unspecified
-  					:background unspecified
-  					:inherit lambda-meek))))
+                                        :background unspecified
+                                        :inherit lambda-meek))))
   (magit-diff-added-highlight   ((t (:foreground unspecified
-  						 :background unspecified
-  						 :inherit (lambda-green)))))
+                                                 :background unspecified
+                                                 :inherit (lambda-green)))))
   )
 #+end_src
 
@@ -2578,12 +2593,12 @@ A simple Emacs package for abridging refined diff hunks (for example in magit). 
   :init (abridge-diff-mode 1)
   :custom-face
   (diff-refine-added   ((t (:foreground unspecified
-      					:weight bold
-      					:inherit lambda-green))))
+                                        :weight bold
+                                        :inherit lambda-green))))
   (diff-refine-removed ((t (:foreground "#bf616a" :weight bold :strike-through nil :inherit lambda-red))))
   (diff-refine-changed ((t (:foreground unspecified
-      					:weight bold
-      					:inherit lambda-yellow))))
+                                        :weight bold
+                                        :inherit lambda-yellow))))
   )
 #+end_src
 
@@ -2602,8 +2617,8 @@ It is inspired by all-the-icons, icons-in-terminal, vim-devicons, and nvim-web-d
 
 #+begin_src emacs-lisp
 (use-package nerd-icons
-   :custom
-    (nerd-icons-font-family "Roboto Mono Nerd Font")
+  :custom
+  (nerd-icons-font-family "Roboto Mono Nerd Font")
   )
 #+end_src
 
@@ -2632,7 +2647,7 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
   :ensure adaptive-wrap
   :init (global-visual-line-mode)
   :custom (visual-fill-column-center-text t)
-          (visual-fill-column-enable-sensible-window-split t)
+  (visual-fill-column-enable-sensible-window-split t)
   :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
           ((LaTeX-mode) . adaptive-wrap-prefix-mode)
           )
@@ -3464,11 +3479,11 @@ REMOTE is non-nil, search on the remote host indicated by
 `default-directory' instead."
   (if (and remote (file-remote-p default-directory))
       (let ((res (locate-file
-	          command
-	          (mapcar
-	           (lambda (x) (concat (file-remote-p default-directory) x))
-	           (exec-path))
-	          exec-suffixes 'file-executable-p)))
+                  command
+                  (mapcar
+                   (lambda (x) (concat (file-remote-p default-directory) x))
+                   (exec-path))
+                  exec-suffixes 'file-executable-p)))
         (when (stringp res) (file-local-name res)))
     ;; Use 1 rather than file-executable-p to better match the
     ;; behavior of call-process.
@@ -3762,7 +3777,7 @@ Thanks to dirvish, navigating through files is now like dancing.
         ("C-x d" . dirvish)
         ("C-x D" . dirvish-side)
         ("C-x a" . dirvish-quick-access)
-   :map dirvish-mode-map
+        :map dirvish-mode-map
         ("SPC"      . consult-buffer)
         ("C-<up>"   . dirvish-history-go-forward)
         ("C-<down>" . dirvish-history-go-backward)
@@ -4164,15 +4179,15 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
   (set-face-attribute 'nano-modeline-active nil :foreground almost-gray)
   (set-face-attribute 'nano-modeline-active nil :background almost-blue)
   (setopt nano-modeline-faces '((header-active nano-modeline-active)
-                                  (header-inactive nano-modeline-inactive)
-                                  (footer-active nano-modeline-active)
-                                  (footer-inactive nano-modeline-inactive)
-                                  (status-RW-active nano-modeline-status)
-                                  (status-RO-active nano-modeline-status)
-                                  (status-**-active nano-modeline-status nano-popout-i)
-                                  (name-active bold)
-                                  (primary-active)
-                                  (secondary-active nano-modeline-active)))
+                                (header-inactive nano-modeline-inactive)
+                                (footer-active nano-modeline-active)
+                                (footer-inactive nano-modeline-inactive)
+                                (status-RW-active nano-modeline-status)
+                                (status-RO-active nano-modeline-status)
+                                (status-**-active nano-modeline-status nano-popout-i)
+                                (name-active bold)
+                                (primary-active)
+                                (secondary-active nano-modeline-active)))
   )
 
 (defun my-nano-dark-muted ()
@@ -4195,15 +4210,15 @@ We define a set of colours as defined by Paul Tol in his blog [[https://personal
   (set-face-attribute 'nano-modeline-active nil :background almost-blue)
   (set-face-attribute 'nano-modeline-active nil :foreground almost-gray)
   (setopt nano-modeline-faces '((header-active nano-modeline-active)
-                                  (header-inactive nano-modeline-inactive)
-                                  (footer-active nano-modeline-active)
-                                  (footer-inactive nano-modeline-inactive)
-                                  (status-RW-active nano-modeline-status)
-                                  (status-RO-active nano-modeline-status)
-                                  (status-**-active nano-modeline-status nano-popout-i)
-                                  (name-active bold)
-                                  (primary-active)
-                                  (secondary-active nano-modeline-active)))
+                                (header-inactive nano-modeline-inactive)
+                                (footer-active nano-modeline-active)
+                                (footer-inactive nano-modeline-inactive)
+                                (status-RW-active nano-modeline-status)
+                                (status-RO-active nano-modeline-status)
+                                (status-**-active nano-modeline-status nano-popout-i)
+                                (name-active bold)
+                                (primary-active)
+                                (secondary-active nano-modeline-active)))
   )
 
 (setq my-current-theme-light t)
@@ -4388,10 +4403,6 @@ No tabulation, ever.
 
 #+begin_src emacs-lisp
 
-(setq-default indent-tabs-mode nil        ; Stop using tabs to indent
-              tab-always-indent 'complete ; Indent first then try completions
-              tab-width 4)                ; Smaller width for tab characters
-
 ;; Let Emacs guess Python indent silently
 (setq python-indent-guess-indent-offset t
       python-indent-guess-indent-offset-verbose nil)
@@ -4414,7 +4425,7 @@ We enable paren mode for highlighting matching parenthesis and rainbow-delimiter
 
 #+end_src
 
- We need a small helper to distinguish between words and special characters  which should be treated differently.
+We need a small helper to distinguish between words and special characters  which should be treated differently.
 
 
 #+begin_src emacs-lisp
@@ -4423,43 +4434,43 @@ We enable paren mode for highlighting matching parenthesis and rainbow-delimiter
 
 
 (defun my-backward-word ()
- " muW4e want to go back by words in a smart way"
+  " muW4e want to go back by words in a smart way"
   (interactive)
-    (if (string-search (string (preceding-char)) my-backward-special-characters)
+  (if (string-search (string (preceding-char)) my-backward-special-characters)
       (backward-char)
-          (backward-word))
-)
+    (backward-word))
+  )
 
 #+end_src
 
 #+begin_src emacs-lisp
 
-  (use-package puni
-    :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
-    :bind (:map puni-mode-map
-                ("C-<right>" . puni-slurp-forward)
-                ("C-<left>"  . puni-barf-forward)
-                ("M-<left>"  . puni-slurp-backward)
-                ("M-<right>" . puni-barf-backward)
-                ("C-x C-d"   . puni-splice)
-                ("M-i"       . puni-squeeze)
-                ("C-<up>"    . my-puni-rewrap)
-                ("<left>"    . my-backward-word)
-  ))
+(use-package puni
+  :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
+  :bind (:map puni-mode-map
+              ("C-<right>" . puni-slurp-forward)
+              ("C-<left>"  . puni-barf-forward)
+              ("M-<left>"  . puni-slurp-backward)
+              ("M-<right>" . puni-barf-backward)
+              ("C-x C-d"   . puni-splice)
+              ("M-i"       . puni-squeeze)
+              ("C-<up>"    . my-puni-rewrap)
+              ("<left>"    . my-backward-word)
+              ))
 
-  (defun my-puni-rewrap ()
-    (interactive)
-    (let*((next-delimiters (completing-read
-                            "Rewrap the sexp at point with: "
-                            '("(...)" "{...}" "[...]" "\\langle...\\rangle" "\\|...\\|"  "<...>" "\\left(...\\right)" )
-                            nil
-                            t
-                            ))
-          (opening-del "A"))
-      (puni-squeeze)
-      (insert (car (split-string next-delimiters "\\.+" t)))
-      (yank)
-      (insert (car (cdr (split-string next-delimiters "\\.+" t))))))
+(defun my-puni-rewrap ()
+  (interactive)
+  (let*((next-delimiters (completing-read
+                          "Rewrap the sexp at point with: "
+                          '("(...)" "{...}" "[...]" "\\langle...\\rangle" "\\|...\\|"  "<...>" "\\left(...\\right)" )
+                          nil
+                          t
+                          ))
+        (opening-del "A"))
+    (puni-squeeze)
+    (insert (car (split-string next-delimiters "\\.+" t)))
+    (yank)
+    (insert (car (cdr (split-string next-delimiters "\\.+" t))))))
 
 #+end_src
 
@@ -4477,7 +4488,7 @@ Now we can set up flyspell and guess-language.
   (setq ispell-program-name "aspell")
   (setq ispell-list-command "--list")
   (setq ispell-alternate-dictionary "/usr/share/dict/en_GB.txt")
-)
+  )
 
 ;; (use-package flyspell-lazy
 ;;   :after flyspell
@@ -4493,10 +4504,10 @@ Now we can set up flyspell and guess-language.
 (use-package guess-language
   :hook (mu4e-compose-mode . guess-language-mode)
   :config
-(setq guess-language-langcodes '((en . ("en_GB" "English"))
-                                 (de . ("de_DE" "German")))
-      guess-language-languages '(en de)
-      guess-language-min-paragraph-length 45))
+  (setq guess-language-langcodes '((en . ("en_GB" "English"))
+                                   (de . ("de_DE" "German")))
+        guess-language-languages '(en de)
+        guess-language-min-paragraph-length 45))
 
 (use-package mu4e
   :after flyspell
@@ -4506,9 +4517,9 @@ Now we can set up flyspell and guess-language.
 We use powerthesaurus for fancy word juggling.
 #+begin_src emacs-lisp
 
-  ;; (use-package powerthesaurus
-  ;;   :ensure jeison
-  ;;   )
+;; (use-package powerthesaurus
+;;   :ensure jeison
+;;   )
 #+end_src
 
 ** Imenu list
@@ -5006,13 +5017,13 @@ Setting up mail composition with org mode.
   :config
   (setq org-msg-startup "content"
         org-msg-options "toc:nil author:nil email:nil \\n:t broken-links:t"
-	    org-msg-greeting-fmt "\nHi%s,\n\n"
-	    org-msg-greeting-name-limit 3
-	    org-msg-default-alternatives '((new		      . (utf-8))
-				                       (reply-to-html . (utf-8))
-				                       (reply-to-text . (utf-8)))
-	    org-msg-convert-citation t
-	    org-msg-signature "" )
+        org-msg-greeting-fmt "\nHi%s,\n\n"
+        org-msg-greeting-name-limit 3
+        org-msg-default-alternatives '((new        . (utf-8))
+                                       (reply-to-html . (utf-8))
+                                       (reply-to-text . (utf-8)))
+        org-msg-convert-citation t
+        org-msg-signature "" )
   (advice-add 'org-msg-preview :around #'org-msg-no-temp-buffer)
   (advice-add 'org-msg-ctrl-c-ctrl-c :around #'org-msg-no-temp-buffer)
   (add-hook 'message-sent-hook
@@ -5022,7 +5033,7 @@ Setting up mail composition with org mode.
               (mu4e-view-quit)
               (kill-buffer "*Org ASCII Export*"))))
 
-  (add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*")))
+(add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*")))
 
 
 #+end_src
@@ -5107,46 +5118,46 @@ Here is the actual tag action
 
 #+begin_src emacs-lisp
 
-  (defun mu4e-tag-read (target msg)
-    "Ask for tags to be added and/or removed."
-    (let* ((tags nil)
-           (old-tags (mu4e-message-field msg :tags))
-           (new-tags (completing-read-multiple
-                      "TAGS: "
-                      mu4e-tag-history
-                      nil
-                      nil
-                      (mapconcat #'identity old-tags ",")
-                      ;; 'mu4e-tag-history
-                      )))
-      (dolist (tag old-tags)
-        (let ((tag (string-trim tag)))
-          (if (and (> (length tag) 0)
-                   (not (member tag new-tags)))
-              (push (concat "-" tag) tags))))
-      (dolist (tag new-tags)
-        (let ((tag (string-trim tag)))
-          (if (and (> (length tag) 0)
-                   (not (member tag old-tags)))
-              (progn
-                (add-to-mu4e-tag-history tag)
-                (push (concat "+" tag) tags)))))
-      (mapconcat #'identity tags ",")))
+(defun mu4e-tag-read (target msg)
+  "Ask for tags to be added and/or removed."
+  (let* ((tags nil)
+         (old-tags (mu4e-message-field msg :tags))
+         (new-tags (completing-read-multiple
+                    "TAGS: "
+                    mu4e-tag-history
+                    nil
+                    nil
+                    (mapconcat #'identity old-tags ",")
+                    ;; 'mu4e-tag-history
+                    )))
+    (dolist (tag old-tags)
+      (let ((tag (string-trim tag)))
+        (if (and (> (length tag) 0)
+                 (not (member tag new-tags)))
+            (push (concat "-" tag) tags))))
+    (dolist (tag new-tags)
+      (let ((tag (string-trim tag)))
+        (if (and (> (length tag) 0)
+                 (not (member tag old-tags)))
+            (progn
+              (add-to-mu4e-tag-history tag)
+              (push (concat "+" tag) tags)))))
+    (mapconcat #'identity tags ",")))
 
-  ;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
-  ;; I Did not find a way to cancel the marks
-  (add-to-list 'mu4e-marks
-                 '(tag
-                   :char       "g"
-                   :prompt     "gtag"
-                   :dyn-target mu4e-tag-read
-                   :action      (lambda (docid msg target)
-                                  (when (> (length target) 0)
-                                    (mu4e-action-retag-message msg target)))))
+;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
+;; I Did not find a way to cancel the marks
+(add-to-list 'mu4e-marks
+             '(tag
+               :char       "g"
+               :prompt     "gtag"
+               :dyn-target mu4e-tag-read
+               :action      (lambda (docid msg target)
+                              (when (> (length target) 0)
+                                (mu4e-action-retag-message msg target)))))
 
-  ;; Tell mu4e about the new mark
-  ;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
-  (mu4e~headers-defun-mark-for tag)
+;; Tell mu4e about the new mark
+;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
+(mu4e~headers-defun-mark-for tag)
 
 #+end_src
 
@@ -5848,7 +5859,7 @@ We activate the dashboard in the headers view.
   (when mu4e-dashboard-buffer-name
     (kill-buffer mu4e-dashboard-buffer-name)
     (setq mu4e-dashboard-buffer-name nil)
-  ))
+    ))
 
 #+end_src
 
@@ -5877,10 +5888,10 @@ We begin with some basic latex default settings.
   :ensure auctex
   :config
   (setq TeX-auto-save t                      ; We automatically save style information when saving the buffer.
-      TeX-parse-self t                       ; Parse the file after loading it if no style hook is found.
-      ;; TeX-PDF-mode t                      ; We use PDFTeX mode
-      TeX-source-correlate-mode t            ; Correlate (La-)TeX files with their PDF output.
-      TeX-source-correlate-start-server nil) ; We do start a server for correlation.
+        TeX-parse-self t                       ; Parse the file after loading it if no style hook is found.
+        ;; TeX-PDF-mode t                      ; We use PDFTeX mode
+        TeX-source-correlate-mode t            ; Correlate (La-)TeX files with their PDF output.
+        TeX-source-correlate-start-server nil) ; We do start a server for correlation.
   (setq-default TeX-master nil)              ; We do not specify the master files globally.
 
   (setq ispell-dictionary "british")         ; The default language is British English.
@@ -5892,9 +5903,9 @@ We begin with some basic latex default settings.
   (setq font-latex-fontify-sectioning 1.0)   ; We set section hights to 1.
 
   (advice-add
-  'TeX-source-correlate-sync-source
-  :after
-  (lambda (&rest r) (recenter)))
+   'TeX-source-correlate-sync-source
+   :after
+   (lambda (&rest r) (recenter)))
   )
 
 #+end_src
@@ -6018,9 +6029,9 @@ We set try to be clever about our uses of <return> and <$>.
   :after cdlatex
   :config (setup-smart-keys)
   :bind (:map cdlatex-mode-map
-         ("$" . cycle-texmath)
-         :map TeX-mode-map
-         ("RET" . smart-return)
+              ("$" . cycle-texmath)
+              :map TeX-mode-map
+              ("RET" . smart-return)
               )
   )
 #+end_src
@@ -6037,55 +6048,55 @@ Some latex-commands that are auto-expanded by aas.
   :config
   (--each '(latex-mode) ;; TODO integrate qorg-mode
     (aas-set-snippets it
-      :cond #'(lambda()(and (texmathp) (car texmathp-why)))
-      " :"      "\\from "
-      " **"     "\\star"
-      " mm"     "\\mid "
-      " ->"     "\\to "
-      " mt"     "\\mapsto "
-      " =>"     "\\implies "
-      " in"     "\\in"
-      " ..."    "\\dots"
-      " blank"  "\\blank"
-      " def"    "\\defeq"
-      " ~"      "\\sim"
-      " =="     "\\cong"
-      " ot"     "\\otimes"
-      " bn"     "\\mathbb{N}"
-      " bz"     "\\mathbb{Z}"
-      " bq"     "\\mathbb{Q}"
-      " br"     "\\mathbb{R}"
-      " bc"     "\\mathbb{C}"
-      " bf"     "\\mathbb{F}"
-      " bp"     "\\mathbb{P}"
-      " fg"     "\\mathfrak{g}"
-      " fh"     "\\mathfrak{h}"
-      " cc"     "\\cat{C}"
-      " cd"     "\\cat{D}"
-      " cm"     "\\cat{M}"
-      " zc"     "\\ZCat{C}"
-      " subset" "\\subset"
-      " supset" "\\supset"
-      " angled"    (lambda () (interactive)
-                 (yas-expand-snippet "\\langle $0 \\rangle"))
-      " adj"   (lambda () (interactive)
-                 (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
-      " hom"  (lambda () (interactive)
-                (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
-      " coend" (lambda () (interactive)
-                 (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
-      " end"   (lambda () (interactive)
-                 (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
-      " set"   (lambda () (interactive)
-                 (yas-expand-snippet "\\\\{$0\\\\}"))
-      " sum"   (lambda () (interactive)
-                 (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
-      ;;" gl"    (lambda () (interactive)
-      ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
-      ;;" //"    (lambda () (interactive)
-      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
-      " cat"   (lambda () (interactive)
-                 (yas-expand-snippet "\\cat{$1}$0")))))
+                      :cond #'(lambda()(and (texmathp) (car texmathp-why)))
+                      " :"      "\\from "
+                      " **"     "\\star"
+                      " mm"     "\\mid "
+                      " ->"     "\\to "
+                      " mt"     "\\mapsto "
+                      " =>"     "\\implies "
+                      " in"     "\\in"
+                      " ..."    "\\dots"
+                      " blank"  "\\blank"
+                      " def"    "\\defeq"
+                      " ~"      "\\sim"
+                      " =="     "\\cong"
+                      " ot"     "\\otimes"
+                      " bn"     "\\mathbb{N}"
+                      " bz"     "\\mathbb{Z}"
+                      " bq"     "\\mathbb{Q}"
+                      " br"     "\\mathbb{R}"
+                      " bc"     "\\mathbb{C}"
+                      " bf"     "\\mathbb{F}"
+                      " bp"     "\\mathbb{P}"
+                      " fg"     "\\mathfrak{g}"
+                      " fh"     "\\mathfrak{h}"
+                      " cc"     "\\cat{C}"
+                      " cd"     "\\cat{D}"
+                      " cm"     "\\cat{M}"
+                      " zc"     "\\ZCat{C}"
+                      " subset" "\\subset"
+                      " supset" "\\supset"
+                      " angled"    (lambda () (interactive)
+                                     (yas-expand-snippet "\\langle $0 \\rangle"))
+                      " adj"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
+                      " hom"  (lambda () (interactive)
+                                (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
+                      " coend" (lambda () (interactive)
+                                 (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
+                      " end"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
+                      " set"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\\\{$0\\\\}"))
+                      " sum"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
+                      ;;" gl"    (lambda () (interactive)
+                      ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
+                      ;;" //"    (lambda () (interactive)
+                      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
+                      " cat"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\cat{$1}$0")))))
 
 #+end_src
 
@@ -6523,37 +6534,37 @@ We will use biblio for handling/downloading papers.
 
 #+begin_src emacs-lisp
 (defun zotra-download-attachment-for-current-entry ()
-    (interactive)
-    (save-excursion
-      (bibtex-beginning-of-entry)
-      (let* ((entry (bibtex-parse-entry t))
-             (key (cdr (assoc "=key=" entry)))
-             (url (cdr (assoc "url" entry)))
-             (filename (concat (regularlise-file-name key) ".pdf"))
-             (filename (when entry
-                         (zotra-download-attachment
-                          url nil filename))))
-        (when filename
-          (bibtex-make-field (list "File" nil filename) t)))))
+  (interactive)
+  (save-excursion
+    (bibtex-beginning-of-entry)
+    (let* ((entry (bibtex-parse-entry t))
+           (key (cdr (assoc "=key=" entry)))
+           (url (cdr (assoc "url" entry)))
+           (filename (concat (regularlise-file-name key) ".pdf"))
+           (filename (when entry
+                       (zotra-download-attachment
+                        url nil filename))))
+      (when filename
+        (bibtex-make-field (list "File" nil filename) t)))))
 
 
 (defun finalise-entry ()
   (interactive)
   (progn
-  (save-excursion
+    (save-excursion
       (bibtex-beginning-of-entry)
       (let* ((entry (bibtex-parse-entry t))
              (year (cdr (assoc "year" entry)))
              (date (cdr (assoc "date" entry)))
              (journaltitle (cdr (assoc "journaltitle" entry)))
              (journal (cdr (assoc "journal" entry))))
-         (unless year
+        (unless year
           (bibtex-make-field (list "year" nil (number-to-string
                                                (nth 5 (parse-time-string date))))))
-         (unless journal
+        (unless journal
           (bibtex-make-field (list "journal" nil journaltitle))))
-        (bibtex-clean-entry t nil)
-        )))
+      (bibtex-clean-entry t nil)
+      )))
 
 
 
@@ -6582,8 +6593,8 @@ We will use biblio for handling/downloading papers.
 #+begin_src emacs-lisp
 (defun regularlise-file-name (name)
   (string-inflection-underscore-function
-    (replace-regexp-in-string "\\(:\\| \\|-\\)" "_" name))
-   )
+   (replace-regexp-in-string "\\(:\\| \\|-\\)" "_" name))
+  )
 
 (defun string-inflection-underscore-function (str)
   "FooBar => foo_bar"
@@ -6635,16 +6646,16 @@ We will use biblio for handling/downloading papers.
   (org-cite-activate-processor 'citar)
   (citar-bibliography org-cite-global-bibliography)
   (citar-indicators
-  (list citar-indicator-files-icons
-        citar-indicator-links-icons
-        citar-indicator-notes-icons
-        citar-indicator-cited-icons))
+   (list citar-indicator-files-icons
+         citar-indicator-links-icons
+         citar-indicator-notes-icons
+         citar-indicator-cited-icons))
   (citar-file-open-functions '(("html" . citar-file-open-external) ("pdf" . citar-file-open-external) (t . find-file)))
   (citar-templates
-      '((main . "${author editor:20%sn}  ${date year issued:4}  ${title:40}")
-        (suffix . " ${=key= id:10}  ${tags keywords:*}")
-        (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
-        (note . "Notes on ${author editor:%etal}, ${title}")))
+   '((main . "${author editor:20%sn}  ${date year issued:4}  ${title:40}")
+     (suffix . " ${=key= id:10}  ${tags keywords:*}")
+     (preview . "${author editor:%etal} (${year issued date}) ${title}, ${journal journaltitle publisher container-title collection-title}.\n")
+     (note . "Notes on ${author editor:%etal}, ${title}")))
   :hook
   (LaTeX-mode . citar-capf-setup)
   (org-mode . citar-capf-setup)
@@ -6767,7 +6778,7 @@ We use [[https://github.com/skeeto/elfeed][elfeed]] to keep in touch with (relev
 #+begin_src emacs-lisp
 (use-package elfeed
   :bind (:map elfeed-search-mode-map
-         ("U" . elfeed-update )) ; Bind "U" to update feeds on main screen
+              ("U" . elfeed-update )) ; Bind "U" to update feeds on main screen
   :hook ((elfeed-search-mode-hook  .my-elfeed-search-mode-hook)
          (elfeed-show-mode-hook .my-elfeed-show-mode-hook))
   :config
@@ -6792,7 +6803,7 @@ We try to rank papers by using elfeed-score.
   (elfeed-score-load-score-file "~/.emacs.org/elfeed.score") ; See the elfeed-score documentation for the score file syntax
   (elfeed-score-enable)
   (define-key elfeed-search-mode-map "=" elfeed-score-map)
-)
+  )
 #+end_src
 
 We separate author by commas and have at most three.
@@ -6803,12 +6814,12 @@ We separate author by commas and have at most three.
 concatenated."
   (if (>(length authors-list) 3)
       (let ((short-authors (seq-subseq authors-list 0 3)))
-    (concat (mapconcat
-   (lambda (author) (plist-get author :name))
-   short-authors ", ") " et.al"))
-  (mapconcat
-   (lambda (author) (plist-get author :name))
-   authors-list ", ")))
+        (concat (mapconcat
+                 (lambda (author) (plist-get author :name))
+                 short-authors ", ") " et.al"))
+    (mapconcat
+     (lambda (author) (plist-get author :name))
+     authors-list ", ")))
 #+end_src
 
 Next we shorten feed titles. At the moment this is hard-coded.
@@ -6830,47 +6841,47 @@ We print entries very nicely
   "Print ENTRY to the buffer."
   (let*
       ((date (elfeed-search-format-date (elfeed-entry-date entry)))
-	   (title (or (elfeed-meta entry :title)
-		          (elfeed-entry-title entry) ""))
-	   (title-faces (elfeed-search--faces (elfeed-entry-tags entry)))
-	   (feed (elfeed-entry-feed entry))
-	   (feed-title (short-feed-titles (when feed
-	                                    (or (elfeed-meta feed :title) (elfeed-feed-title feed)))))
-	   (entry-authors (concatenate-authors
-			           (elfeed-meta entry :authors)))
-	   (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
-	   (tags-str (mapconcat
-		          (lambda (s) (propertize s 'face
-					                      'elfeed-search-tag-face))
-		          tags ","))
-	   (title-width (- (window-width) 10
-			           elfeed-search-trailing-width))
-	   (title-column (elfeed-format-column
-			          title (elfeed-clamp
-			                 elfeed-search-title-min-width
-			                 title-width
-			                 elfeed-search-title-max-width)
-			          :left))
-	   (authors-width 80)
-	   (authors-column (elfeed-format-column
-			            entry-authors (elfeed-clamp
-			                           elfeed-search-title-min-width
-			                           authors-width
-			                           131)
-			            :left)))
+       (title (or (elfeed-meta entry :title)
+                  (elfeed-entry-title entry) ""))
+       (title-faces (elfeed-search--faces (elfeed-entry-tags entry)))
+       (feed (elfeed-entry-feed entry))
+       (feed-title (short-feed-titles (when feed
+                                        (or (elfeed-meta feed :title) (elfeed-feed-title feed)))))
+       (entry-authors (concatenate-authors
+                       (elfeed-meta entry :authors)))
+       (tags (mapcar #'symbol-name (elfeed-entry-tags entry)))
+       (tags-str (mapconcat
+                  (lambda (s) (propertize s 'face
+                                          'elfeed-search-tag-face))
+                  tags ","))
+       (title-width (- (window-width) 10
+                       elfeed-search-trailing-width))
+       (title-column (elfeed-format-column
+                      title (elfeed-clamp
+                             elfeed-search-title-min-width
+                             title-width
+                             elfeed-search-title-max-width)
+                      :left))
+       (authors-width 80)
+       (authors-column (elfeed-format-column
+                        entry-authors (elfeed-clamp
+                                       elfeed-search-title-min-width
+                                       authors-width
+                                       131)
+                        :left)))
 
     (insert (propertize date 'face 'elfeed-search-date-face) " ")
 
     (insert (propertize title-column
-			            'face title-faces 'kbd-help title) " ")
+                        'face title-faces 'kbd-help title) " ")
 
     (insert (propertize authors-column
-			            'face 'elfeed-search-date-face
-			            'kbd-help entry-authors) " ")
+                        'face 'elfeed-search-date-face
+                        'kbd-help entry-authors) " ")
 
     (when entry-authors
       (insert (propertize feed-title
-			              'face 'elfeed-search-feed-face) " "))
+                          'face 'elfeed-search-feed-face) " "))
 
     )
   )
@@ -7279,10 +7290,10 @@ Open an iterm (OSX) and go to the curent directory
 
 #+begin_src emacs-lisp
 
-  (defun my-iterm-here ()
-    (interactive)
+(defun my-iterm-here ()
+  (interactive)
 
-    (shell-command "open -a iTerm $PWD" nil nil))
+  (shell-command "open -a iTerm $PWD" nil nil))
 
 #+end_src
 
@@ -7290,7 +7301,7 @@ Open an iterm (OSX) and go to the curent directory
 
 #+begin_src emacs-lisp  :prologue "" :epilogue ""
 
-  (my-report-time "System")
+(my-report-time "System")
 
 #+end_src
 
@@ -7318,17 +7329,17 @@ Emacs-dashboard is used as the splash screen to show current tasks and projects
 We use smudge to control spotify from within emacs.
 
 #+begin_src emacs-lisp
-  (use-package smudge
-    :custom
-    (setq smudge-oauth2-client-secret "307ee557e2724f4c966b76cb343403a5"
-          smudge-oauth2-client-id "8af15fa300304341a0e1bcbe09165e27")
-    :bind
-    (("<f7>" . smudge-controller-toggle-play)
-     ("<f8>" . smudge-controller-next-track)
-     ;; :map smudge-command-map
-     ;; ("RET" . smudge-track-select)
-     )
-    )
+(use-package smudge
+  :custom
+  (setq smudge-oauth2-client-secret "307ee557e2724f4c966b76cb343403a5"
+        smudge-oauth2-client-id "8af15fa300304341a0e1bcbe09165e27")
+  :bind
+  (("<f7>" . smudge-controller-toggle-play)
+   ("<f8>" . smudge-controller-next-track)
+   ;; :map smudge-command-map
+   ;; ("RET" . smudge-track-select)
+   )
+  )
 #+end_src
 
 ** Singular
@@ -7349,13 +7360,13 @@ We use our customisation of the nano theme.
 
 #+begin_src emacs-lisp
 
-  (let ((init-time (float-time (time-subtract (current-time) my-init-start-time)))
-        (total-time (string-to-number (emacs-init-time "%f"))))
+(let ((init-time (float-time (time-subtract (current-time) my-init-start-time)))
+      (total-time (string-to-number (emacs-init-time "%f"))))
 
-    (message "---------------------------------------------------------------")
-    (message "Initialisation time:                 %.2fs (+ %.2f system time)"
-             init-time (- total-time init-time)))
   (message "---------------------------------------------------------------")
+  (message "Initialisation time:                 %.2fs (+ %.2f system time)"
+           init-time (- total-time init-time)))
+(message "---------------------------------------------------------------")
 
 #+end_src
 
@@ -7368,14 +7379,14 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 (use-package maxima
   :straight (maxima :type git :flavor melpa :files ("maxima.el" "maxima-font-lock.el" ("keywords" "keywords/*") "maxima-pkg.el") :host gitlab :repo   "sasanidas/maxima")
   :bind (:map maxima-inferior-mode-map ("TAB" . maxima-complete))
-        (:map maxima-mode-map          ("TAB" . maxima-complete))
+  (:map maxima-mode-map          ("TAB" . maxima-complete))
   :init
   (setq org-format-latex-options (plist-put org-format-latex-options :scale 2.0)
-	  maxima-display-maxima-buffer nil)
+        maxima-display-maxima-buffer nil)
   (add-to-list 'auto-mode-alist
-		 (cons "\\.mac\\'" 'maxima-mode))
+               (cons "\\.mac\\'" 'maxima-mode))
   (add-to-list 'interpreter-mode-alist
-		 (cons "maxima" 'maxima-mode)))
+               (cons "maxima" 'maxima-mode)))
 #+end_src
 ** Visual regexp
 
@@ -7430,8 +7441,8 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 #+begin_src emacs-lisp
 (use-package org-timeblock
   :straight (org-timeblock :type git
-              :host github
-              :repo "ichernyshovvv/org-timeblock")
+                           :host github
+                           :repo "ichernyshovvv/org-timeblock")
   :bind (:map ergoemacs-override-keymap ("M-n" . org-timeblock))
   :custom
   (org-timeblock-scale-options '(7 . 21))
