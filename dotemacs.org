@@ -2461,6 +2461,43 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
   (org-gcal-reload-client-id-secret))
 #+end_src
 
+* Version control
+
+We use [[https://magit.vc/][magit]] in combination with git for version control.
+
+#+begin_quote
+Magit is a complete text-based user interface to Git. It fills the glaring gap between the Git command-line interface and various GUIs, letting you perform trivial as well as elaborate version control tasks with just a couple of mnemonic key presses. Magit looks like a prettified version of what you get after running a few Git commands but in Magit every bit of visible information is also actionable to an extent that goes far beyond what any Git GUI provides and it takes care of automatically refreshing this output when it becomes outdated. In the background Magit just runs Git commands and if you wish you can see what exactly is being run, making it possible for you to learn the git command-line.
+#+end_quote
+
+** Magit
+
+#+begin_src emacs-lisp
+  (use-package magit
+    :elpaca (:type git
+             :host github
+             :repo "magit/magit")
+    :config
+    (setq magit-display-buffer-function 'switch-to-buffer)
+    (setq magit-diff-refine-hunk 'all)
+    :custom-face
+    (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
+    (magit-header-line ((t (:foreground unspecified :background unspecified))))
+    )
+#+end_src
+
+** Abridge
+In order to handles long lines in diffs, which happens in LaTeX-documents quite freqently, we use visual clues about actual changes.
+
+#+begin_quote
+A simple Emacs package for abridging refined diff hunks (for example in magit). Why abridge a diff hunk? Most diffs are line based. If you are working on files with very long lines, for example LaTeX files, or text files with full paragraphs per line (often using visual-line-mode), line-based diffs can be very challenging to read, even with "hunk refining" enabled (highlighting the words which changed).
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package abridge-diff
+  :after magit ;; optional, if you'd like to use with magit
+  :init (abridge-diff-mode 1))
+#+end_src
+
 * Other visuals
 ** TODO Nerd icons
 
@@ -6622,43 +6659,6 @@ An autoload function for my-config (that will load org mode).
 #+end_src
 
 ** Magit :ADVICE:HOOK:
-
-Prevent magit from writing in the header line.
-
-#+begin_src emacs-lisp
-(use-package magit
-  :straight (magit
-             :host github
-             :repo "magit/magit")
-  :config
-  (visual-line-mode 1)
-  (setq magit-branch-direct-configure nil)) ;;use the standard branch config
-#+end_src
-
-#+begin_src emacs-lisp
-
-(advice-add 'magit-set-header-line-format :override #'ignore)
-
-#+end_src
-
-Add fringe on the left side of magit windows such that we can highlight region using the fringe.
-
-#+begin_src emacs-lisp
-
-(add-hook 'magit-mode-setup-hook
-          #'(lambda ()
-              (interactive)
-              (set-window-fringes nil (* 2 (window-font-width)) 0)))
-
-#+end_src
-** Benchmark
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(my-report-time "Versioning")
-
-#+end_src
-
 
 ** News :DEFER:
 :PROPERTIES:
