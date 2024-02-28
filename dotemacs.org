@@ -2521,16 +2521,19 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
 
 #+NAME: magit-add-remove-face-font-lock
 #+begin_src emacs-lisp :tangle no
-(defun my-magit-add-remove-face-font-lock ()
-  "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
-  (add-to-list 'font-lock-extra-managed-props 'display)
-  (font-lock-add-keywords 'nil
-			  '(("\\(^-\\)" 1 '(face nil display
-#("│" 0 1 (face (:inherit lambda-red)))))))
-  (font-lock-add-keywords nil
-			  '(("\\(^+\\)" 1 '(face nil display
-#("│" 0 1 (face (:inherit lambda-green)))))))
-)
+  (defun my-magit-add-remove-face-font-lock ()
+    "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
+    (add-to-list 'font-lock-extra-managed-props 'display)
+    (font-lock-add-keywords 'nil
+    			  '(("\\(^-\\)" 1 '(face nil display
+  						 #("│" 0 1 (face (:inherit lambda-red)))))))
+    (font-lock-add-keywords 'nil
+  			  '(("\\(^ \\)" 1 '(face nil display
+  						 #("│" 0 1 (face (:inherit lambda-meek)))))))
+    (font-lock-add-keywords nil
+    			  '(("\\(^+\\)" 1 '(face nil display
+  						 #("│" 0 1 (face (:inherit lambda-green)))))))
+    )
 
 #+end_src
 
@@ -2552,13 +2555,13 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
   					:inherit lambda-meek))))
   (magit-diff-removed-highlight ((t (:foreground unspecified
   						 :background unspecified
-  						 :inherit lambda-meek))))
+  						 :inherit lambda-red))))
   (magit-diff-added    ((t (:foreground unspecified
   					:background unspecified
   					:inherit lambda-meek))))
   (magit-diff-added-highlight   ((t (:foreground unspecified
   						 :background unspecified
-  						 :inherit lambda-meek))))
+  						 :inherit (lambda-green)))))
   )
 #+end_src
 
