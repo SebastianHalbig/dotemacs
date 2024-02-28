@@ -30,7 +30,7 @@ Its aim is to make emacs my digital companion for my everyday life. That means
  + Writing sketches (org and its export functionalities)
  + Many big and small goodies such as being able to control spotify from within emacs.
 
-To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ([[help:org-babel-tangle][org-babel-tangle]]).
+To extract the init.el and early-init.el files from this document, execute ~C-c C-v C-t~ ([[help:org-babel-tangle][org-babel-tangle]]). We will make use of the [[https://github.com/jwiegley/use-package][use-package]] ecosystem for the configuration of packages. In order to present the code-snippets in readable sizes, we will use the [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][noweb-syntax]].
 
 Each subsection may be tagged with:
 
