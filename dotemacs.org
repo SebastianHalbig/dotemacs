@@ -2471,7 +2471,22 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
 
 ** Magit
 
-#+begin_src emacs-lisp
+#+NAME: magit-add-remove-face-font-lock
+#+begin_src emacs-lisp :tangle no
+(defun my-magit-add-remove-face-font-lock ()
+  "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
+  (add-to-list 'font-lock-extra-managed-props 'display)
+  (font-lock-add-keywords 'nil
+			  '(("\\(^-\\)" 1 '(face nil display
+#("│" 0 1 (face (:inherit lambda-red)))))))
+  (font-lock-add-keywords nil
+			  '(("\\(^+\\)" 1 '(face nil display
+#("│" 0 1 (face (:inherit lambda-green)))))))
+)
+
+#+end_src
+
+#+begin_src emacs-lisp :noweb yes
 (use-package magit
   :elpaca (:type git
            :host github
@@ -2479,13 +2494,27 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
   :config
   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
   (setq magit-diff-refine-hunk 'all)
+  <<magit-add-remove-face-font-lock>>
+  :hook (magit-mode . my-magit-add-remove-face-font-lock)
   :custom-face
   (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
   (magit-header-line ((t (:foreground unspecified :background unspecified))))
+  (magit-diff-removed  ((t (:foreground unspecified
+  					:background unspecified
+  					:inherit lambda-meek))))
+  (magit-diff-removed-highlight ((t (:foreground unspecified
+  						 :background unspecified
+  						 :inherit lambda-meek))))
+  (magit-diff-added    ((t (:foreground unspecified
+  					:background unspecified
+  					:inherit lambda-meek))))
+  (magit-diff-added-highlight   ((t (:foreground unspecified
+  						 :background unspecified
+  						 :inherit lambda-meek))))
   )
 #+end_src
 
-** Abridge :INACTIVE:
+** Abridge
 In order to handles long lines in diffs, which happens in LaTeX-documents quite freqently, we use visual clues about actual changes.
 
 #+begin_quote
@@ -2495,7 +2524,16 @@ A simple Emacs package for abridging refined diff hunks (for example in magit). 
 #+begin_src emacs-lisp
 (use-package abridge-diff
   :after magit ;; optional, if you'd like to use with magit
-  :init (abridge-diff-mode 1))
+  :init (abridge-diff-mode 1)
+  :custom-face
+  (diff-refine-added   ((t (:foreground unspecified
+      					:weight bold
+      					:inherit lambda-green))))
+  (diff-refine-removed ((t (:foreground "#bf616a" :weight bold :strike-through nil :inherit lambda-red))))
+  (diff-refine-changed ((t (:foreground unspecified
+      					:weight bold
+      					:inherit lambda-yellow))))
+  )
 #+end_src
 
 * Other visuals
