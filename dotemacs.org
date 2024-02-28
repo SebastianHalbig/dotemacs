@@ -238,12 +238,10 @@ We use the main branch of org. Due to the high dependence of other packages on o
 #+begin_src emacs-lisp :noweb yes
 <<org-config>>
 #+end_src
-
 * Fundamental and early settings :HOOK:
 
 Many of the ideas here are a mix of [[https://protesilaos.com/emacs/dotemacs#h:dae63bd9-93a8-41c4-af1b-d0f39ba50974][Prot's config]] and [[https://github.com/rougier/dotemacs][Rougier's config]].
 If other sources are used, they are specifically mentioned.
-
 ** Emacs defaults
 
 #+NAME: emacs-defaults
@@ -350,7 +348,6 @@ We can now configure recentf.
   (setq backup-directory-alist ; Alist of file name patterns and backup directory names
         `((".*" . ,(no-littering-expand-var-file-name "backups/")))))
 #+end_src
-
 ** No custom files
 
 #+NAME: no-custom-files
@@ -828,7 +825,6 @@ We will use these colours at various places.
   "#342e14")
 
 #+end_src
-
 *** The theme itself
 We use the [[https://github.com/Lambda-Emacs/lambda-themes][lambda theme]]. It comes in four variants:
 - light,
@@ -974,7 +970,6 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   (outline-8 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
   )
 #+end_src
-
 ** TODO The font stack
 
 This is the font stack we install:
