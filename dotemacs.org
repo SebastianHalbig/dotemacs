@@ -251,6 +251,11 @@ If other sources are used, they are specifically mentioned.
 (setq-default indent-tabs-mode nil        ; Stop using tabs to indent
               tab-always-indent 'complete ; Indent first then try completions
               tab-width 2)                ; Smaller width for tab characters
+
+(setq-default fill-column 100                         ; Default line width
+              sentence-end-double-space nil           ; Use a single space after dots
+              bidi-paragraph-direction 'left-to-right ; Faster
+              truncate-string-ellipsis "…")           ; Nicer ellipsis
 #+end_src
 ** Keeping emacs.d clean: Recentf and no-littering
 
