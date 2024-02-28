@@ -53,7 +53,7 @@ The documentation of each package-based (sub-)section is build like follows:
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
 
 
-** [0/7] Open Tasks
+** [1/9] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
@@ -62,6 +62,7 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] Modify the Victor mono font to be compatible with Roboto mono.
 - [ ] Write a transient (i.e. 21st century) date-picker.
 - [ ] Create/use a template system for latex-based projects.
+- [X] Move the early-loading of org to a later stage.
 ** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
@@ -177,7 +178,7 @@ A short summary of its functionality taken from its documentation is as follows:
   + Downloads packages from their sources for convenient elisp development.
   + Supports thousands of elisp packages out of the box (MELPA, NonGNU/GNU ELPA, Org/org-contrib).
   + Makes it easy for users to create their own ELPAs.
-#+END_QUOTE
+#+end_quote
 
 Like straight, one needs to bootstrap elpaca.
 #+NAME: elpaca-bootstrap
@@ -232,26 +233,10 @@ The elpaca-documentation suggests the following piece of code for the integratio
   ;; Assume :elpaca t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
 #+end_src
-** Early-loading of org
-We use the main branch of org. Due to the high dependence of other packages on org, one needs to load it as soon as possible. The real configuration of org is in the section called "[[Org mode][Org mode]]".
-However we can reference it using [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][noweb]] syntax.
+* Early-loading of org
+We use the main branch of org. Due to the high dependence of other packages on org, one needs to load it as soon as possible. The real configuration of org is in the section called "[[Org mode][Org mode]]". We ensure that it is tangled "here" by using [[https://orgmode.org/manual/Noweb-Reference-Syntax.html][noweb]] syntax.
 #+begin_src emacs-lisp :noweb yes
-(use-package org
-  :elpaca ( :package "org"
-            :local-repo "org"
-            :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
-            :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
-            :autoloads "org-loaddefs.el"
-            :build (:not elpaca--generate-autoloads-async)
-            :files (:defaults ("etc/styles/"
-		                       "etc/styles/*" "doc/*.texi")))
-  :config
-    <<org-config>>
-  :hook
-    <<org-hooks>>
-  :custom-face
-  (org-document-title ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
-  )
+<<org-config>>
 #+end_src
 
 * Fundamental and early settings :HOOK:
@@ -1706,32 +1691,49 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
 
 #+NAME: org-config
 #+begin_src emacs-lisp :noweb yes :tangle no
-(setq-default org-directory "~/Documents/org-files"
-              org-tags-column 0                            ; Tags next to header title
-              org-hide-emphasis-markers t                  ; Hide markers
-              org-cycle-separator-lines 1                  ; Number of empty lines between sections
-              org-use-tag-inheritance t                    ; Tags ARE inherited
-              org-use-property-inheritance t               ; Properties ARE inherited
-              org-indent-indentation-per-level 2           ; Indentation per level
-              org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
-              org-fontify-quote-and-verse-blocks t         ; Specific face for quote and verse blocks
-              org-return-follows-link nil                  ; Follow links when hitting return
-              org-image-actual-width nil                   ; Resize image to window width
-              org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
-              org-outline-path-complete-in-steps nil       ; No steps in path display
-              org-fold-catch-invisible-edits 'smart        ; Check if in invisible region
-              org-insert-heading-respect-content nil       ; Insert new heading at point.
-              org-pretty-entities t                        ; Show entities as UTF-8 characters
-              org-ellipsis " …"                            ; Short ellipsis
-              org-emphasis-alist
-              '(("*" (:weight bold :inherit lambda-focus))
-                ("/" italic)
-                ("_" underline)
-                ("=" (:weight bold :inherit lambda-urgent))
-                ("~" (lambda-meek))
-                ("+" (:box t :inverse-video t)))
-              org-export-with-broken-links t)            ; Allow export of broken links
-<<org-faces>>
+  (use-package org
+    :elpaca ( :package "org"
+              :local-repo "org"
+              :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
+              :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
+              :autoloads "org-loaddefs.el"
+              :build (:not elpaca--generate-autoloads-async)
+              :files (:defaults ("etc/styles/"
+  		               "etc/styles/*" "doc/*.texi")))
+    :config
+    (setq-default org-directory "~/Documents/org-files"
+                  org-tags-column 0                            ; Tags next to header title
+                  org-hide-emphasis-markers t                  ; Hide markers
+                  org-cycle-separator-lines 1                  ; Number of empty lines between sections
+                  org-use-tag-inheritance t                    ; Tags ARE inherited
+                  org-use-property-inheritance t               ; Properties ARE inherited
+                  org-indent-indentation-per-level 2           ; Indentation per level
+                  org-link-use-indirect-buffer-for-internals t ; Indirect buffer for internal links
+                  org-fontify-quote-and-verse-blocks t         ; Specific face for quote and verse blocks
+                  org-return-follows-link nil                  ; Follow links when hitting return
+                  org-image-actual-width nil                   ; Resize image to window width
+                  org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a new window
+                  org-outline-path-complete-in-steps nil       ; No steps in path display
+                  org-fold-catch-invisible-edits 'smart        ; Check if in invisible region
+                  org-insert-heading-respect-content nil       ; Insert new heading at point.
+                  org-pretty-entities t                        ; Show entities as UTF-8 characters
+                  org-ellipsis " …"                            ; Short ellipsis
+                  org-emphasis-alist
+                  '(("*" (:weight bold :inherit lambda-focus))
+                    ("/" italic)
+                    ("_" underline)
+                    ("=" (:weight bold :inherit lambda-urgent))
+                    ("~" (lambda-meek))
+                    ("+" (:box t :inverse-video t)))
+                  org-export-with-broken-links t)            ; Allow export of broken links
+    <<org-faces>>
+    :hook
+    <<org-hooks>>
+    :custom-face
+    (org-document-title ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
+    )
+
+
 #+end_src
 
 
@@ -2162,52 +2164,52 @@ The daily agenda
                 :tag "short")
          ;; After the last group, the agenda will display items that didn't
          ;; match any of these groups, with the default order position of 99
-         ))
-  (setq org-agenda-custom-commands
-        '(("g" "GTD view"
-           ((agenda "" ((org-agenda-overriding-header "")
-                        (org-super-agenda-groups
-                         '((:discard (:not (:scheduled today
-                                            :deadline today)))
-                           (:name "📅 Today\n"           ; section name
-                                  :time-grid t      ; Items that appear on the time grid
-                                  :scheduled today
-                                  :deadline today
-                                  :order 1)
-                           ))))
-            (alltodo "" ((org-agenda-overriding-header "")
-                         (org-super-agenda-groups
-                          '((:log t)
-                            (:name "🕮 Research\n"
-                                   :tag "research"
-                                   :order 2)
-                            (:name "🗨 Upcoming teaching\n"
-                                   :tag "teaching"
-                                   :order 3)
-                            (:name "📧 Mail\n"
-                                   :tag "mail"
-                                   :order 4)
-                            (:name "🎙 Talks\n"
-                                   :tag "talk"
-                                   :order 5)
-                            (:name "💬 Meetings"
-                                    :tag "meeting"
-                                    :order 6)
-                            (:name "📝 Administrative tasks"
-                                    :tag "admin"
-                                    :order 7)
-                            (:name "⚠ Overdue \n"
-                                   :deadline past
-                                   :order 8)
-                            (:name "✩ Important \n"
-                                   :priority "A"
-                                   :order 9)
-                            (:name "🗏 Scheduled soon \n"
-                                   :scheduled future
-                                   :order 10)
-                            (:discard (:not (:todo "TODO")))))))))))
+         )
+       (setq org-agenda-custom-commands
+             '(("g" "GTD view"
+                ((agenda "" ((org-agenda-overriding-header "")
+                             (org-super-agenda-groups
+                              '((:discard (:not (:scheduled today
+                                                 :deadline today)))
+                                (:name "📅 Today\n"           ; section name
+                                       :time-grid t      ; Items that appear on the time grid
+                                       :scheduled today
+                                       :deadline today
+                                       :order 1)
+                                ))))
+                 (alltodo "" ((org-agenda-overriding-header "")
+                              (org-super-agenda-groups
+                               '((:log t)
+                                 (:name "🕮 Research\n"
+                                        :tag "research"
+                                        :order 2)
+                                 (:name "🗨 Upcoming teaching\n"
+                                        :tag "teaching"
+                                        :order 3)
+                                 (:name "📧 Mail\n"
+                                        :tag "mail"
+                                        :order 4)
+                                 (:name "🎙 Talks\n"
+                                        :tag "talk"
+                                        :order 5)
+                                 (:name "💬 Meetings"
+                                         :tag "meeting"
+                                         :order 6)
+                                 (:name "📝 Administrative tasks"
+                                         :tag "admin"
+                                         :order 7)
+                                 (:name "⚠ Overdue \n"
+                                        :deadline past
+                                        :order 8)
+                                 (:name "✩ Important \n"
+                                        :priority "A"
+                                        :order 9)
+                                 (:name "🗏 Scheduled soon \n"
+                                        :scheduled future
+                                        :order 10)
+                                 (:discard (:not (:todo "TODO")))))))))))
 :config
-(org-super-agenda-mode))
+(org-super-agenda-mode)))
 
 #+end_src
 
