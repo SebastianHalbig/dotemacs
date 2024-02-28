@@ -577,7 +577,8 @@ We run emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Em
 Dash]] makes working with lists better.
 
 #+begin_src emacs-lisp
-(use-package dash)
+(use-package dash
+  :demand t)
 #+end_src
 * Design :FACE:HOOK:BIND:
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
@@ -1592,7 +1593,6 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :demand t                             ; Otherwise won't get loaded immediately
   :elpaca (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
                    :includes (vertico-indexed
                               vertico-flat
@@ -1667,7 +1667,6 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
 
 #+begin_src emacs-lisp
 (use-package vertico-truncate
-  :demand t                             ; Otherwise won't get loaded immediately
   :elpaca (:type git :host github :repo "jdtsmith/vertico-truncate")
   :config
   (vertico-truncate-mode 1)
@@ -1684,7 +1683,6 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
 
 (use-package yasnippet
   :elpaca (:type git :host github :repo "oaotavora/yasnippet")
-  :demand t
   :config (yas-global-mode)
   :custom
   (yas-inhibit-overlay-modification-protection nil))
@@ -1812,7 +1810,6 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 ;; Modern org mode
 (use-package org-modern
   :elpaca (:type git :host github :repo "minad/org-modern")
-  :demand t
   :config
   (setq org-todo-keywords
         '((sequence "TODO(t)"   "NEXT(n)"                 "|" "DONE(d)")
