@@ -135,12 +135,39 @@ The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.
 (add-hook 'after-init-hook
           #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
 #+end_src
+* Emacs-internal configurations
+We specify the skeleton for our fundamental emacs configurations such as our choice of package manager here.
+The actual code-blocks will be found in different sections and inserted once the document is tangled.
+
+#+begin_src emacs-lisp :noweb yes
+ <<elpaca-bootstrap>>
+
+(use-package emacs
+  :demand t
+  :config
+  <<elpaca-use-package-integration>>
+  <<no-custom-files>>
+  <<enable-disable-commands>>
+  <<encoding>>
+  <<auto-save>>
+  <<unpropertise-kill-ring>>
+  <<savehistory-settings>>
+  <<savehistory-duplicates>>
+  <<start-savehistory-mode>>
+  <<save-vistited-mode>>
+  <<save-buffers>>
+  <<recursive-minibuffers>>
+  <<server>>
+  <<cus-edit>>
+  (elpaca-wait)
+  )
+#+end_src
 * Elpaca :HOOK:
 
 We will use [[https://github.com/progfolio/elpaca][Elpaca]] as the package manager for this config.
 A short summary of its functionality taken from its documentation is as follows:
 
-#+BEGIN_QUOTE
+#+BEGIN_quote
   Elpaca is an elisp package manager. It allows users to find, install, update, and remove third-party packages for Emacs. It is a replacement for the built-in Emacs package manager, package.el.
 
   Elpaca:
@@ -196,14 +223,13 @@ Like straight, one needs to bootstrap elpaca.
 We will use elpaca in conjunction with use-package.
 The elpaca-documentation suggests the following piece of code for the integration of elpaca into use-package.
 
-#+begin_src emacs-lisp
+#+NAME: elpaca-use-package-integration
+#+begin_src emacs-lisp :tangle no
 (elpaca elpaca-use-package
   ;; Enable :elpaca use-package keyword.
   (elpaca-use-package-mode)
   ;; Assume :elpaca t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
-
-(elpaca-wait)
 #+end_src
 ** Early-loading of org
 We use the main branch of org. Due to the high dependence of other packages on org, one needs to load it as soon as possible. The real configuration of org is in the section called "[[Org mode][Org mode]]".
@@ -240,13 +266,17 @@ If other sources are used, they are specifically mentioned.
 
 The following code will allow for an integration between dired and recentf.
 
-#+begin_src emacs-lisp
+#+NAME: my-recentf-rename-notify
+#+begin_src emacs-lisp :tangle no
 (defun my-recentf-rename-notify (oldname newname &rest args)
   "Change file or directory OLDNAME in the recentf list to NEWNAME"
   (if (file-directory-p newname)
       (my-recentf-rename-directory oldname newname)
     (my-recentf-rename-file oldname newname)))
+#+end_src
 
+#+NAME: my-recentf-rename-file
+#+begin_src emacs-lisp :tangle no
 (defun my-recentf-rename-file (oldname newname)
   "Change the OLDNAME of a file in the recentf list to NEWNAME"
   (setq recentf-list
@@ -255,7 +285,10 @@ The following code will allow for an integration between dired and recentf.
                     oldname)
                 recentf-list))
   recentf-cleanup)
+#+end_src
 
+#+NAME: my-recentf-rename-directory
+#+begin_src emacs-lisp :tangle no
 (defun my-recentf-rename-directory (oldname newname)
   "Chage OLDNAME to NEWNAME"
   ;; oldname, newname and all entries of recentf-list should already
@@ -268,13 +301,15 @@ The following code will allow for an integration between dired and recentf.
                 recentf-list))
   recentf-cleanup)
 #+end_src
-
 We can now configure recentf.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :noweb yes
 (use-package recentf
   :elpaca nil
   :config
+  <<my-recentf-rename-notify>>
+  <<my-recentf-rename-file>>
+  <<my-recentf-rename-directory>>
   (setq recentf-max-saved-items 200           ; length of the "recent list"
         recentf-max-menu-items 20             ; length of the "recentf menu list"
         recentf-auto-cleanup 360              ; Clean up recentf if emacs was idle
@@ -319,7 +354,8 @@ We can now configure recentf.
 
 ** No custom files
 
-#+begin_src emacs-lisp
+#+NAME: no-custom-files
+#+begin_src emacs-lisp :tangle no
 ;; Disable the emacs custom block by making it disposable.
 (setq custom-file (make-temp-file "emacs-custom-"))
 #+end_src
@@ -346,7 +382,8 @@ To switch between input methods use [[help:toggle-input-method][toggle-input-met
 
 ** Enable and disable certain commands
 
-#+begin_src emacs-lisp
+#+NAME: enable-disable-commands
+#+begin_src emacs-lisp :tangle no
 ;; Enable these
 (mapc
  (lambda (command)
@@ -364,7 +401,8 @@ To switch between input methods use [[help:toggle-input-method][toggle-input-met
 
 We tell emacs to use UTF-8 encoding as much as possible.
 
-#+begin_src emacs-lisp
+#+NAME: encoding
+#+begin_src emacs-lisp :tangle no
 
 (set-default-coding-systems 'utf-8)     ; Default to utf-8 encoding
 (prefer-coding-system       'utf-8)     ; Add utf-8 at the front for automatic detection.
@@ -377,7 +415,8 @@ We tell emacs to use UTF-8 encoding as much as possible.
 
 If Emacs or the computer crashes, you can recover the files you were editing at the time of the crash from their auto-save files. To do this, start Emacs again and type the command ~M-x recover-session~. Here, we parameterise how files are saved in the background.
 
-#+begin_src emacs-lisp
+#+Name: auto-save
+#+begin_src emacs-lisp :tangle no
 (setq auto-save-list-file-prefix ; Prefix for generating auto-save-list-file-name
                (expand-file-name ".auto-save-list/.saves-" user-emacs-directory)
       auto-save-default t        ; Auto-save every buffer that visits a file
@@ -389,7 +428,8 @@ If Emacs or the computer crashes, you can recover the files you were editing at 
 
 Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
 
-#+begin_src emacs-lisp
+#+NAME: unpropertise-kill-ring
+#+begin_src emacs-lisp :tangle no
 
 (defun unpropertise-kill-ring ()
   "Save string in the kill-ring without text properties"
@@ -401,7 +441,8 @@ Remove text properties for kill ring entries (see https://emacs.stackexchange.co
 
 We save every possible history we can think of.
 
-#+begin_src emacs-lisp
+#+NAME: savehistory-settings
+#+begin_src emacs-lisp :tangle no
 
 (setq kill-ring-max 50      ; Maximum length of kill-ring
       history-length 50)    ; Maximum length of history before truncation starts
@@ -435,7 +476,8 @@ We save every possible history we can think of.
 
 No duplicates in history
 
-#+begin_src emacs-lisp
+#+NAME: savehistory-duplicates
+#+begin_src emacs-lisp :tangle no
 
 (setq history-delete-duplicates t) ; No duplicates
 
@@ -443,7 +485,8 @@ No duplicates in history
 
 Start history mode.
 
-#+begin_src emacs-lisp
+#+NAME: start-savehistory-mode
+#+begin_src emacs-lisp :tangle no
 (let (message-log-max)
   (savehist-mode)) ;start history mode
 
@@ -452,7 +495,8 @@ Start history mode.
 
 Enable auto-save-visited-mode
 
-#+begin_src emacs-lisp
+#+NAME: save-vistited-mode
+#+begin_src emacs-lisp :tangle no
 
 (auto-save-visited-mode) ; start auto-save-visited mode
 
@@ -472,7 +516,8 @@ A buffer can get out of sync with respect to its visited file on disk if that fi
 
 ** Saving buffers
 
-#+begin_src emacs-lisp
+#+NAME: save-buffers
+#+begin_src emacs-lisp :tangle no
 
 (add-hook 'before-save-hook 'delete-trailing-whitespace) ; On save, delete trailing whitespaces
 (setq require-final-newline t)                           ; Require a final newline—POSIX BOIS
@@ -499,7 +544,8 @@ Record cursor position using [[https://github.com/emacs-mirror/emacs/blob/master
 
 We want to use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Recursive-Mini.html][recursive minibuffers]].
 
-#+begin_src emacs-lisp
+#+NAME: recursive-minibuffers
+#+begin_src emacs-lisp :tangle no
 (setq enable-recursive-minibuffers t)
 #+end_src
 
@@ -507,7 +553,8 @@ We want to use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Recur
 
 We run emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Emacs-Server.html][server]].
 
-#+begin_src emacs-lisp
+#+NAME: server
+#+begin_src emacs-lisp :tangle no
 
 (require 'server)
 
@@ -519,14 +566,12 @@ We run emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Em
 ** Cus edit
 
 [[https://github.com/emacs-mirror/emacs/blob/master/lisp/cus-edit.el][Cus edit]] implements the code to create and edit customize buffers.
-#+begin_src emacs-lisp
-(use-package emacs
-  :elpaca nil
-  :config
-  (setq-default
-   custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
-   custom-unlispify-tag-names nil          ; Prefer kebab-case for symbols
-))
+
+#+NAME: cus-edit
+#+begin_src emacs-lisp :tangle no
+(setq-default
+custom-unlispify-menu-entries nil       ; Prefer kebab-case for titles
+custom-unlispify-tag-names nil)         ; Prefer kebab-case for symbols
 #+end_src
 ** Dash
 [[https://github.com/magnars/dash.el][
