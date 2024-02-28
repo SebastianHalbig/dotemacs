@@ -180,7 +180,8 @@ A short summary of its functionality taken from its documentation is as follows:
 #+END_QUOTE
 
 Like straight, one needs to bootstrap elpaca.
-#+begin_src emacs-lisp
+#+NAME: elpaca-bootstrap
+#+begin_src emacs-lisp :tangle no
 (defvar elpaca-installer-version 0.6)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
