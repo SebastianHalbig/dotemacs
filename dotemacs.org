@@ -593,7 +593,8 @@ In general the theme aims to use as few highly distinct colors as possible witho
 
 [[https://en.wikipedia.org/wiki/Werner%27s_Nomenclature_of_Colours][Werner's nomenclature of colours]] is a book of named colour samples compiled by the geologist Abraham Gottlob Werner(1749-1817), and subsequently amended by Patrick Syme.
 We will use these colours at various places.
-#+begin_src emacs-lisp
+#+NAME: werner-colours
+#+begin_src emacs-lisp :tangle no
 ;; whites
 (defvar snow-white
   "#f9faf8" "snow-drop")
@@ -844,7 +845,8 @@ This has to be done in the package itself due to internal reasons.
 
 We want less colours and less stress for the eyes both in the light and dark mode.
 
-#+begin_src emacs-lisp
+#+NAME: my-lambda-light-werner
+#+begin_src emacs-lisp :tangle no
 (defun my-lambda-light-werner ()
   "Load the light variant of a modified lambda theme."
   (progn
@@ -873,7 +875,8 @@ We want less colours and less stress for the eyes both in the light and dark mod
     (set-face-attribute 'lambda-line-inactive-status-MD nil :background "#fbfdf8")))
 #+end_src
 
-#+begin_src emacs-lisp
+#+NAME: my-lambda-dark-werner
+#+begin_src emacs-lisp :tangle no
 
 (defun my-lambda-dark-werner ()
   "Load the dark variant of a modified lambda theme."
@@ -906,7 +909,8 @@ We want less colours and less stress for the eyes both in the light and dark mod
 Finally, a small fun which lets us switch between our settings.
 This is an adaptation of the toggle-theme functionality built into lambda-themes.
 
-#+begin_src emacs-lisp
+#+NAME: my-toggle-theme
+#+begin_src emacs-lisp :tangle no
 (defun my-toggle-theme ()
   "Toggle between dark and light variants."
   (interactive)
@@ -927,9 +931,12 @@ This is an adaptation of the toggle-theme functionality built into lambda-themes
 We load the theme-code with a few configurations here.
 Choosing this theme is done when we set up the modeline due to the fact that we modify the theme and modeline simultaneously.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :noweb yes
 (use-package lambda-themes
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
+  :after dash
+  :init
+  <<werner-colours>>
   :demand t
   :custom
   (lambda-themes-set-italic-comments t)  ; Italic comments.
@@ -938,6 +945,10 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   :bind (:map ergoemacs-override-keymap
               ("<f6>" . my-toggle-theme))
   :config
+  ;; theme-specific function
+  <<my-lambda-light-werner>>
+  <<my-lambda-dark-werner>>
+  <<my-toggle-theme>>
   ;; load preferred theme
   (setq initial-scratch-message "")      ; Why would I ever want a scratch message?
   ;; Default frame settings (taken from N.Rougier)
@@ -948,6 +959,9 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
                               (left-fringe . 0)
                               (right-fringe . 0)))
   (setq initial-frame-alist default-frame-alist)
+  ;; Some font specifications
+  <<font-stack>>
+  <<nerd-font-settings>>
   :custom-face
   (outline-1 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
   (outline-2 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
@@ -980,7 +994,8 @@ Roboto Mono Nerd                           Roboto Mono
 
 Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
 
-#+begin_src emacs-lisp
+#+NAME: font-stack
+#+begin_src emacs-lisp :tangle no
 
 (set-face-attribute 'default nil
                     :family "Roboto Mono "
@@ -1023,29 +1038,12 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 We additionally define some fonts for common character sets.
 To get a list of all character sets type "M-x list-character-sets"
 
-#+begin_src emacs-lisp
-(use-package emacs
-  :elpaca nil
-  :after dash
-  :demand t
-  :config
-  ( --map (set-fontset-font t (-first-item it) (-second-item it))
-    '((unicode "Roboto Mono Nerd Font")
-      (symbol  "Roboto Mono Nerd Font")
-      (emoji   "Roboto Mono Nerd Font")
-      ))
-  )
-#+end_src
-
-** Further general layout settings
-
-#+begin_src emacs-lisp
-
-(setq-default fill-column 100                         ; Default line width
-              sentence-end-double-space nil           ; Use a single space after dots
-              bidi-paragraph-direction 'left-to-right ; Faster
-              truncate-string-ellipsis "…")           ; Nicer ellipsis
-
+#+NAME: nerd-font-settings
+#+begin_src emacs-lisp :tangle no
+(--map (set-fontset-font t (-first-item it) (-second-item it))
+  '((unicode "Roboto Mono Nerd Font")
+    (symbol  "Roboto Mono Nerd Font")
+    (emoji   "Roboto Mono Nerd Font")))
 #+end_src
 
 ** Lambda modeline
@@ -1066,7 +1064,8 @@ We customise it at bit.
 *** Prelude: A thin (bottom) modeline
 We will have a status line at the top of the frames and therefore disable the modeline at the bottom (except for a thin seperator line).
 
-#+begin_src emacs-lisp
+#+NAME: my-thin-modeline
+#+begin_src emacs-lisp :tangle no
 (defun my-thin-modeline ()
   "Transform the modeline in a thin faded line"
   (lambda-line-face-clear 'mode-line)
@@ -1083,10 +1082,12 @@ We will have a status line at the top of the frames and therefore disable the mo
                       ))
 #+end_src
 *** The modeline itself
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :noweb yes
 (use-package lambda-line
   :elpaca (:type git :host github :repo "lambda-emacs/lambda-line")
   :after lambda-themes
+  :init
+  <<my-thin-modeline>>
   :demand t
   :hook (lambda-line-mode-hook . my-thin-modeline)
   :custom
@@ -1746,8 +1747,8 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
                   ("_" underline)                            ; can be added.
                   ("=" (:weight bold :inherit lambda-urgent))
                   ("~" (lambda-meek))
-                  ("+" (:box t :inverse-video t)))
-                org-export-with-broken-links t)              ; Allow export of broken links
+                  ("+" (:box t :inverse-video t))))
+                <<org-html-export-settings>>                ; Export settings
   <<org-faces>>
   :hook
   <<org-hooks>>
@@ -1798,11 +1799,11 @@ Finally, we have some hooks to add.
 A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 
 #+begin_src emacs-lisp
-
-(require 'org-tempo)
-(add-to-list 'org-structure-template-alist
-             '("S" . "src emacs-lisp"))
-
+(use-package org-tempo
+  :elpaca nil
+  :custom
+  (add-to-list 'org-structure-template-alist
+             '("S" . "src emacs-lisp")))
 #+end_src
 
 ** Modern Org mode
@@ -1826,6 +1827,11 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 #+end_src
 *** Org appear mode
 
+We use [[https://github.com/awth13/org-appear][org-appear]] in order to dynamically dispaly certain symbols, such as emphasis-markers, depending on the position of the coursor.
+#+begin_quote
+Org mode provides a way to toggle visibility of hidden elements such as emphasis markers, links, etc. by customising specific variables, e.g., org-hide-emphasis-markers. However, it is currently not possible to do this interactively and on an element-by-element basis. This package, inspired by org-fragtog, enables automatic visibility toggling depending on cursor position. Hidden element parts appear when the cursor enters an element and disappear when it leaves.
+#+end_quote
+
 #+begin_src emacs-lisp
 (use-package org-appear
   :elpaca (org-appear :type git :host github :repo "awth13/org-appear")
@@ -1844,9 +1850,22 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 We treat ~code~ and =verbatim= faces differently among export.
 
 Hereto we require the newest version of htmlize.
+#+NAME: org-html-export-settings
+#+begin_src emacs-lisp :noweb yes :tangle no
+(setq org-export-with-broken-links t) ; Export even with broken links
+<<org-html-markup-alist>>
+<<my-org-theme-css-dir>>
+<<my-org-current-html-theme>>
+<<my-set-org-html-style>>
+(add-hook 'org-export-before-parsing-hook 'my-set-org-html-style)
+#+end_src
+
+Our exporter needs a new version of htmlize.
+
 #+begin_src emacs-lisp
 (use-package htmlize
-  :elpaca (:type git :host github :repo "hniksic/emacs-htmlize"))
+  :elpaca (:type git :host github :repo "hniksic/emacs-htmlize")
+  )
 #+end_src
 
 Alist of HTML expressions to convert text markup.
@@ -1855,9 +1874,8 @@ The key must be a symbol among bold, code, italic,
 strike-through, underline and verbatim.  The value is
 a formatting string to wrap fontified text with.
 
-
-#+begin_src emacs-lisp
-
+#+NAME: org-html-markup-alist
+#+begin_src emacs-lisp :tangle no
 (setq org-html-text-markup-alist '(
                                    (bold           . "<b>%s</b>")
                                    (code           . "<span class=\"meek\">%s</span>")
@@ -1870,17 +1888,19 @@ a formatting string to wrap fontified text with.
 
 In order to have a nice page after exporting, we want to include some css code.
 
-#+begin_src emacs-lisp
-(defvar org-theme-css-dir "~/.emacs.org/org-css/") ; location of the css files
+#+NAME: my-org-theme-css-dir
+#+begin_src emacs-lisp :tangle no
+(defvar my-org-theme-css-dir "~/.emacs.org/org-css/") ; location of the css files
 #+end_src
 
 Retrieve the theme.
 
-#+begin_src emacs-lisp
+#+NAME: my-org-current-html-theme
+#+begin_src emacs-lisp :tangle no
 (defun my-org-current-html-theme ()
   "Retrieve the css-file for org export."
   (interactive)
-  (let* ((cssdir org-theme-css-dir)
+  (let* ((cssdir my-org-theme-css-dir)
          (css-choices (directory-files cssdir nil ".css$"))
          (css (completing-read "theme: " css-choices nil t)))
     (concat cssdir css)))
@@ -1888,8 +1908,9 @@ Retrieve the theme.
 
 Set the style for the file.
 
-#+begin_src emacs-lisp
-(defun set-org-html-style (&optional backend)
+#+NAME: my-set-org-html-style
+#+begin_src my-emacs-lisp :tangle no
+(defun my-set-org-html-style (&optional backend)
   "Include the css-file in the exportet html file."
   (interactive)
   (when (or (null backend) (eq backend 'html))
@@ -1910,10 +1931,6 @@ Set the style for the file.
         (message "Custom header file %s doesnt exist")))))
 
 
-#+end_src
-
-#+begin_src emacs-lisp
-(add-hook 'org-export-before-parsing-hook 'set-org-html-style)
 #+end_src
 
 ** Babel :INACTIVE:
