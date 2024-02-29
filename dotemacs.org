@@ -2074,6 +2074,7 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
 #+begin_src emacs-lisp :noweb yes
 (use-package org-gtd
   :elpaca (:type git :host github :repo "Trevoke/org-gtd.el")
+  :demand t
   :init
   (setq org-gtd-update-ack "3.0.0")
   :custom
