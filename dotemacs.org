@@ -3021,8 +3021,8 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-#+name: my-mu4e-get-maildir
-#+begin_src emacs-lisp
+#+NAME: my-mu4e-get-maildir
+#+begin_src emacs-lisp :tangle no
 
 (defun my-mu4e-get-maildir (msg)
   "Get MSG related maildir."
@@ -3033,8 +3033,8 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-#+name: my-mu4e-get-mailbox
-#+begin_src emacs-lisp
+#+NAME: my-mu4e-get-mailbox
+#+begin_src emacs-lisp :tangle no
 
 (defun my-mu4e-get-mailbox (msg)
   "Get MSG related mailbox as 'account - maildir' "
@@ -3043,8 +3043,8 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-#+name: my-mu4e-get-sender
-#+begin_src emacs-lisp
+#+NAME: my-mu4e-get-sender
+#+begin_src emacs-lisp :tangle no
 
 (defun my-mu4e-get-sender (msg)
   "Get MSG sender."
@@ -3054,2459 +3054,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-
-** TODO Configuration :BINDING:HOOK:DEFER:
-# :PROPERTIES:
-# :header-args:emacs-lisp: :prologue "(with-eval-after-load 'org" :epilogue ")"
-# :END:
-
-*** General
-
-This section is meant to ease the writing of the configuration file using a dedicated minor mode (~my-config-mode~) with a few key bindings:
-
-=C-`=       : Toggle navigation sidebar
-=C-c C-p=   : Go to previous subsection
-=C-c C-n=   : Go to next subsection
-=C-c C-S-p= : Go to previous section
-=C-c C-S-n= : Go to next section
-=C-c t=     : Fold code blocks
-=C-c f=     : Filter block visibility (sidebar)
-=C-c C-v t= : Export (tangle) code
-=C-c C-v s= : Execute current subsection
-
-Before being able to use it, you need to execute the whole subtree using [[help:org-babel-execute-subtree][org-babel-execute-subtree]] (generally bound to =C-c C-v s=).
-
-*** Sidebar :INACTIVE:BINDING:
-
-This defines an org sidebar using imenu-list.
-
-#+name: my-org-sidebar
-#+begin_src emacs-lisp
-
-(require 'imenu)
-(require 'imenu-list)
-
-(defun my-org-tree-to-indirect-buffer ()
-  "Create indirect buffer, narrow it to current subtree and unfold blocks"
-
-  (org-tree-to-indirect-buffer)
-  (org-show-block-all)
-  (setq-local my-org-blocks-hidden nil))
-
-(defun my-org-sidebar ()
-  "Open an imenu list on the left that allow navigation."
-
-  (interactive)
-  (setq imenu-list-after-jump-hook #'my-org-tree-to-indirect-buffer
-        imenu-list-position 'left
-        imenu-list-size 36
-        imenu-list-focus-after-activation t)
-
-  (let ((heading (substring-no-properties (or (org-get-heading t t t t) ""))))
-    (when (buffer-base-buffer)
-      (switch-to-buffer (buffer-base-buffer)))
-    (imenu-list-minor-mode)
-    (imenu-list-stop-timer)
-    (hl-line-mode)
-    (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
-    (setq header-line-format
-          '(:eval
-            (nano-modeline-render nil
-                                  (buffer-name imenu-list--displayed-buffer)
-                                  "(outline)"
-                                  "")))
-    (setq-local cursor-type nil)
-    (when (> (length heading) 0)
-      (goto-char (point-min))
-      (search-forward heading)
-      (imenu-list-display-dwim))))
-
-#+end_src
-
-#+RESULTS: my-org-sidebar
-: my-org-sidebar
-
-This toggles the org-sidebar.
-
-#+name: org-sidebar-toggle
-#+begin_src emacs-lisp
-
-(defun my-org-sidebar-toggle ()
-  "Toggle the org-sidebar"
-
-  (interactive)
-  (if (get-buffer-window "*Ilist*")
-      (progn
-        (quit-window nil (get-buffer-window "*Ilist*"))
-        (switch-to-buffer (buffer-base-buffer)))
-    (my-org-sidebar)))
-
-#+end_src
-
-#+RESULTS: org-sidebar-toggle
-: my-org-sidebar-toggle
-
-Make sure tangle is applied to the base buffer and not the subtree.
-
-#+name: my-org-babel-tangle
-#+begin_src emacs-lisp
-
-(defun my-org-babel-tangle ()
-  "Write code blocks to source-specific files from the base buffer."
-
-  (interactive)
-  (with-current-buffer (or (buffer-base-buffer)
-                           (current-buffer))
-    (org-babel-tangle)))
-
-#+end_src
-
-#+RESULTS: my-org-babel-tangle
-: my-org-babel-tangle
-
-
-Toggle code blocks folding, starting folded.
-
-#+name: my-org-toggle-blocks
-#+begin_src emacs-lisp
-
-(defvar my-org-blocks-hidden nil)
-
-(defun my-org-toggle-blocks ()
-  "Toggle code blocks folding."
-
-  (interactive)
-  (if my-org-blocks-hidden
-      (org-show-block-all)
-    (org-hide-block-all))
-  (setq-local my-org-blocks-hidden (not my-org-blocks-hidden)))
-
-(add-hook 'config-mode-hook #'my-org-toggle-blocks)
-
-#+end_src
-
-#+RESULTS: my-org-toggle-blocks
-| my-org-toggle-blocks |
-
-
-#+begin_src emacs-lisp
-
-(defvar my-imenu-list-folding-status t
-  "Folding status of the imenu-list")
-
-(defun my-imenu-list-toggle-folding ()
-  "Toggle top level nodes of the imenu-list buffer"
-
-  (interactive)
-  (with-current-buffer "*Ilist*"
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward "^\\+ " nil t)
-        (if my-imenu-list-folding-status
-            (hs-hide-block)
-          (hs-show-block)))
-      (setq my-imenu-list-folding-status (not my-imenu-list-folding-status)))))
-
-(bind-key "S-<tab>" #'my-imenu-list-toggle-folding imenu-list-major-mode-map)
-
-#+end_src
-
-#+RESULTS:
-: my-imenu-list-toggle-folding
-
-Some information for when a top node is closed
-
-#+begin_src emacs-lisp
-
-(defun my-display-code-line-counts (ov)
-  (when (eq 'code (overlay-get ov 'hs))
-    (overlay-put ov 'display
-                 (propertize
-                  (format " [%d sections] … "
-                          (- (count-lines (overlay-start ov)
-                                          (overlay-end ov)) 1))
-                  'face 'nano-faded))))
-
-(setq hs-set-up-overlay #'my-display-code-line-counts)
-
-#+end_src
-
-#+RESULTS:
-: my-display-code-line-counts
-
-#+begin_src emacs-lisp
-
-(defun my-imenu-list-display-dwim ()
-  "Display or toggle the entry at `point'."
-  (interactive)
-  (save-selected-window
-    (save-excursion
-      (my-imenu-list-ret-dwim))))
-
-(defun my-imenu-list-ret-dwim ()
-  "Jump to or toggle the entry at `point'."
-  (interactive)
-  (save-excursion
-    (let ((entry (imenu-list--find-entry)))
-      (when (imenu--subalist-p entry)
-        (setq entry (cons
-                     (car entry)
-                     (get-text-property 0 'marker (car entry)))))
-      (imenu-list--goto-entry entry))))
-
-(bind-key "<SPC>" #'my-imenu-list-display-dwim imenu-list-major-mode-map)
-(bind-key "<return>" #'my-imenu-list-ret-dwim imenu-list-major-mode-map)
-
-#+end_src
-
-#+RESULTS:
-: my-imenu-list-ret-dwim
-
-
-*** Filter :INACTIVE:BINDING:
-
-This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries using the specified expression (e.g. "+HOOK +DEFER").
-
-#+begin_src emacs-lisp
-
-(bind-key "C-c f" #'my-org-imenu-filter)
-(bind-key "f" #'my-org-imenu-filter imenu-list-major-mode-map)
-(bind-key "U" #'imenu-list-refresh imenu-list-major-mode-map)
-
-#+end_src
-
-#+RESULTS:
-: imenu-list-refresh
-
-3 levels for org-imenu
-
-#+begin_src emacs-lisp
-
-(setq org-imenu-depth 3)
-
-#+end_src
-
-#+RESULTS:
-: 3
-
-
-#+begin_src emacs-lisp
-(require 'org)
-(require 'svg-tag-mode)
-
-(defvar my-org-imenu-filter-history
-  '("BINDING" "HOOK" "ADVICE" "FACE" "MODE" "DEFER"
-    "PERSONAL" "INACTIVE" "BUGFIX" "OTHER" "TIMER" "OS")
-  "Filter history list.")
-
-(with-eval-after-load 'org
-  (defvar my-org-imenu-filter-function
-    (cdr (org-make-tags-matcher "*"))
-    "Filter function to decide if a headline is kept"))
-
-(defun my-org-imenu-filter ()
-  "Define and apply a new filter"
-
-  (interactive)
-  (let* ((match (completing-read-multiple
-                 "FILTER: "
-                 my-org-imenu-filter-history
-                 nil nil nil
-                 'my-org-imenu-filter-history))
-         (match (mapconcat #'identity match " ")))
-    (when (string= "" match)
-      (setq match "*"))
-    (setq my-org-imenu-filter-function
-          (cdr (org-make-tags-matcher match)))
-    (imenu-list-refresh)))
-
-
-(defun my-org-imenu-filter-tree (&optional bound parent-match)
-  "Build a imenu list using current filter function"
-
-  (let* ((headlines '()))
-    (save-excursion
-      (org-with-wide-buffer
-       (unless bound
-         (setq bound (point-max))
-         (goto-char (point-min)))
-       (while (re-search-forward org-heading-regexp bound t)
-         (let* ((element (org-element-at-point))
-                (begin (org-element-property :begin element))
-                (end (org-element-property :end element))
-                (marker (copy-marker begin))
-                (level (org-element-property :level element))
-                (tags (save-excursion
-                        (goto-char begin)
-                        (org-get-tags)))
-                (match (save-excursion
-                         (goto-char begin)
-                         (funcall my-org-imenu-filter-function
-                                  nil (org-get-tags) level)))
-
-                (title (org-element-property :raw-value element))
-                (title (org-link-display-format
-                        (substring-no-properties title)))
-                (title (propertize title 'org-imenu-marker marker
-                                   'org-imenu t))
-                (title (if (member "INACTIVE" tags)
-                           (propertize title 'face 'nano-faded)
-                         title))
-                (svg-tags (mapconcat #'(lambda (tag)
-                                         (propertize tag 'display (svg-tag-make tag :face 'nano-faded)))
-                                     tags " "))
-                (title (if tags (format "%s %s" title svg-tags) title))
-                (title (propertize title 'marker marker))
-                (children (my-org-imenu-filter-tree end match)))
-           (goto-char end)
-
-           (cond ((> level org-imenu-depth)
-                  nil)
-                 ((> (length children) 0)
-                  (add-to-list 'headlines (append (list title) children) t))
-                 ((or match parent-match)
-                  (add-to-list 'headlines (cons title marker) t)))))))
-    headlines))
-
-(advice-add #'org-imenu-get-tree :override #'my-org-imenu-filter-tree)
-
-#+end_src
-
-#+RESULTS:
-
-*** Configuration mode :INACTIVE:
-
-This section defines the ~my-config-mode~ to ease navigating and interacting with the configuration file.
-
-Navigation commands using the ilist menu.
-
-#+begin_src emacs-lisp
-
-(defun my-config-mode-prev-header ()
-  "Move to previous header"
-
-  (interactive)
-  (with-current-buffer "*Ilist*"
-    (search-backward-regexp "^  ")
-    (imenu-list-display-dwim)))
-
-(defun my-config-mode-next-header ()
-  "Move to next header"
-
-  (interactive)
-  (with-current-buffer "*Ilist*"
-    (forward-line)
-    (search-forward-regexp "^  ")
-    (imenu-list-display-dwim)))
-
-(defun my-config-mode-prev-section ()
-  "Move to previous section"
-
-  (interactive)
-  (with-current-buffer "*Ilist*"
-    (search-backward-regexp "\\+ " nil nil 2)
-    (forward-line)
-    (imenu-list-display-dwim)))
-
-(defun my-config-mode-next-section ()
-  "Move to next section"
-
-  (interactive)
-  (with-current-buffer "*Ilist*"
-    (previous-line)
-    (search-forward-regexp "\\+ ")
-    (forward-line)
-    (imenu-list-display-dwim)))
-
-#+end_src
-
-#+RESULTS:
-: my-config-mode-next-section
-
-A minor mode for configuration
-
-#+name: config-mode
-#+begin_src emacs-lisp
-
-(define-minor-mode my-config-mode
-  "Configuration mode"
-
-  :init-value nil
-  :global nil
-  :keymap (let* ((map (make-sparse-keymap)))
-            (bind-key "C-c C-p"   #'my-config-mode-prev-header map)
-            (bind-key "C-c C-n"   #'my-config-mode-next-header map)
-            (bind-key "C-c C-S-p" #'my-config-mode-prev-section map)
-            (bind-key "C-c C-S-n" #'my-config-mode-next-section map)
-            (bind-key "C-`"       #'my-org-sidebar-toggle map)
-            (bind-key "C-c C-v t" #'my-org-babel-tangle map)
-            (bind-key "C-c t"     #'my-org-toggle-blocks map)
-            map)
-
-  (require 'org)
-  (if my-config-mode
-      (my-org-sidebar)))
-
-
-#+end_src
-
-
-
-A shortcut to edit configuration
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-(defun my-config ()
-  "Create a new for editing configuration"
-
-  (interactive)
-  (select-frame (make-frame '((name . "my-config")
-                              (width . 150)
-                              (height . 45))))
-  (find-file "~/Documents/GitHub/dotemacs/dotemacs.org")
-  (my-config-mode))
-
-#+end_src
-
-
-An autoload function for my-config (that will load org mode).
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(autoload 'my-config
-  (expand-file-name "init.el" user-emacs-directory)
-  "Autoloaded my-config command."
-  t)
-
-#+end_src
-
-#+RESULTS:
-
-*** Bugfix :BUGFIX:
-
-*Temporary bugfix* for babel emacs-lisp that does not take into account prologue/epilogue.
-See https://list.orgmode.org/CA+G3_PNrdhx0Ejzw8UO7DgZ+ju1B7Ar_eTch5MMViEpKGwqq3w@mail.gmail.com/T/
-(November 2020)
-
-#+name: org-babel-expand-body:emacs-lisp
-#+begin_src emacs-lisp
-
-(defun my-org-babel-expand-body:emacs-lisp (orig-fun body params)
-  "Expand BODY according to PARAMS and call original function with new body"
-
-  (let* ((pro (or (cdr (assq :prologue params)) ""))
-         (epi (or (cdr (assq :epilogue params)) ""))
-         (body (concat pro body epi)))
-    (apply orig-fun `(,body ,params))))
-
-(advice-add 'org-babel-expand-body:emacs-lisp
-            :around
-            #'my-org-babel-expand-body:emacs-lisp)
-
-#+end_src
-
-#+RESULTS: org-babel-expand-body:emacs-lisp
-
-
-Some compat tools do not work as expected:
-
-#+begin_src emacs-lisp
-
-(defun compat-executable-find (command &optional remote)
-  "Search for COMMAND in `exec-path' and return the absolute file name.
-Return nil if COMMAND is not found anywhere in `exec-path'.  If
-REMOTE is non-nil, search on the remote host indicated by
-`default-directory' instead."
-  (if (and remote (file-remote-p default-directory))
-      (let ((res (locate-file
-                  command
-                  (mapcar
-                   (lambda (x) (concat (file-remote-p default-directory) x))
-                   (exec-path))
-                  exec-suffixes 'file-executable-p)))
-        (when (stringp res) (file-local-name res)))
-    ;; Use 1 rather than file-executable-p to better match the
-    ;; behavior of call-process.
-    (let ((default-directory (file-name-quote default-directory 'top)))
-      (locate-file command exec-path exec-suffixes 1))))
-
-#+end_src
-
-Flyspell causes some problems. We try to fix them here
-
-
-#+begin_src emacs-lisp
-
-(defun flyspell() (flyspell-mode))
-
-#+end_src
-
-*** Auto-tangle
-
-Automatically tangle org-mode files with the option #+auto_tangle: t
-
-#+begin_src emacs-lisp
-
-;;(add-hook 'org-mode-hook 'org-auto-tangle-mode)
-
-#+end_src
-
-** Benchmark
-
-#+begin_src emacs-lisp
-
-(my-report-time "Personal library")
-
-#+end_src
-
-
-** Interface
-
-#+begin_src emacs-lisp
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** TODO Frame :BINDING:
-
-A [[help:make-frame][make-frame]] rewrite that creates the frame and switch to the ~*scratch*~ buffer.
-
-#+name: my-new-frame
-#+begin_src emacs-lisp
-
-(defun my-make-frame ()
-  "Create a new frame and switch to *scratch* buffer."
-
-  (interactive)
-  (select-frame (make-frame))
-  (switch-to-buffer "*scratch*"))
-
-#+end_src
-
-A function that close the current frame and kill emacs if it was the last frame.
-
-#+name: my-kill-emacs
-#+begin_src emacs-lisp
-
-(defun my-kill-emacs ()
-  "Delete frame or kill Emacs if there is only one frame."
-
-  (interactive)
-  (condition-case nil
-      (delete-frame)
-    (error (save-buffers-kill-terminal))))
-
-#+end_src
-
-Default frame geometry (large margin: 24 pixels).
-
-#+begin_src emacs-lisp
-
-(require 'frame)
-
-;; Default frame settings
-(setq default-frame-alist '((min-height . 1)  '(height . 45)
-                            (min-width  . 1)  '(width  . 81)
-                            (vertical-scroll-bars . nil)
-                            (internal-border-width . 24)
-                            (left-fringe . 0)
-                            (right-fringe . 0)
-                            (tool-bar-lines . 0)
-                            (menu-bar-lines . 0)))
-
-;; Default frame settings
-(setq initial-frame-alist default-frame-alist)
-
-
-#+end_src
-
-Frame related binding (self explanatory).
-
-#+begin_src emacs-lisp
-
-
-(bind-key "M-n"        #'my-make-frame `ergoemacs-override-keymap)
-(bind-key "C-x C-c"    #'my-kill-emacs `ergoemacs-override-keymap)
-(bind-key "M-`"        #'other-frame `ergoemacs-override-keymap)
-;; (bind-key "<M-return>" #'toggle-frame-maximize `ergoemacs-override-keymap)
-
-#+end_src
-
-For frame maximisation, we have to make a specific case for [[help:org-mode][org-mode]].
-
-#+begin_src emacs-lisp
-
-(with-eval-after-load 'org
-  (bind-key "<M-return>" #'toggle-frame-maximized 'org-mode-map))
-
-#+end_src
-
-** Window :BINDING:MODE:
-
-Margin and divider mode.
-
-#+begin_src emacs-lisp
-
-(setq-default window-divider-default-right-width 24
-              window-divider-default-places 'right-only
-              left-margin-width 0
-              right-margin-width 0
-              window-combination-resize nil) ; Do not resize windows proportionally
-
-(window-divider-mode 1)
-
-#+end_src
-
-Toggle the dedicated flag on the current window
-
-#+name: my-toggle-window-dedicated
-#+begin_src emacs-lisp
-
-;; Make a window dedicated
-(defun my-toggle-window-dedicated ()
-  "Toggle whether the current active window is dedicated or not"
-  (interactive)
-  (message
-   (if (let (window (get-buffer-window (current-buffer)))
-         (set-window-dedicated-p window (not (window-dedicated-p window))))
-       "Window '%s' is dedicated"
-     "Window '%s' is normal")
-   (current-buffer))
-  (force-window-update))
-
-(bind-key "C-c d" #'my-toggle-window-dedicated `ergoemacs-override-keymap)
-
-#+end_src
-
-Close the window and kill the buffer if its title matches a certain regular expression.
-This functionality is bound to ~C-w~.
-
-#+name: my-delete-window
-#+begin_src emacs-lisp
-(defvar my-kill-buffer-by-regexp "^\*.+\*" "Buffers whose name matches this regular expression are killed upon closing their window")
-
-(defun my-delete-window()
-  (interactive)
-  "Close the active window. If the buffer-name matches the my-kill-buffer-by-regexp variable, close the buffer first."
-  (let ((currently-active-windows (count-windows)))
-    (when (or (eq currently-active-windows 1)
-              (string-match my-kill-buffer-by-regexp (buffer-name)))
-      (ergoemacs-close-current-buffer))
-    (unless (eq currently-active-windows 1) (delete-window))))
-
-(bind-key "C-w" #'my-delete-window `ergoemacs-override-keymap)
-(bind-key "M-w" #'ergoemacs-close-current-buffer `ergoemacs-override-keymap)
-#+end_src
-
-** Buffer :BINDING:
-
-Size of temporary buffers
-
-#+begin_src emacs-lisp
-
-(temp-buffer-resize-mode)
-(setq temp-buffer-max-height 8)
-
-#+end_src
-
-Unique buffer names
-
-#+begin_src emacs-lisp
-
-(require 'uniquify)
-
-(setq uniquify-buffer-name-style 'reverse
-      uniquify-separator " • "
-      uniquify-after-kill-buffer-p t
-      uniquify-ignore-buffers-re "^\\*")
-
-#+end_src
-
-No question after killing a buffer (kill-buffer asks you which buffer to switch to)
-
-#+begin_src emacs-lisp
-
-(bind-key "C-x k" #'kill-current-buffer `ergoemacs-override-keymap)
-
-#+end_src
-** TODO Files :BINDING:PERSONAL:
-
-We first set some settings for dired,
-
-#+begin_src emacs-lisp
-
-(use-package dired
-  :bind
-  (nil
-   :map dired-mode-map
-   ("c"      . dired-do-copy)
-   ("/"      . dired-goto-file)
-   ("+"      . dired-create-empty-file)
-   ("n"      . dired-create-directory)
-   ("p"      . dired-insert-subdir)
-   ("d"      . dired-kill-subdir)
-   ("f"      . dired-find-file-other-window)
-   ("<up>"   . (lambda () (interactive) (dired-next-line -1)))
-   ("<down>" . dired-next-line)
-   ("<left>" . dired-up-directory)
-   ("x"      . dired-do-delete)
-   ("X"      . dired-do-flagged-delete))
-  :config
-  (setq dired-mouse-drag-files t) ; added in Emacs 29
-  (setq mouse-drag-and-drop-region-cross-program t) ; added in Emacs 29
-  (setq dired-kill-when-opening-new-dired-buffer t) ; added in Emacs 28
-  (setq dired-recursive-copies 'always)
-  (setq dired-recursive-deletes 'always)
-  (setq delete-by-moving-to-trash t)
-  (setq dired-dwim-target t)
-  (setq dired-listing-switches
-        "-g --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group"))
-
-#+end_src
-
-We define some standard directories.
-
-#+begin_src emacs-lisp
-
-(use-package files
-  :config
-  ;; (setq my-files-dir-alist
-  ;;       '(((title . "  Research")     (path . "~/Documents/mathematics/research"))
-  ;;         ((title . "  Teaching")     (path . "~/Documents/mathematics/research"))
-  ;;         ((title . "  Literature")   (path . "~/Documents/mathematics/literature"))
-  ;;         ((title . "  Notes")        (path . "~/Documents/org-files"))
-  ;;         ((title . "  Photos")       (path . "~/Documents/Pictures"))
-  ;;         ((title . "ﱘ  Music")        (path . "~/Documents/Music"))
-  ;;         ((title . "  Downloads")    (path . "~/Downloads"))))
-  (setq large-file-warning-threshold (* 16 1024 1024))
-  )
-
-#+end_src
-
-TODO: Defining a nano-modeline for the dirvish mode.
-
-#+begin_src emacs-lisp
-
-;; (defun my-nano-modeline-dirvish-list-mode-p ()
-;;   (derived-mode-p 'dirvish-mode)
-;;   )
-
-;; (defun my-nano-modeline-dirvish-list-mode (&optional icon)
-;;   (let* ((icon (or icon
-;;                    (plist-get (cdr (assoc 'dirvish-mode nano-modeline-mode-formats)) :icon)))
-;;          (cur-file-name (when dired-mode (dired-file-name-at-point)))
-;;          (cur-file-attr (when cur-file-name (file-attributes cur-file-name)))
-;;          (cur-file-last-acc (when cur-file-attr (file-attribute-access-time cur-file-attr)))
-;;          (cur-file-str (when cur-file-last-acc (concat cur-file-name " last accessed: " cur-file-last-acc)))
-;;          )(
-;;          (nano-modeline-render icon
-;;                                cur-file-name
-;;                                cur-file-last-acc
-;;                                ""))))
-#+end_src
-
-Thanks to dirvish, navigating through files is now like dancing.
-
-#+begin_src emacs-lisp
-
-(use-package dirvish
-  :hook ((dirvish-setup . dirvish-emerge-mode))
-  :bind
-  (:map ergoemacs-override-keymap
-        ("C-x d" . dirvish)
-        ("C-x D" . dirvish-side)
-        ("C-x a" . dirvish-quick-access)
-        :map dirvish-mode-map
-        ("SPC"      . consult-buffer)
-        ("C-<up>"   . dirvish-history-go-forward)
-        ("C-<down>" . dirvish-history-go-backward)
-        ("TAB"      . dirvish-subtree-toggle)
-        ("a"        . dirvish-quick-access)
-        ("p"        . dirvish-move)
-        ("P"        . dirvish-yank-menu)
-        ("f"        . dirvish-file-info-menu)
-        ("*"        . dirvish-mark-menu)
-        ("M-e"      . dirvish-emerge-menu)
-        ([remap dired-sort-toggle-or-edit] . dirvish-quicksort)
-        ([remap dired-do-redisplay] . dirvish-ls-switches-menu)
-        ([remap dired-do-copy] . dirvish-yank-menu))
-  :config
-  (dirvish-override-dired-mode)
-  (dirvish-define-preview exa (file)
-                          "Use `exa' to generate directory preview."
-                          :require ("exa")
-                          (when (file-directory-p file)
-                            `(shell . ("exa" "--color=always" "-al" "--group-directories-first" ,file))))
-  (add-to-list 'dirvish-preview-dispatchers 'exa)
-  ;; (add-to-list 'nano-modeline-mode-formats '(dirvish-mode
-  ;;                                            :mode-p my-nano-modeline-dirvish-list-mode-p
-  ;;                                            :format my-nano-modeline-dirvish-list-mode
-  ;;                                            :icon "") t)
-  (setq dirvish-quick-access-entries
-        '(("h" "~/"                                " Home")
-          ("e" "~/.emacs.d/    "                   " Emacs cache")
-          ("r" "~/Documents/mathematics/research"  " Research")
-          ("t" "~/Documents/mathematics/teaching"  " Teaching")
-          ("d" "~/Documents/organisation"          " Organisation")
-          ;; ("o" "fd -e org"   "All org files in ~/Documents") TODO
-          ("t" "~/.local/share/Trash/files/" "Trash")))
-  (setq dirvish-emerge-groups '(("Research documents"
-                                 (extensions "tex" "bib")
-                                 nil nil)
-                                ("Plaintext documents"
-                                 (extensions "pdf" "epub" "org" "txt")
-                                 nil nil)
-                                ("Recent files"
-                                 (predicate . recent-files-today)
-                                 nil nil)
-                                ("Directories"
-                                 (predicate . directories)
-                                 nil nil)
-                                ("Pictures"
-                                 (extensions "jpg" "png" "svg" "gif")
-                                 t t)
-                                ("Video"
-                                 (extensions "mp4" "mkv" "webm")
-                                 t t)
-                                ("Audio"
-                                 (extensions "mp3" "flac" "wav" "ape" "aac")
-                                 t t)
-                                ("Archives"
-                                 (extensions "gz" "rar" "zip")
-                                 t t)
-                                ("Auxiliary files"
-                                 (extensions "aux" "auxlock" "bbl" "blg" "fls" "log" "out" "latexmkrc")
-                                 t t)
-                                ("other files"
-                                 (regex . ".*")
-                                 t t)
-                                ))
-  (setq dirvish-open-with-programs
-        `((,dirvish-video-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))
-          (,dirvish-audio-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))))
-  (setq dirvish-attributes '(vc-state file-size git-msg subtree-state all-the-icons collapse))
-  (setq dirvish-all-the-icons-height 0.8)
-  (setq dirvish-side-attributes dirvish-attributes)
-  (setq dirvish-side-preview-dispatchers (append '(vc-diff) dirvish-preview-dispatchers))
-  (setq dirvish-side-display-alist '((side . left) (slot . -1) (window-width . 0.2)))
-  (setq dirvish-side-header-line-format '(:left (project) :right (vc-info)))
-  (setq dirvish-side-mode-line-format '(:left (sort omit) :right (index)))
-  )
-
-#+end_src
-
-Follow symlinks without prompt
-
-#+begin_src emacs-lisp
-
-(setq vc-follow-symlinks t)
-
-#+end_src
-
-** Dialogues :OS:
-
-Emacs can use a large number of dialogs and popups. Here we get rid of them.
-
-#+begin_src emacs-lisp
-
-(setq-default show-help-function nil    ; No help text
-              use-file-dialog nil       ; No file dialog
-              use-dialog-box nil        ; No dialog box
-              pop-up-windows nil)       ; No popup windows
-First we define a consisted set of faces for todo keywords. This is incorporated into the emacs default settings.
-
-#+NAME: todo-faces
-#+begin_src emacs-lisp :tangle no
-(defface todo-face '((t (:foreground "#fdf096"
-                                     :background "#494f67"
-                                     :weight semibold :inverse-video t)))
-  "A consistent emacs-wide TODO face") ;;straw-yellow and blackish-grey
-(defface next-face '((t (:foreground "#d65848"
-                                     :background "#494f67"
-                                     :weight semibold
-                                     :inverse-video t)))
-  "A consistent emacs-wide NEXT face") ;;aurora-red and blackish-grey
-(defface done-face '((t (:foreground "#97b578"
-                                     :background "#494f67"
-                                     :weight semibold
-                                     :inverse-video t)))
-  "A consistent emacs-wide DONE face") ;;emerald-green and blackish-grey
-(defface wait-face '((t (:foreground "#fdf096"
-                                       :background "#494f67"
-                                       :weight semibold
-                                       :inverse-video t)))
-  "A consistent emacs-wide WAIT face") ;;straw-yellow and blackish-grey
-(defface canceled-face '((t (:foreground "#edf0f2"
-                                         :background "#494f67"
-                                         :weight semibold
-                                         :inverse-video t)))
-  "A consistent emacs-wide CANCELED face") ;;skimmed-milk-white and blackish-grey
-#+end_src
-
-#+begin_src emacs-lisp
-(use-package hl-todo
-  :elpaca (:type git :host github :repo "tarsius/hl-todo")
-  :config
-  (setq hl-todo-exclude-modes nil)
-  (setq hl-todo-keyword-faces
-      '(("TODO"     . todo-face)
-        ("NEXT"     . next-face)
-        ("DONE"     . done-face)
-        ("WAIT"     . wait-face)
-        ("CANCELED" . canceled-face)))
-  (global-hl-todo-mode 1)
-  )
-#+end_src
-* Other visuals
-** TODO Nerd icons
-
-** Keyboard :MODE:
-
-The mode displays the key bindings following your currently entered incomplete command (a ;; prefix) in a popup.
-
-#+begin_src emacs-lisp
-
-(require 'which-key)
-
-(which-key-mode)
-
-#+end_src
-
-** Cursor :MODE:
-
-We set the appearance of the cursor: vertical line, 3 pixels thick, no blinking
-
-#+begin_src emacs-lisp
-
-(setq-default cursor-in-non-selected-windows nil ; Hide the cursor in inactive windows
-              cursor-type '(bar . 3)             ; Vertical cursor
-              cursor-intangible-mode t           ; Enforce cursor intangibility
-              x-stretch-cursor nil)
-                                        ; Don't stretch cursor to the glyph width
-
-(blink-cursor-mode 0)                            ; Blinking cursor
-
-#+end_src
-
-** Text :BINDING:
-
-Pretty self-explanatory
-
-#+begin_src emacs-lisp
-
-(setq-default use-short-answers t ; Replace yes/no prompts with y/n
-              confirm-nonexistent-file-or-buffer nil ; Ok to visit non existent files
-              words-include-escapes nil) ; Don't treat escape chars as part of words
-
-#+end_src
-
-Replace region when inserting text
-
-#+begin_src emacs-lisp
-
-(delete-selection-mode 1)
-
-#+end_src
-
-A smarter fill/unfill command
-
-#+begin_src emacs-lisp
-
-(defun my-fill-unfill ()
-  "Like `fill-paragraph', but unfill if used twice."
-
-  (interactive)
-  (let ((fill-column
-         (if (eq last-command #'my-fill-unfill)
-             (progn (setq this-command nil)
-                    (point-max))
-           fill-column)))
-    (call-interactively #'fill-paragraph)))
-
-(bind-key "M-q"  #'my-fill-unfill)
-;; (bind-key [remap fill-paragraph]  #'my-fill-unfill)
-
-#+end_src
-
-** Sound
-
-Disable the bell (auditory or visual).
-
-#+begin_src emacs-lisp
-
-(setq-default visible-bell nil             ; No visual bell
-              ring-bell-function 'ignore)  ; No bell
-
-#+end_src
-
-** Mouse :MODE:
-
-Mouse behavior can be finely controlled using the [[help:mouse-avoidance-mode][mouse-avoidance-mode]].
-
-#+begin_src emacs-lisp
-
-(setq-default mouse-yank-at-point t) ; Yank at point rather than pointer
-(mouse-avoidance-mode 'exile)        ; Avoid collision of mouse with point
-
-#+end_src
-
-Mouse active in tty mode.
-
-#+begin_src emacs-lisp
-
-(unless (display-graphic-p)
-  (xterm-mouse-mode 1)
-  (global-set-key (kbd "<mouse-4>") #'scroll-down-line)
-  (global-set-key (kbd "<mouse-5>") #'scroll-up-line))
-
-#+end_src
-
-** Scroll
-
-Smoother scrolling.
-
-#+begin_src emacs-lisp
-
-(setq-default scroll-conservatively 101       ; Avoid recentering when scrolling far
-              scroll-margin 2                 ; Add a margin when scrolling vertically
-              recenter-positions '(5 bottom)) ; Set re-centering positions
-
-#+end_src
-
-** Clipboard :OS:
-
-Allows system and Emacs clipboard to communicate smoothly (both ways)
-
-#+begin_src emacs-lisp
-
-(setq-default select-enable-clipboard t) ; Merge system's and Emacs' clipboard
-
-#+end_src
-
-Make sure clipboard works properly in tty mode on OSX.
-
-#+begin_src emacs-lisp
-
-(defun my-paste-from-osx ()
-  (shell-command-to-string "pbpaste"))
-
-(defun my-copy-to-osx (text &optional push)
-  (let ((process-connection-type nil))
-    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
-      (process-send-string proc text)
-      (process-send-eof proc))))
-
-(when (and (not (display-graphic-p))
-           (eq system-type 'darwin))
-  (setq interprogram-cut-function   #'my-copy-to-osx
-        interprogram-paste-function #'my-paste-from-osx))
-
-#+end_src
-
-** Help :BINDING:
-
-[[https://github.com/Wilfred/helpful][Helpful]] is an alternative to the built-in Emacs help that provides much more contextual information.
-It is a bit slow to load so we do need load it explicitely.
-
-#+begin_src emacs-lisp
-
-(setq help-window-select t)             ; Focus new help windows when opened
-
-(bind-key "C-h f"   #'helpful-callable) ; Look up callable
-(bind-key "C-h v"   #'helpful-variable) ; Look up variable
-(bind-key "C-h k"   #'helpful-key)      ; Look up key
-(bind-key "C-c C-d" #'helpful-at-point) ; Look up the current symbol at point
-(bind-key "C-h F"   #'helpful-function) ; Look up *F*unctions (excludes macros).
-(bind-key "C-h C"   #'helpful-command)  ; Look up *C*ommands.
-
-#+end_src
-
-** Benchmark
-
-#+begin_src emacs-lisp
-
-(my-report-time "Interface")
-
-#+end_src
-
-
-** Visual
-
-
-#+begin_src emacs-lisp
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** TODO Colours :MODE:TIMER:
-
-A consistent theme for GNU Emacs. The light theme is based on Material colors and the dark theme is based on Nord colors. The theme is based on a set of six faces (only).
-
-#+begin_src emacs-lisp
-
-(require 'nano-theme)
-(setq nano-fonts-use t) ; Use theme font stack
-;;(nano-mode)             ; Recommended settings
-
-
-(defun my-set-face (face style)
-  "Reset FACE and make it inherit STYLE."
-  (set-face-attribute face nil
-                      :foreground 'unspecified :background 'unspecified
-                      :family     'unspecified :slant      'unspecified
-                      :weight     'unspecified :height     'unspecified
-                      :underline  'unspecified :overline   'unspecified
-                      :box        'unspecified :inherit    style))
-(my-set-face 'italic 'nano-faded)
-
-#+end_src
-
-We define a set of colours as defined by Paul Tol in his blog [[https://personal.sron.nl/~pault/][]].
-
-#+begin_src emacs-lisp
-
-(setq bright-blue   '"#4477AA"
-      bright-cyan   '"#66CCEE"
-      bright-green  '"#228833"
-      bright-yellow '"#CCBB44"
-      bright-red    '"#EE6677"
-      bright-purple '"#AA3377"
-      bright-grey   '"#BBBBBB")
-
-(setq high-contrast-white  '"#FFFFFF"
-      high-contrast-yellow '"#DDAA33"
-      high-contrast-red    '"#BB5566"
-      high-contrast-blue   '"#004488"
-      high-contrast-black  '"#000000")
-
-(setq vibrant-blue    '"#0077BB"
-      vibrant-cyan    '"#33BBEE"
-      vibrant-teal    '"#009988"
-      vibrant-orange  '"#EE7733"
-      vibrant-red     '"#CC3311"
-      vibrant-magenta '"#EE3377"
-      vibrant-gray    '"#BBBBBB")
-
-(setq muted-indigo '"#332288"
-      muted-cyan   '"#88CCEE"
-      muted-teal   '"#44AA99"
-      muted-green  '"#117733"
-      muted-olive  '"#999933"
-      muted-sand   '"#DDCC77"
-      muted-rose   '"#CC6677"
-      muted-wine   '"#882255"
-      muted-purple '"#AA4499"
-      muted-gray   '"#DDDDDD")
-
-(setq medium-contrast-white        '"#FFFFFF"
-      medium-contrast-light-yellow '"#EECC66"
-      medium-contrast-light-red    '"#EE99AA"
-      medium-contrast-light-blue   '"#6699CC"
-      medium-contrast-dark-yellow  '"#997700"
-      medium-contrast-dark-red     '"#994455"
-      medium-contrast-dark-blue    '"#004488"
-      medium-contrast-black        '"#000000")
-
-(setq pale-blue   '"#BBCCEE"
-      pale-cyan   '"#CCEEFF"
-      pale-green  '"#CCDDAA"
-      pale-yellow '"#EEEEBB"
-      pale-red    '"#FFCCCC"
-      pale-gray   '"#DDDDDD")
-
-(setq dark-blue   '"#222255"
-      dark-cyan   '"#225555"
-      dark-green  '"#225522"
-      dark-yellow '"#666633"
-      dark-red    '"#663333"
-      dark-gray   '"#555555")
-
-(setq light-black  '"#454545"
-      light-blue   '"#77AADD"
-      light-cyan   '"#99DDFF"
-      light-mint   '"#44BB99"
-      light-pear   '"#BBCC33"
-      light-olive  '"#AAAA00"
-      light-yellow '"#EEDD88"
-      light-orange '"#EE8866"
-      light-pink   '"#FFAABB"
-      light-gray   '"#DDDDDD")
-
-(setq almost-black '"#111A1A"
-      almost-white '"#FBFAFC"
-      almost-blue  '"#4F5565"
-      almost-gray  '"#F1F1F1")
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(defun my-nano-light-muted ()
-  (nano-light)
-  (my-thin-modeline)
-  (set-face-attribute 'nano-critical   nil :foreground muted-rose)
-  (set-face-attribute 'nano-critical-i nil :background muted-rose)
-  (set-face-attribute 'nano-popout     nil :foreground vibrant-red)
-  (set-face-attribute 'nano-popout-i   nil :background vibrant-red)
-  (set-face-attribute 'nano-strong     nil :foreground almost-black)
-  (set-face-attribute 'nano-strong-i   nil :background almost-black)
-  (set-face-attribute 'nano-salient    nil :foreground medium-contrast-light-blue)
-  (set-face-attribute 'nano-salient-i  nil :background bright-blue)
-  (set-face-attribute 'nano-faded      nil :foreground dark-gray)
-  (set-face-attribute 'nano-faded-i    nil :background dark-gray)
-  (set-face-attribute 'nano-subtle     nil :foreground light-black)
-  (set-face-attribute 'nano-subtle     nil :background almost-gray)
-  (set-face-attribute 'nano-subtle-i   nil :foreground almost-gray)
-  (set-face-attribute 'nano-subtle-i   nil :background light-black)
-  (set-face-attribute 'nano-modeline-active nil :foreground almost-gray)
-  (set-face-attribute 'nano-modeline-active nil :background almost-blue)
-  (setopt nano-modeline-faces '((header-active nano-modeline-active)
-                                (header-inactive nano-modeline-inactive)
-                                (footer-active nano-modeline-active)
-                                (footer-inactive nano-modeline-inactive)
-                                (status-RW-active nano-modeline-status)
-                                (status-RO-active nano-modeline-status)
-                                (status-**-active nano-modeline-status nano-popout-i)
-                                (name-active bold)
-                                (primary-active)
-                                (secondary-active nano-modeline-active)))
-  )
-
-(defun my-nano-dark-muted ()
-  (nano-dark)
-  (my-thin-modeline)
-  (set-face-attribute 'nano-critical   nil :foreground muted-rose)
-  (set-face-attribute 'nano-critical-i nil :background muted-rose)
-  (set-face-attribute 'nano-popout     nil :foreground vibrant-red)
-  (set-face-attribute 'nano-popout-i   nil :background vibrant-red)
-  (set-face-attribute 'nano-strong     nil :foreground almost-white)
-  (set-face-attribute 'nano-strong-i   nil :background almost-white)
-  (set-face-attribute 'nano-salient    nil :foreground pale-cyan)
-  (set-face-attribute 'nano-salient-i  nil :background pale-cyan)
-  (set-face-attribute 'nano-faded      nil :foreground pale-blue)
-  (set-face-attribute 'nano-faded-i    nil :background pale-blue)
-  (set-face-attribute 'nano-subtle     nil :foreground almost-white)
-  (set-face-attribute 'nano-subtle     nil :background almost-blue)
-  (set-face-attribute 'nano-subtle-i   nil :foreground almost-blue)
-  (set-face-attribute 'nano-subtle-i   nil :background almost-white)
-  (set-face-attribute 'nano-modeline-active nil :background almost-blue)
-  (set-face-attribute 'nano-modeline-active nil :foreground almost-gray)
-  (setopt nano-modeline-faces '((header-active nano-modeline-active)
-                                (header-inactive nano-modeline-inactive)
-                                (footer-active nano-modeline-active)
-                                (footer-inactive nano-modeline-inactive)
-                                (status-RW-active nano-modeline-status)
-                                (status-RO-active nano-modeline-status)
-                                (status-**-active nano-modeline-status nano-popout-i)
-                                (name-active bold)
-                                (primary-active)
-                                (secondary-active nano-modeline-active)))
-  )
-
-(setq my-current-theme-light t)
-
-(defun my-toggle-theme ()
-  (interactive)
-  (if my-current-theme-light
-      (progn (setq my-current-theme-light nil)
-             (my-nano-dark-muted))
-    (setq my-current-theme-light t)
-    (my-nano-light-muted)))
-
-(bind-key "<f6>" #'my-toggle-theme ergoemacs-override-keymap)
-
-#+end_src
-
-** TODO Fonts :BUGFIX:
-
-This is the font stack we install:
-
-- Default font:  Roboto Mono 14pt Light       [[https://fonts.google.com/specimen/Roboto+Mono][]]
-- /Italic font/:   Victor Mono 14pt Semilight   [[https://github.com/rubjo/victor-mono][]]
-- *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]]
-- Unicode font:  Inconsolata 16pt Light       [[https://github.com/googlefonts/Inconsolata][]] TODO: Switch to Fira Code?
-- Icon font:     Roboto Mono Nerd 12pt Light  [[https://www.nerdfonts.com/][]]
-- Serif font:
-- math font:
-
-Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
-chosen to really *stand out* from the default font (Roboto Mono).
-┌─────────────────────────────────────────────────────────────────┐
-│   The quick brown fox jumps over the lazy dog                  │
-│   /The quick brown fox jumps over the lazy dog/                  ┼─ Victor Mono Italic
-│   *The quick brown fox jumps over the lazy dog*                  ├─ Roboto Mono Nerd
-└─┼─────────────────────────────────────┼─────────────────────────┘
-Roboto Mono Nerd                     Roboto Mono
-
-Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): \copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
-
-
-#+begin_src emacs-lisp
-(set-face-attribute 'default nil
-                    :family "Roboto Mono"
-                    :weight 'light
-                    :height 140)
-
-(set-face-attribute 'bold nil
-                    :family "Roboto Mono"
-                    :weight 'regular)
-
-(set-face-attribute 'italic nil
-                    :family "Victor Mono"
-                    :weight 'semilight
-                    :slant 'italic
-                    :height (lambda (x)
-                              (cond ((< x 100) (+ x 5))
-                                    ((and (>= x 100) (< x 110)) 110)
-                                    ((and (>= x 110) (< x 120)) 132)
-                                    ((and (>= x 120) (< x 130)) 132)
-                                    ((and (>= x 130) (< x 140)) 140)
-                                    ((and (>= x 140) (< x 150)) 150)
-                                    ((and (>= x 150) (< x 160)) 170)
-                                    ((and (>= x 160) (< x 170)) 180)
-                                    ((and (>= x 170) (< x 180)) 190)
-                                    ((and (>= x 180) (< x 190)) 200)
-                                    ((>= x 190) (round(* x 1.1)))))
-                    )
-
-
-(set-fontset-font t 'unicode "Roboto Mono Nerd")
-
-(set-fontset-font t '(#xe000 . #xffdd) "Roboto Mono Nerd")
-
-(set-fontset-font t 'emoji "Roboto Mono Nerd")
-
-#+end_src
-
-
-** Typography and layout
-
-#+begin_src emacs-lisp
-
-(setq-default fill-column 100                         ; Default line width
-              sentence-end-double-space nil           ; Use a single space after dots
-              bidi-paragraph-direction 'left-to-right ; Faster
-              truncate-string-ellipsis "…")           ; Nicer ellipsis
-
-#+end_src
-
-
-#+begin_src emacs-lisp
-
-(use-package visual-fill-column
-  :ensure adaptive-wrap
-  :custom (visual-fill-column-center-text t)
-  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
-          )
-  )
-
-#+end_src
-Changing the symbol for truncation (…) and wrap (↩).
-
-#+begin_src emacs-lisp
-
-(require 'nano-theme)
-
-;; Nicer glyphs for continuation and wrap
-(set-display-table-slot standard-display-table
-                        'truncation (make-glyph-code ?… 'nano-faded))
-
-(defface wrap-symbol-face
-  '((t (:family "Fira Code"
-                :inherit nano-faded)))
-  "Specific face for wrap symbol")
-
-(set-display-table-slot standard-display-table
-                        'wrap (make-glyph-code ?↩ 'wrap-symbol-face))
-
-#+end_src
-
-Fix a bug on OSX in term mode & zsh (spurious "%" after each command)
-
-#+begin_src emacs-lisp
-
-(when (eq system-type 'darwin)
-  (add-hook 'term-mode-hook
-            (lambda ()
-              (setq buffer-display-table (make-display-table)))))
-
-#+end_src
-
-Make sure underline is positioned at the very bottom.
-
-#+begin_src emacs-lisp
-
-(setq x-underline-at-descent-line nil
-      x-use-underline-position-properties t
-      underline-minimum-offset 10)
-
-#+end_src
-** Benchmark
-
-#+begin_src emacs-lisp
-
-(my-report-time "Visual")
-
-#+end_src
-
-
-** Editing
-
-#+begin_src emacs-lisp
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** Default mode :HOOK:MODE:
-
-Default & initial mode is text.
-
-#+begin_src emacs-lisp
-
-(setq-default initial-major-mode 'text-mode   ; Initial mode is text
-              default-major-mode 'text-mode)  ; Default mode is text
-
-#+end_src
-
-Visual line mode for prog and text modes
-
-#+begin_src emacs-lisp
-
-(add-hook 'text-mode-hook 'visual-line-mode)
-(add-hook 'prog-mode-hook 'visual-line-mode)
-
-#+end_src
-
-** Tabulations
-
-No tabulation, ever.
-
-#+begin_src emacs-lisp
-
-;; Let Emacs guess Python indent silently
-(setq python-indent-guess-indent-offset t
-      python-indent-guess-indent-offset-verbose nil)
-
-#+end_src
-
-** Parenthesis :MODE:
-
-We enable paren mode for highlighting matching parenthesis and rainbow-delimiters in order to be able to visually distinguish delimiters of different depths.
-
-#+begin_src emacs-lisp
-
-(use-package emacs
-  :init (show-paren-mode t); Matches parentheses and such in every mode
-  )
-
-(use-package rainbow-delimiters
-  :hook ((prog-mode org-mode LaTeX-mode) . rainbow-delimiters-mode)
-  )
-
-#+end_src
-
-We need a small helper to distinguish between words and special characters  which should be treated differently.
-
-
-#+begin_src emacs-lisp
-
-(defvar my-backward-special-characters '".,:;!?(){}[]~@#$%^&*<>_=-+\\\"' \n\t/`")
-
-
-(defun my-backward-word ()
-  " muW4e want to go back by words in a smart way"
-  (interactive)
-  (if (string-search (string (preceding-char)) my-backward-special-characters)
-      (backward-char)
-    (backward-word))
-  )
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(use-package puni
-  :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
-  :bind (:map puni-mode-map
-              ("C-<right>" . puni-slurp-forward)
-              ("C-<left>"  . puni-barf-forward)
-              ("M-<left>"  . puni-slurp-backward)
-              ("M-<right>" . puni-barf-backward)
-              ("C-x C-d"   . puni-splice)
-              ("M-i"       . puni-squeeze)
-              ("C-<up>"    . my-puni-rewrap)
-              ("<left>"    . my-backward-word)
-              ))
-
-(defun my-puni-rewrap ()
-  (interactive)
-  (let*((next-delimiters (completing-read
-                          "Rewrap the sexp at point with: "
-                          '("(...)" "{...}" "[...]" "\\langle...\\rangle" "\\|...\\|"  "<...>" "\\left(...\\right)" )
-                          nil
-                          t
-                          ))
-        (opening-del "A"))
-    (puni-squeeze)
-    (insert (car (split-string next-delimiters "\\.+" t)))
-    (yank)
-    (insert (car (cdr (split-string next-delimiters "\\.+" t))))))
-
-#+end_src
-
-** Spell-checking
-
-We set up multi-language lazy flyspell checks in text modes.
-
-Now we can set up flyspell and guess-language.
-
-#+begin_src emacs-lisp
-
-(use-package flyspell
-  :hook (text-mode org-mode latex-mode mu4e-compose-mode)
-  :config
-  (setq ispell-program-name "aspell")
-  (setq ispell-list-command "--list")
-  (setq ispell-alternate-dictionary "/usr/share/dict/en_GB.txt")
-  )
-
-;; (use-package flyspell-lazy
-;;   :after flyspell
-;;   :hook (text-mode org-mode latex-mode mu4e-compose-mode))
-
-(use-package flyspell-correct
-  :after flyspell
-  :bind (:map ergoemacs-override-keymap ("M-t" . flyspell-correct-wrapper)))
-
-;; (use-package flyspell-correct-popup
-;;   :after flyspell-correct)
-
-(use-package guess-language
-  :hook (mu4e-compose-mode . guess-language-mode)
-  :config
-  (setq guess-language-langcodes '((en . ("en_GB" "English"))
-                                   (de . ("de_DE" "German")))
-        guess-language-languages '(en de)
-        guess-language-min-paragraph-length 45))
-
-(use-package mu4e
-  :after flyspell
-  :init (setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify))
-#+end_src
-
-We use powerthesaurus for fancy word juggling.
-#+begin_src emacs-lisp
-
-;; (use-package powerthesaurus
-;;   :ensure jeison
-;;   )
-#+end_src
-
-** Imenu list
-
-Imenu setup
-
-#+begin_src emacs-lisp
-
-(require 'imenu-list)
-
-(setq-default imenu-list-position 'left
-              imenu-max-item-length 1000)
-
-#+end_src
-** Highlighting :MODE:INACTIVE:
-
-Highlighting of the current line (native mode)
-
-#+begin_src emacs-lisp
-
-;; (require 'hl-line)
-
-;; (global-hl-line-mode)
-
-#+end_src
-
-** PDF Tools
-
-For retina display (OSX)
-
-#+begin_src emacs-lisp
-;; (require 'pdf-tools)
-
-(add-hook 'doc-view-mode-hook 'pdf-tools-install)
-
-(setq-default pdf-view-use-scaling t
-              pdf-view-use-imagemagick nil)
-
-#+end_src
-
-** Benchmark
-
-#+begin_src emacs-lisp
-
-(my-report-time "Editing")
-
-#+end_src
-
-** Mail :DEFER:
-:PROPERTIES:
-:header-args:emacs-lisp: :prologue "(with-eval-after-load 'mu4e" :epilogue ")"
-:END:
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-** Setup :PERSONAL:BINDING:
-
-Mu4e doesn't come with an autoload function, we declare it here.
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(autoload 'mu4e
-  "/usr/share/emacs/site-lisp/mu4e/mu4e.el"
-  "Start mu4e daemon and show its main window." t)
-
-#+end_src
-
-# Lots of options. Make sure to adapt paths to your system.
-
-#+begin_src emacs-lisp
-(setq mu4e-mu-binary "/usr/bin/mu"
-      mu4e-maildir "~/Documents/.mails"
-      mu4e-attachment-dir "~/Downloads"
-      mu4e-get-mail-command "/usr/bin/offlineimap"
-
-      mu4e-update-interval 300            ; Update interval (seconds)
-      mu4e-index-cleanup t                ; Cleanup after indexing
-      mu4e-index-update-error-warning t   ; Warnings during update
-      mu4e-hide-index-messages t          ; Hide indexing messages
-      mu4e-index-update-in-background t   ; Background update
-      mu4e-index-lazy-check nil           ; Don't be lazy, index everything
-
-      ;;mu4e-confirm-quit nil
-      ;;mu4e-split-view 'single-window    ; Breaks the mu4e main page.
-
-      mu4e-headers-auto-update t                ; avoid to type `g' to update
-      mu4e-headers-date-format "%d-%m"
-      mu4e-headers-time-format "%H:%M"
-      mu4e-headers-from-or-to-prefix '("" . "To ")
-      mu4e-headers-include-related t
-      mu4e-headers-skip-duplicates t
-
-      mu4e-view-show-images t                   ; show images in the view buffer
-      mu4e-use-fancy-chars t                    ; allow fancy icons for mail threads
-      mu4e-view-html-plaintext-ratio-heuristic  most-positive-fixnum
-      mu4e-html2text-command 'mu4e-shr2text
-      shr-use-fonts nil   ; Simple HTML Renderer / no font
-      shr-use-colors nil) ; Simple HTML Renderer / no color
-
-#+end_src
-We bind mu4e to M-m.
-#+begin_src emacs-lisp
-(bind-key (kbd "M-m") #'mu4e 'ergoemacs-override-keymap)
-#+end_src
-How to handle various MIME data.
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(require 'mailcap)
-
-(push '((viewer . "open %s 2> /dev/null &")
-        (type . "application/pdf")
-        (test . window-system))
-      mailcap-user-mime-data)
-
-(when (fboundp 'imagemagick-register-types)
-  (imagemagick-register-types))
-
-#+end_src
-
-Some bindings to avoid confirmation for execution (headers and message view)
-
-#+begin_src emacs-lisp
-(require 'mu4e)
-(bind-key "x" (lambda() (interactive) (mu4e-mark-execute-all t)) mu4e-headers-mode-map)
-(bind-key "x" (lambda() (interactive) (mu4e-mark-execute-all t)) mu4e-view-mode-map)
-
-#+end_src
-
-** Accounts :PERSONAL:
-
-*** General
-
-We will rely on mu4e as our mail user agent.
-
-#+begin_src emacs-lisp
-(setq mail-user-agent 'mu4e-user-agent)
-#+end_src
-
-General information about me.
-
-#+begin_src emacs-lisp
-
-;; User name
-(setq user-full-name "Sebastian Halbig")
-
-;; Main user mail address
-(setq user-mail-address "SebastianHalbig@gmx.de")
-
-;; Common signature for all accounts.
-(setq mu4e-signature (concat
-                      "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
-                      "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
-                      "Hans-Meerwein-Straße 6 Room 04C35, 35043 Marburg\n"
-                      "BBB home room: https://webconf.hrz.uni-marburg.de/d/seb-omn-wqu-r6k"))
-
-#+end_src
-
-Because we'll use mu4e-contexts, we reset single account settings.
-
-#+begin_src emacs-lisp
-
-(setq mu4e-contexts nil
-      mu4e-drafts-folder nil
-      mu4e-compose-reply-to-address nil
-      mu4e-compose-signature t
-      mu4e-compose-signature-auto-include t
-      mu4e-sent-folder nil
-      mu4e-trash-folder nil)
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(setq mu4e-context-policy 'pick-first  ; How to determine context when entering headers view
-      mu4e-compose-context-policy nil) ; Do not modify context when composing
-
-#+end_src
-
-Refile/archive depending on the context (via maildir)
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-refile-folder (msg)
-  "Contextual refile"
-
-  (let (
-        (maildir (mu4e-message-field msg :maildir))
-        (tags (mu4e-message-field msg :tags))
-        (subfolder "saved")
-        )
-    (cond
-     ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
-     ((member "INFO" tags) (setq subfolder "info"))
-     ((member "TEACHING" tags) (setq subfolder "teaching"))
-     ((member "RESEARCH" tags) (setq subfolder "research"))
-     ((member "INVOICE" tags) (setq subfolder "invoice"))
-     )
-    (concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
-    ))
-
-(setq mu4e-refile-folder 'my-mu4e-refile-folder)
-
-(add-to-list 'mu4e-marks
-             '(archive
-               :char       "r"
-               :prompt     "Archive"
-               :dyn-target (lambda (target msg) (my-mu4e-refile-folder msg))
-               :action      (lambda (docid msg target)
-                              (mu4e--server-move docid (my-mu4e-refile-folder msg) "+S-u-N")
-                              )))
-
-
-(mu4e~headers-defun-mark-for archive)
-(define-key mu4e-headers-mode-map (kbd "r") 'mu4e-headers-mark-for-archive)
-
-#+end_src
-
-Move emails to the relative spam folder.
-
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-spam-folder (msg)
-  "Contextual spam handling"
-
-  (let ((maildir (mu4e-message-field msg :maildir)))
-    (concat "/" (nth 1 (split-string maildir "/")) "/spam")))
-
-(setq mu4e-spam-folder 'my-mu4e-spam-folder)
-
-#+end_src
-
-
-*** Web :PERSONAL:
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-contexts
-             (make-mu4e-context
-              :name "Spam"
-              :enter-func (lambda () (mu4e-message "Entering Spam context"))
-              :leave-func (lambda () (mu4e-message "Leaving Spam context"))
-              :match-func (lambda (msg)
-                            (when msg (mu4e-message-contact-field-matches msg
-                                                                          :to "xolotl.spam@web.de")))
-              :vars `((user-mail-address . "xolotl.spam@web.de"  )
-                      (user-full-name . "Sebastian Halbig" )
-                      (mu4e-compose-signature . nil)
-                      (mu4e-sent-folder . "/Web/sent")
-                      (mu4e-trash-folder . "/Web/trash")
-                      (mu4e-drafts-folder . "/Web/drafts")
-                      (mu4e-maildir-shortcuts . (("/Web/inbox" . ?i)
-                                                 ("/Web/archive" . ?a)
-                                                 ("/Web/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.staff.uni-marburg.de")
-                      (smtpmail-stream-type . starttls)
-                      (smtpmail-smtp-service . 587))))
-
-#+end_src
-
-*** Dresden(deprecated) :PERSONAL:DEPRECATED:
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-contexts
-             (make-mu4e-context
-              :name "TUDresden"
-              :enter-func (lambda () (mu4e-message "Entering Dresden(deprecated) context"))
-              :leave-func (lambda () (mu4e-message "Leaving Dresden(deprecated) context"))
-              :match-func (lambda (msg)
-                            (when msg (mu4e-message-contact-field-matches msg
-                                                                          :to "sebastian.halbig@tu-dresden.de")))
-              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
-                      (user-full-name . "Sebastian Halbig" )
-                      (mu4e-compose-signature . nil)
-                      (mu4e-sent-folder . "/TUD/sent")
-                      (mu4e-trash-folder . "/TUD/trash")
-                      (mu4e-drafts-folder . "/TUD/drafts")
-                      (mu4e-maildir-shortcuts . (("/TUD/inbox" . ?i)
-                                                 ("/TUD/archive" . ?a)
-                                                 ("/TUD/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.uni-marburg.de")
-                      (smtpmail-stream-type . starttls)
-                      (smtpmail-smtp-service . 587))))
-
-#+end_src
-
-*** Private :PERSONAL:
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-contexts
-             (make-mu4e-context
-              :name "GMX"
-              :enter-func (lambda () (mu4e-message "Entering GMX context"))
-              :leave-func (lambda () (mu4e-message "Leaving GMX context"))
-              :match-func (lambda (msg)
-                            (when msg (mu4e-message-contact-field-matches msg
-                                                                          :to "sebastianhalbig@gmx.de")))
-              :vars `((user-mail-address . "SebastianHalbig@gmx.de"  )
-                      (user-full-name . "Sebastian Halbig" )
-                      (mu4e-compose-signature . nil)
-                      (mu4e-sent-folder . "/GMX/sent")
-                      (mu4e-trash-folder . "/GMX/trash")
-                      (mu4e-drafts-folder . "/GMX/drafts")
-                      (mu4e-maildir-shortcuts . (("/GMX/inbox" . ?i)
-                                                 ("/GMX/archive" . ?a)
-                                                 ("/GMX/sent" . ?s)))
-                      (smtpmail-smtp-server . "mail.gmx.net")
-                      (smtpmail-stream-type . starttls)
-                      (smtpmail-smtp-service . 587))))
-
-#+end_src
-*** TODO Marburg-Internal :PERSONAL:
-
-Currently we reroute the mail to the main account to avoid a bug of the mail server.
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-contexts
-             (make-mu4e-context
-              :name "Internal-Marburg"
-              :enter-func (lambda () (mu4e-message "Entering Marburg(general) context"))
-              :leave-func (lambda () (mu4e-message "Leaving Marburg(general) context"))
-              :match-func (lambda (msg)
-                            (when msg (mu4e-message-contact-field-matches msg
-                                                                          :to "halbigs@mathematik.uni-marburg.de")))
-              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de") ;;"halbigs@mathematik.uni-marburg.de"
-                      (user-full-name . "Sebastian Halbig")
-                      (mu4e-compose-signature . ,mu4e-signature)
-                      (mu4e-sent-folder . "/MarburgInternal/sent")
-                      (mu4e-trash-folder . "/MarburgInternal/trash")
-                      (mu4e-drafts-folder . "/MarburgInternal/drafts")
-                      (mu4e-maildir-shortcuts . (("/MarburgInternal/inbox" . ?i)
-                                                 ("/MarburgInternal/archive" . ?a)
-                                                 ("/MarburgInternal/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.uni-marburg.de") ;; "smtp.mathematik.uni-marburg.de"
-                      (smtpmail-stream-type . starttls)
-                      (smtpmail-smtp-service . 587))))
-
-#+end_src
-*** Marburg :PERSONAL:
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-contexts
-             (make-mu4e-context
-              :name "Marburg"
-              :enter-func (lambda () (mu4e-message "Entering Marburg(general) context"))
-              :leave-func (lambda () (mu4e-message "Leaving Marburg(general) context"))
-              :match-func (lambda (msg)
-                            (when msg (mu4e-message-contact-field-matches msg
-                                                                          :to "Sebastian.Halbig@uni-marburg.de")))
-              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
-                      (user-full-name . "Sebastian Halbig")
-                      (mu4e-compose-signature . ,mu4e-signature)
-                      (mu4e-sent-folder . "/Marburg/sent")
-                      (mu4e-trash-folder . "/Marburg/trash")
-                      (mu4e-drafts-folder . "/Marburg/drafts")
-                      (mu4e-maildir-shortcuts . (("/Marburg/inbox" . ?i)
-                                                 ("/Marburg/archive" . ?a)
-                                                 ("/Marburg/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.uni-marburg.de")
-                      (smtpmail-stream-type . starttls)
-                      (smtpmail-smtp-service . 587))))
-
-#+end_src
-** TODO Contacts :INACTIVE:
-
-In the future we will use org-contacts and based on them individual greetings and signatures.
-
-#+begin_src emacs-lisp
-(use-package org
-  :ensure org-contacts
-  :after org
-  :custom (org-contacts-files '("~/Documents/org-files/contacts.org")))
-#+end_src
-** Encryption
-
-See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(require 'epg-config)
-
-(setq epg-gpg-program "/usr/bin/gpg"        ; What gpg program to use
-      epg-user-id "Sebastian Halbig <Sebastian.Halbig@uni-marburg.de>" ; GnuPG ID of your default identity
-      mml2015-use 'epg                      ; The package used for PGP/MIME.
-      mml2015-encrypt-to-self t             ; Add our own key ID to recipient list
-      mml2015-sign-with-sender t)           ; Use message sender to find a key to sign with.
-
-;;(setq epa-file-cache-passphrase-for-symmetric-encryption nil)
-(require 'epa-file)
-(epa-file-enable)
-(setq epa-file-select-keys nil)
-(setq epa-pinentry-mode 'loopback)
-(pinentry-start)
-
-#+end_src
-
-** TODO Read :BINDING:FACE:
-
-Various settings
-
-#+begin_src emacs-lisp
-
-(setq mu4e-show-images t
-      mu4e-use-fancy-chars nil
-      mu4e-view-html-plaintext-ratio-heuristic  most-positive-fixnum
-      mu4e-html2text-command 'mu4e-shr2text
-      shr-use-fonts nil   ; Simple HTML Renderer / no font
-      shr-use-colors nil) ; Simple HTML Renderer / no color
-
-#+end_src
-
-n/p for nevigating unread mails
-
-#+begin_src emacs-lisp
-
-(bind-key "n" #'mu4e-headers-next-unread mu4e-headers-mode-map)
-(bind-key "p" #'mu4e-headers-prev-unread mu4e-headers-mode-map)
-
-#+end_src
-
-Custom faces
-
-#+begin_src emacs-lisp
-
-(set-face-attribute 'mu4e-system-face nil :inherit 'nano-critical)
-(set-face-attribute 'mu4e-header-marks-face nil :inherit 'nano-critical)
-(set-face-attribute 'mu4e-header-highlight-face nil :inherit 'nano-salient-i)
-
-#+end_src
-** TODO Write :HOOK:BINDING:
-
-See www.gnu.org/software/emacs/manual/html_node/message/Insertion-Variables.html
-We try to sign all mails. Encryption should also be managed automatically
-
-#+begin_src emacs-lisp
-
-(setq message-send-mail-function 'smtpmail-send-it
-      smtpmail-servers-requiring-authorization '".*"
-      message-cite-reply-position 'below
-      message-citation-line-format "%N [%Y-%m-%d at %R] wrote:"
-      message-citation-line-function 'message-insert-formatted-citation-line
-      message-yank-prefix       "> "
-      message-yank-cited-prefix "> "
-      message-yank-empty-prefix "> "
-      message-indentation-spaces 1
-      message-kill-buffer-on-exit t
-
-      mu4e-compose-format-flowed t
-      mu4e-compose-complete-only-personal t
-      ;; mu4e-compose-complete-only-after "2021-01-01" ; Limit address auto-completion
-      mu4e-compose-dont-reply-to-self t
-      mu4e-compose-crypto-reply-policy 'sign-and-encrypt)
-
-(add-hook 'message-send-hook 'mml-secure-message-sign-pgpmime)
-
-#+end_src
-
-Setting up mail composition with org mode.
-
-#+name: my-mu4e-compose-hook
-#+begin_src emacs-lisp
-
-(defun my-mu4e-compose-hook ()
-  "Settings for message composition."
-
-  (auto-save-mode -1)
-  (set-fill-column 80)
-  (delete-other-windows)
-  ;;(auto-fill-mode)
-  (setq flyspell-generic-check-word-predicate
-        'mail-mode-flyspell-verify))
-
-(add-hook 'mu4e-compose-mode-hook #'my-mu4e-compose-hook)
-
-#+end_src
-
-
-#+begin_src emacs-lisp
-(use-package org-msg
-  :preface
-  (defun org-msg-no-temp-buffer (orig-fun &rest args)
-    "Advice to set `org-export-show-temporary-export-buffer' to `nil'."
-    (let ((org-export-show-temporary-export-buffer nil))
-      (apply orig-fun args)))
-  :hook (mu4e-main-mode . org-msg-mode)
-  :config
-  (setq org-msg-startup "content"
-        org-msg-options "toc:nil author:nil email:nil \\n:t broken-links:t"
-        org-msg-greeting-fmt "\nHi%s,\n\n"
-        org-msg-greeting-name-limit 3
-        org-msg-default-alternatives '((new        . (utf-8))
-                                       (reply-to-html . (utf-8))
-                                       (reply-to-text . (utf-8)))
-        org-msg-convert-citation t
-        org-msg-signature "" )
-  (advice-add 'org-msg-preview :around #'org-msg-no-temp-buffer)
-  (advice-add 'org-msg-ctrl-c-ctrl-c :around #'org-msg-no-temp-buffer)
-  (add-hook 'message-sent-hook
-            (lambda ()
-              (interactive)
-              (switch-to-buffer "*mu4e-article*")
-              (mu4e-view-quit)
-              (kill-buffer "*Org ASCII Export*"))))
-
-(add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*")))
-
-
-#+end_src
-
-** Bookmarks
-
-#+begin_src emacs-lisp
-
-(setq mu4e-bookmarks
-      '((:name "Unread"
-               :key ?u
-               :show-unread t
-               :query "flag:unread AND (m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox) AND NOT flag:trashed")
-
-        (:name "Inbox"
-               :key ?i
-               :show-unread t
-               :query "m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox")
-
-        (:name "Today"
-               :key ?t
-               :show-unread t
-               :query "date:today..now")
-
-        (:name "Last week"
-               :key ?w
-               :hide-unread t
-               :query "date:7d..now")
-
-        (:name "Sent"
-               :key ?s
-               :show-unread nil
-               :query "from:Sebastian.Halbig or from:halbigs or from: SebastianHalbig")
-
-        (:name "Drafts"
-               :key ?d
-               :hide-unread t
-               :query "flag:draft")
-
-        (:name "Next"
-               :key ?N
-               :show-unread t
-               :query "tags:NEXT")
-
-        (:name "Todo"
-               :key ?T
-               :show-unread t
-               :query "tags:TODO")
-
-        (:name "Done"
-               :key ?D
-               :show-unread t
-               :query "tags:DONE")
-        ))
-#+end_src
-
-** Tags :BINDING:
-
-This provides a tag action inside the mu4e headers view to quickly tag message. Tags are saved in the ~mu4e-tag-history~ variable that is also saved from one session to the other. We use the ~consult-completing-read-multiple~ function to read tags.
-
-
-#+begin_src emacs-lisp
-
-(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE")
-  "Mu4e tag history list.")
-
-(add-to-list 'savehist-additional-variables 'mu4e-tag-history)
-
-(put 'mu4e-tag-history 'history-length 5)
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(defun add-to-mu4e-tag-history (tag)
-  "Add the new tags to the history"
-  (add-to-list 'mu4e-tag-history tag))
-
-#+end_src
-
-Here is the actual tag action
-
-#+begin_src emacs-lisp
-
-(defun mu4e-tag-read (target msg)
-  "Ask for tags to be added and/or removed."
-  (let* ((tags nil)
-         (old-tags (mu4e-message-field msg :tags))
-         (new-tags (completing-read-multiple
-                    "TAGS: "
-                    mu4e-tag-history
-                    nil
-                    nil
-                    (mapconcat #'identity old-tags ",")
-                    ;; 'mu4e-tag-history
-                    )))
-    (dolist (tag old-tags)
-      (let ((tag (string-trim tag)))
-        (if (and (> (length tag) 0)
-                 (not (member tag new-tags)))
-            (push (concat "-" tag) tags))))
-    (dolist (tag new-tags)
-      (let ((tag (string-trim tag)))
-        (if (and (> (length tag) 0)
-                 (not (member tag old-tags)))
-            (progn
-              (add-to-mu4e-tag-history tag)
-              (push (concat "+" tag) tags)))))
-    (mapconcat #'identity tags ",")))
-
-;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
-;; I Did not find a way to cancel the marks
-(add-to-list 'mu4e-marks
-             '(tag
-               :char       "g"
-               :prompt     "gtag"
-               :dyn-target mu4e-tag-read
-               :action      (lambda (docid msg target)
-                              (when (> (length target) 0)
-                                (mu4e-action-retag-message msg target)))))
-
-;; Tell mu4e about the new mark
-;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
-(mu4e~headers-defun-mark-for tag)
-
-#+end_src
-
-We bind the tagging with the "g" key in mu4e-headers-mode.
-
-#+begin_src emacs-lisp
-
-(bind-key "g" #'mu4e-headers-mark-for-tag mu4e-headers-mode-map)
-
-#+end_src
-
-** Folding :FACE:
-
-Some face specification for folding.
-
-#+begin_src emacs-lisp
-
-(require 'mu4e-folding)
-
-(set-face-attribute 'mu4e-folding-root-folded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-(set-face-attribute 'mu4e-folding-root-unfolded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-(set-face-attribute 'mu4e-folding-child-folded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-(set-face-attribute 'mu4e-folding-child-unfolded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-
-#+end_src
-
-** Spam handling :BINDING:
-
-We move messages automatically to the "correct" spam folder.
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-marks
-             '(spam
-               :char       "k"
-               :prompt     "Spam"
-               :dyn-target (lambda (target msg) (my-mu4e-spam-folder msg))
-               ;; :show-target (lambda (target) "Spam")
-               :action      (lambda (docid msg target)
-                              ;; (message (symbol-value msg))
-                              (mu4e--server-move docid (my-mu4e-spam-folder msg) "+S-u-N")
-                              )))
-
-(mu4e~headers-defun-mark-for spam)
-
-
-#+end_src
-
-We bind spam handling to the "k"-key.
-
-#+begin_src emacs-lisp
-
-(define-key mu4e-headers-mode-map (kbd "k") 'mu4e-headers-mark-for-spam)
-
-#+end_src
-
-** Layout for mu4e :HOOK:BINDING:
-*** Headers
-
-#+begin_src emacs-lisp
-
-(setq mu4e-headers-fields
-      '((:my-flags      . 2)
-        (:my-from       . 25)
-        (:my-subject    . 70)
-        (:my-tags       . 10)
-        (:my-date       . 14)))
-
-
-(setq mu4e-headers-thread-root-prefix          '(""   . "")
-      mu4e-headers-thread-first-child-prefix   '(""   . "")
-      mu4e-headers-thread-child-prefix         '(""   . "")
-      mu4e-headers-thread-last-child-prefix    '(""   . "")
-      mu4e-headers-thread-connection-prefix    '("| " . "| ")
-      mu4e-headers-thread-blank-prefix         '(""   . "")
-      mu4e-headers-thread-orphan-prefix        '(""   . "")
-      mu4e-headers-thread-single-orphan-prefix '(""   . "")
-      mu4e-headers-thread-duplicate-prefix     '("="  . "="))
-
-(plist-put (cdr (assq 'refile   mu4e-marks)) :char "")
-(plist-put (cdr (assq 'trash    mu4e-marks)) :char "")
-(plist-put (cdr (assq 'action   mu4e-marks)) :char "")
-(plist-put (cdr (assq 'untrash  mu4e-marks)) :char "")
-(plist-put (cdr (assq 'delete   mu4e-marks)) :char "×")
-(plist-put (cdr (assq 'flag     mu4e-marks)) :char "")
-(plist-put (cdr (assq 'unflag   mu4e-marks)) :char "類")
-(plist-put (cdr (assq 'move     mu4e-marks)) :char "")
-(plist-put (cdr (assq 'tag      mu4e-marks)) :char "")
-(plist-put (cdr (assq 'spam     mu4e-marks)) :char "")
-
-#+end_src
-
-**** Colorisation of recent emails
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-colorise (item msg)
-  "Colorise item depending on whe msg was received"
-
-  (let* ((recent (* 5 60)) ;; 5 minutes
-         (now (current-time))
-         (unread (mu4e-message-field msg :unread))
-         (date (mu4e-message-field msg :date))
-         (delta (float-time (time-subtract now date))))
-    (if (and (< delta recent) unread)
-        (propertize item 'face 'nano-salient)
-      item)))
-
-#+end_src
-
-**** Date (custom info)
-
-#+begin_src emacs-lisp
-
-(require 'relative-date)
-
-(defun my-mu4e-headers-date (msg)
-  (let* ((date (mu4e-message-field msg :date)))
-    (my-mu4e-headers-colorise
-     (format "%12s" (relative-date date)) msg)))
-
-(add-to-list 'mu4e-header-info-custom
-             '(:my-date . (:name "my-date"
-                                 :shortname "D"
-                                 :function my-mu4e-headers-date)))
-#+end_src
-
-**** From (custom info)
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-from (msg)
-  (let* ((from        (my-mu4e-get-sender msg))
-         (meta        (when msg (mu4e-message-field msg :meta)))
-         (root        (when meta (plist-get meta :root)))
-         (orphan      (when meta (plist-get meta :orphan)))
-         (first-child (when meta (plist-get meta :first-child)))
-         (has-child   (when meta (plist-get meta :has-child)))
-         (root        (when meta (plist-get meta :root)))
-         (from        (cond ((and root has-child)       (concat " " from))
-                            ((and orphan first-child)   (concat " " from))
-                            ((and root (not has-child)) (concat "" from))
-                            (t                          (concat "│ " from)))))
-    (my-mu4e-headers-colorise from msg)))
-
-(add-to-list 'mu4e-header-info-custom
-             '(:my-from . (:name "my-from"
-                                 :shortname "F"
-                                 :function my-mu4e-headers-from)))
-
-#+end_src
-
-**** Flags (custom info)
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-flags (msg)
-  (let* ((size (mu4e-message-field msg :size))
-         (flags (cond ((memq 'flagged   (mu4e-message-field msg :flags)) "")
-                      ((and (> size 256000)
-                            (memq 'attach    (mu4e-message-field msg :flags))) "")
-                      ((memq 'replied   (mu4e-message-field msg :flags)) "")
-                      ((memq 'draft     (mu4e-message-field msg :flags)) "")
-                      ((memq 'trashed   (mu4e-message-field msg :flags)) "")
-                      ((memq 'encrypted (mu4e-message-field msg :flags)) "")
-                      (t ""))))
-    (my-mu4e-headers-colorise flags msg)))
-
-(add-to-list 'mu4e-header-info-custom
-             '(:my-flags . (:name "my-flags"
-                                  :shortname "F"
-                                  :function my-mu4e-headers-flags)))
-
-#+end_src
-
-**** Tags (custom info)
-
-We want pretty tags to get a good overview what an email is about.
-This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we replace tags by their symbols
-
-#+begin_src emacs-lisp
-
-(defvar my-prettify-tag-alist
-  '(("RESEARCH"       . "")
-    ("PENDING"        . "")
-    ("INVOICE"        . "")
-    ("SAVE"           . "")
-    ("TEACHING"       . "")
-    ("INFO"           . "")
-    ("ORGANISATIONAL" . "")))
-
-(defun my-prettify-tag (tag)
-  "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
-  (let* ((local-tag tag)
-         (prettified-tag (car (split-string local-tag ","))))
-    (dolist (sym-pair my-prettify-tag-alist)
-      (when (string= prettified-tag (car sym-pair))
-        (setq prettified-tag (cdr sym-pair)))
-      )
-    prettified-tag
-    ))
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(defface mu4e-tag-face
-  '((t :inherit (nano-salient)))
-  "Face for message tags"
-  :group 'mu4e-faces)
-
-(defun my-mu4e-headers-tags (msg)
-  (let* ((tags (mu4e-message-field msg :tags)))
-    (if tags
-        (propertize (format "%s" (mapconcat #'my-prettify-tag tags " "))
-                    'face 'mu4e-tag-face)
-      "")))
-(add-to-list 'mu4e-header-info-custom
-             '(:my-tags . (:name "my-tags"
-                                 :shortname "T"
-                                 :function my-mu4e-headers-tags)))
-
-#+end_src
-
-**** Thread count (custom info)
-
-This is an empty info field (4 non-breaking spaces) that will be overwritten by folding mode.
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-thread-counter (msg)
-  "    ") ;; NON-BREAKING spaces
-(add-to-list 'mu4e-header-info-custom
-             '(:my-counter . (:name "my-counter"
-                                    :shortname "#"
-                                    :function my-mu4e-headers-thread-counter)))
-#+end_src
-
-**** Subject (custom info)
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-subject (msg)
-  (let* ((thread (mu4e-message-field msg :meta))
-         (prefix (mu4e~headers-thread-prefix thread))
-         (subject (mu4e-message-field msg :subject))
-         ;; (subject (concat prefix subject " " (my-mu4e-headers-tags msg)))
-         )
-    (my-mu4e-headers-colorise subject msg)))
-
-(add-to-list 'mu4e-header-info-custom
-             '(:my-subject . (:name "my-subject"
-                                    :shortname "S"
-                                    :function my-mu4e-headers-subject)))
-
-#+end_src
-
-*** Folding
+*** Folding :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -5566,7 +3114,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-*** Threads separation
+*** Threads separation :INACTIVE:
 
 #+begin_src emacs-lisp
 
@@ -5609,282 +3157,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-** Layout for mu4e (1.8, alternative) :HOOK:BINDING:INACTIVE:
-
-A custom multiline headers view for mu4e.
-
-#+name: my-mu4e-headers-multiline
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-multiline (msg)
-  "A multiline headers mode."
-
-  (let* ((sender  (my-mu4e-get-sender msg))
-         (date (mu4e-message-field msg :date))
-         (date (concat (propertize "" 'display " ")
-                       (format "%16s" (my-date-relative date))))
-         (subject (mu4e-message-field msg :subject))
-         (subject (truncate-string-to-width subject (- (window-width) 16) nil nil "…"))
-         (flagged   (memq 'flagged   (mu4e-message-field msg :flags)))
-         (attach    (memq 'attach    (mu4e-message-field msg :flags)))
-         (unread    (memq 'unread    (mu4e-message-field msg :flags)))
-         (replied   (memq 'replied   (mu4e-message-field msg :flags)))
-         (encrypted (memq 'encrypted (mu4e-message-field msg :flags)))
-         (draft     (memq 'draft     (mu4e-message-field msg :flags)))
-         (thread (mu4e-message-field msg :meta))
-         (related (and thread (plist-get thread :related)))
-         (prefix (mu4e~headers-thread-prefix thread))
-         (root (plist-get thread :root))
-         (orphan (plist-get thread :orphan))
-         (first-child (plist-get thread :first-child))
-         (has-child (plist-get thread :has-child))
-         (level (plist-get thread :level))
-         (root (or root (and orphan (or first-child has-child))))
-         (child (and thread (not root)))
-         (tags      (mu4e-message-field msg :tags))
-         (unread-mark (propertize (cond (unread               (propertize " ●" 'face 'nano-salient))
-                                        ((and root has-child) "  ")
-                                        (t                    "  "))))
-         (one-line (and child mu4e-headers-include-related))
-         (face-sender (cond (unread               '(nano-salient nano-strong))
-                            ((and root related)   '(nano-strong nano-faded))
-                            (root                '(nano-strong nano-default))
-                            ((and child related) '(:inherit nano-faded :height 140))
-                            (child               '(:inherit nano-default :height 140))
-                            (t                   '(nano-default))))
-         (face-subject (cond (unread  '(:inherit nano-salient))
-                             (related '(:inherit nano-faded))
-                             (t       '(:inherit nano-default))))
-         (face-tags (cond (related '(:inherit (nano-faded)              :height 120))
-                          (t       '(:inherit (nano-popout nano-strong) :height 120))))
-         (face-date    (cond (t '(:inherit nano-faded :height 140))))
-
-         (icons (string-join
-                 `(,@(if draft   `( ,(propertize "" 'face 'nano-faded)))
-                   ,@(if attach  `( ,(propertize "" 'face 'nano-faded)))
-                   ,@(if flagged `( ,(propertize "" 'face 'nano-salient)))
-                   ) " ")))
-
-    (concat
-
-     ;; Separaction line between threads
-     (when root
-       (concat
-        (propertize " "
-                    'mu4e-root t
-                    'display `((margin left-margin) "  "))
-        (propertize "-" 'display "\n"
-                    'face '(:extend t
-                                    :strike-through t
-                                    :inherit nano-subtle-i))
-        "  ")) ;; !! NON-BREAKING SPACE -> will be searched later
-
-     ;; Children are always indented (relatively to root)
-     (when (and child one-line)
-       (concat
-        (propertize "│" 'face 'nano-faded)))
-
-     ;; Unread mark appears in the left margin
-     (propertize " " 'face (if unread 'nano-default face-sender)
-                 'display `((margin left-margin) ,unread-mark))
-
-     ;; Sender
-     (cond (one-line     (propertize (concat prefix sender)
-                                     'face face-sender))
-           ((and root has-child) (propertize (concat " " sender)
-                                             'face face-sender))
-           (t (propertize sender 'face face-sender)))
-
-     " "
-     ;; Replied
-     (when replied
-       (propertize " " 'face face-sender))
-
-     ;; In one line mode (children), icons are displayed next to sender
-     (when one-line
-       (concat (propertize icons)
-               " "))
-
-     ;; Tags next to sender
-     (when tags
-       (concat
-        (propertize " " 'face face-tags)
-        (mapconcat #'(lambda (tag)
-                       (propertize tag 'face face-tags))
-                   tags (propertize "," 'face face-tags))))
-
-     ;; Spacing to have date aligned on the right
-     (propertize " " 'display `(space :align-to (- right 1 ,(* 1.0 (length date)))))
-
-     ;; Date
-     (propertize date 'face face-date)
-
-     ;; When not a child
-     (when (or root (not mu4e-headers-include-related))
-       (concat
-
-        ;; Second line. We use a display property such that hl-line-mode works correctly.
-        (propertize " " 'display "\n") ;; NON-BREAKING space for later search (see below)
-
-        ;; Blank spaces in the margin (for nice hl-line-mode)
-        (propertize " " 'face '(nano-strong nano-salient)
-                    'display `((margin left-margin) "  "))
-
-        ;; Indentation (to compensate for the virtual "\n" we introduced before)
-        (propertize "  ")
-
-        ;; Align subject and sender when this is a child
-        (when (and one-line child)
-          (propertize "  " 'face 'nano-faded))
-
-        ;; Subject
-        (propertize subject 'face face-subject)
-
-        ;; Spacing to have icons aligned on the right
-        (propertize " " 'display `(space :align-to (- right ,(length icons) 1)))
-
-        ;; Icons on the right
-        (propertize icons))))))
-
-#+end_src
-
-Then, we redefine thread symbols (we'll mostly manage ourselves).
-
-#+begin_src emacs-lisp
-
-(setq mu4e-headers-thread-root-prefix          '(""    . "")
-      mu4e-headers-thread-first-child-prefix   '(" "   . " ")
-      mu4e-headers-thread-child-prefix         '(" "   . " ")
-      mu4e-headers-thread-last-child-prefix    '(" "   . " ")
-      mu4e-headers-thread-connection-prefix    '(" |"  . "  ")
-      mu4e-headers-thread-blank-prefix         '(""    . "")
-      mu4e-headers-thread-orphan-prefix        '(" "   . "")
-      mu4e-headers-thread-single-orphan-prefix '(""    . "")
-      mu4e-headers-thread-duplicate-prefix     '("="   . "="))
-
-#+end_src
-
-And we install the new header.
-
-#+begin_src emacs-lisp
-
-;; (add-to-list 'mu4e-header-info-custom
-;;              '(:multiline . (:name "multiline"
-;;                              :shortname ""
-;;                              :function my-mu4e-headers-multiline)))
-;; (setq mu4e-headers-fields  '((:multiline . nil)))
-
-#+end_src
-
-*** Margins :INACTIVE:
-
-Because the multiline header view uses margin to show new mail, we have to make sure there are always margin in the headers view. We also make the hl-line more salient.
-
-#+name: my-mu4e-headers-setup
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-mode-setup ()
-
-  (with-current-buffer "*mu4e-headers*"
-    (set-face-attribute 'mu4e-header-highlight-face nil
-                        :inherit 'nano-salient-i)
-    (setq-local left-margin-width 2)
-    (setq-local cursor-type nil)
-    (set-window-buffer nil "*mu4e-headers*")))
-
-(add-hook 'mu4e-headers-found-hook #'my-mu4e-headers-mode-setup)
-(add-hook 'mu4e-headers-mode-hook  #'my-mu4e-headers-mode-setup)
-
-#+end_src
-
-*** Navigation :INACTIVE:
-
-Since a header can now be displayed over several consecutive lines, we need to remap prev/next line such as to use mu4e prev/next functions (that works properly with multiline headers).
-
-#+begin_src emacs-lisp
-
-(bind-key [remap next-line] #'mu4e-headers-next mu4e-headers-mode-map)
-(bind-key [remap previous-line] #'mu4e-headers-prev mu4e-headers-mode-map)
-
-#+end_src
-
-*** Highlight :INACTIVE:
-
-A special highlight function for root headers that takes the multiline root header into account.
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-hl-line-move ()
-
-  (save-excursion
-    (let* ((beg (line-beginning-position))
-           (end (min (line-beginning-position 2) (point-max)))
-           (match1 (search-forward "  " end t))
-           (match2 (search-forward "│" end t)))
-      (goto-char beg)
-      (cond (match1 (cons (- match1 2) end))
-            (match2 (cons (+ match2 1) end))
-            (t      (cons beg end))))))
-
-#+end_src
-
-We retrict the hack to mu4e-header-mode
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-headers-mode-hl-line-move ()
-  (setq-local hl-line-range-function #'my-mu4e-hl-line-move))
-
-(add-hook 'mu4e-headers-mode-hook  #'my-mu4e-headers-mode-hl-line-move)
-
-#+end_src
-
-*** Folding :INACTIVE:
-
-A special overlay function for folding that takes the multiline root header
-into account & insert the number of children at the root level (replacing "" symbol)
-
-#+begin_src emacs-lisp
-
-(defun mu4e-folding--make-root-overlay (beg end)
-  "Create the root overlay."
-
-  (let* ((buffer-read-only)
-         (overlay (car (mu4e-folding--children-overlay)))
-         (count (if overlay
-                    (overlay-get overlay 'mu4e-folding-children-count)
-                  0)))
-    (save-excursion
-      (goto-char beg)
-      (when (search-forward "" end t)
-        (put-text-property (- (point) 1) (point)
-                           'display (svg-lib-tag (format "%d" count) nil
-                                                 :ascent 'center)))))
-  (save-excursion
-    (let* ((match (search-forward "  " end t)))
-      (if match
-          (make-overlay (- match 2) end)
-        (make-overlay beg end)))))
-
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(defun my-mu4e-move-mark-overlay ()
-  (interactive)
-  (let* ((beg (line-beginning-position))
-         (end (line-beginning-position 2))
-         (overlays (overlays-in beg end)))
-    (dolist (overlay overlays)
-      (when (overlay-get overlay 'mu4e-mark)
-        (move-overlay overlay
-                      (overlay-start overlay)
-                      (+ (overlay-start overlay) 2))))))
-
-#+end_src
-
-** Dashboard
+** Dashboard :INACTIVE:
 
 Provide a [[help:mu4e-dashboard][mu4e-dashboard]] command that opens the mu4e dashboard on the left side.
 
@@ -5946,16 +3219,7 @@ We activate the dashboard in the headers view.
 
 #+end_src
 
-** Benchmark
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(my-report-time "Mail")
-
-#+end_src
-
-
-** Math-mode :DEFER:MODE:BINDING:
+* Math-mode :INACTIVE:DEFER:MODE:BINDING:
 
 #+begin_src emacs-lisp  :prologue "" :epilogue ""
 
@@ -6831,6 +4095,1993 @@ An autoload function for my-config (that will load org mode).
 
 #+end_src
 
+
+
+* Version control
+
+We use [[https://magit.vc/][magit]] in combination with git for version control.
+
+#+begin_quote
+Magit is a complete text-based user interface to Git. It fills the glaring gap between the Git command-line interface and various GUIs, letting you perform trivial as well as elaborate version control tasks with just a couple of mnemonic key presses. Magit looks like a prettified version of what you get after running a few Git commands but in Magit every bit of visible information is also actionable to an extent that goes far beyond what any Git GUI provides and it takes care of automatically refreshing this output when it becomes outdated. In the background Magit just runs Git commands and if you wish you can see what exactly is being run, making it possible for you to learn the git command-line.
+#+end_quote
+** Magit
+
+#+NAME: magit-add-remove-face-font-lock
+#+begin_src emacs-lisp :tangle no
+(defun my-magit-add-remove-face-font-lock ()
+  "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
+  (add-to-list 'font-lock-extra-managed-props 'display)
+  (font-lock-add-keywords 'nil
+                          '(("\\(^-\\)" 1 '(face nil display
+                                                 #("│" 0 1 (face (:inherit lambda-red)))))))
+  (font-lock-add-keywords 'nil
+                          '(("\\(^ \\)" 1 '(face nil display
+                                                 #("│" 0 1 (face (:inherit lambda-meek)))))))
+  (font-lock-add-keywords nil
+                          '(("\\(^+\\)" 1 '(face nil display
+                                                 #("│" 0 1 (face (:inherit lambda-green)))))))
+  )
+
+#+end_src
+
+#+begin_src emacs-lisp :noweb yes
+(use-package magit
+  :elpaca (:type git
+                 :host github
+                 :repo "magit/magit")
+  :config
+  (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
+  (setq magit-diff-refine-hunk 'all)
+  <<magit-add-remove-face-font-lock>>
+  :hook (magit-mode . my-magit-add-remove-face-font-lock)
+  :custom-face
+  (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
+  (magit-header-line ((t (:foreground unspecified :background unspecified))))
+  (magit-diff-removed  ((t (:foreground unspecified
+                                        :background unspecified
+                                        :inherit lambda-meek))))
+  (magit-diff-removed-highlight ((t (:foreground unspecified
+                                                 :background unspecified
+                                                 :inherit lambda-red))))
+  (magit-diff-added    ((t (:foreground unspecified
+                                        :background unspecified
+                                        :inherit lambda-meek))))
+  (magit-diff-added-highlight   ((t (:foreground unspecified
+                                                 :background unspecified
+                                                 :inherit (lambda-green)))))
+  )
+#+end_src
+** Abridge
+In order to handles long lines in diffs, which happens in LaTeX-documents quite freqently, we use visual clues about actual changes.
+
+#+begin_quote
+A simple Emacs package for abridging refined diff hunks (for example in magit). Why abridge a diff hunk? Most diffs are line based. If you are working on files with very long lines, for example LaTeX files, or text files with full paragraphs per line (often using visual-line-mode), line-based diffs can be very challenging to read, even with "hunk refining" enabled (highlighting the words which changed).
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package abridge-diff
+  :after magit ;; optional, if you'd like to use with magit
+  :init (abridge-diff-mode 1)
+  :custom-face
+  (diff-refine-added   ((t (:foreground unspecified
+                                        :weight bold
+                                        :inherit lambda-green))))
+  (diff-refine-removed ((t (:foreground "#bf616a" :weight bold :strike-through nil :inherit lambda-red))))
+  (diff-refine-changed ((t (:foreground unspecified
+                                        :weight bold
+                                        :inherit lambda-yellow))))
+  )
+#+end_src
+** hl-todo
+We use the hl-todo package for an emacs-wide integration of todo-like keywords.
+
+#+begin_quote
+Highlight TODO and similar keywords in comments and strings
+#+end_quote
+
+
+First we define a consisted set of faces for todo keywords. This is incorporated into the emacs default settings.
+
+#+NAME: todo-faces
+#+begin_src emacs-lisp :tangle no
+(defface todo-face '((t (:foreground "#fdf096"
+                                     :background "#494f67"
+                                     :weight semibold :inverse-video t)))
+  "A consistent emacs-wide TODO face") ;;straw-yellow and blackish-grey
+(defface next-face '((t (:foreground "#d65848"
+                                     :background "#494f67"
+                                     :weight semibold
+                                     :inverse-video t)))
+  "A consistent emacs-wide NEXT face") ;;aurora-red and blackish-grey
+(defface done-face '((t (:foreground "#97b578"
+                                     :background "#494f67"
+                                     :weight semibold
+                                     :inverse-video t)))
+  "A consistent emacs-wide DONE face") ;;emerald-green and blackish-grey
+(defface wait-face '((t (:foreground "#fdf096"
+                                       :background "#494f67"
+                                       :weight semibold
+                                       :inverse-video t)))
+  "A consistent emacs-wide WAIT face") ;;straw-yellow and blackish-grey
+(defface canceled-face '((t (:foreground "#edf0f2"
+                                         :background "#494f67"
+                                         :weight semibold
+                                         :inverse-video t)))
+  "A consistent emacs-wide CANCELED face") ;;skimmed-milk-white and blackish-grey
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package hl-todo
+  :elpaca (:type git :host github :repo "tarsius/hl-todo")
+  :config
+  (setq hl-todo-exclude-modes nil)
+  (setq hl-todo-keyword-faces
+      '(("TODO"     . todo-face)
+        ("NEXT"     . next-face)
+        ("DONE"     . done-face)
+        ("WAIT"     . wait-face)
+        ("CANCELED" . canceled-face)))
+  (global-hl-todo-mode 1)
+  )
+#+end_src
+* Other visuals
+** TODO Nerd icons
+
+[[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
+
+#+begin_quote
+Nerd-icons.el is a library for easily using Nerd Font icons inside Emacs, an alternative to all-the-icons.
+
+It works on both GUI and terminal! You only need a Nerd Font installed on your system.
+
+It is inspired by all-the-icons, icons-in-terminal, vim-devicons, and nvim-web-devicons.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package nerd-icons
+  :custom
+  (nerd-icons-font-family "Roboto Mono Nerd Font")
+  )
+#+end_src
+
+There is an integration into the completion framework, called [[https://github.com/rainstormstudio/nerd-icons-completion][nerd icons completion]].
+
+#+begin_src emacs-lisp
+(use-package nerd-icons-completion
+  :elpaca (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
+  :after marginalia
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
+  :config
+  (nerd-icons-completion-mode))
+#+end_src
+** Visual fill column and visual line mode
+
+We activate [[help:visual-line-mode][visual-line-mode]] globally.
+Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+
+#+begin_quote
+visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fill-column in visual-line-mode. Instead of wrapping lines at the window edge, which is the standard behaviour of visual-line-mode, it wraps lines at fill-column (or visual-fill-column-width, if set). That is, it turns the view on the left into the view on the right, without changing the contents of the file.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package visual-fill-column
+  :ensure adaptive-wrap
+  :init (global-visual-line-mode)
+  :custom (visual-fill-column-center-text t)
+  (visual-fill-column-enable-sensible-window-split t)
+  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
+          )
+  )
+#+end_src
+Changing the symbol for truncation (…) and wrap (↩).
+
+
+
+* OLD :INACTIVE:noexport:
+
+** Stuff maybe not needed?
+*** String related
+
+A set of functions to join two strings such as to fit a given width. This will be used for displaying elfeed posts, privileging the right part (tag and feed).
+
+#+name: my-string-pad-right
+#+begin_src emacs-lisp
+
+(defun my-string-pad-right (len s)
+  "If S is shorter than LEN, pad it on the right,
+   if S is longer than LEN, truncate it on the right."
+
+  (if (> (length s) len)
+      (concat (substring s 0 (- len 1)) "…")
+    (concat s (make-string (max 0 (- len (length s))) ?\ ))))
+
+#+end_src
+
+#+name: my-string-pad-left
+#+begin_src emacs-lisp
+
+(defun my-string-pad-left (len s)
+  "If S is shorter than LEN, pad it on the left,
+   if S is longer than LEN, truncate it on the left."
+
+  (if (> (length s) len)
+      (concat  "…" (substring s (- (length s) len -1)))
+    (concat (make-string (max 0 (- len (length s))) ?\ ) s)))
+
+#+end_src
+
+#+name: my-string-join
+#+begin_src emacs-lisp
+
+(defun my-string-join (len left right &optional spacing)
+  "Join LEFT and RIGHT strings to fit LEN characters with at least SPACING characters
+between them. If len is negative, it is retrieved from current window width."
+
+  (let* ((spacing (or spacing 3))
+         (len (or len (window-body-width)))
+         (len (if (< len 0)
+                  (+ (window-body-width) len)
+                len)))
+    (cond ((> (length right) len)
+           (my-string-pad-left len right))
+
+          ((> (length right) (- len spacing))
+           (my-string-pad-left len (concat (make-string spacing ?\ )
+                                           right)))
+
+          ((> (length left) (- len spacing (length right)))
+           (concat (my-string-pad-right (- len spacing (length right)) left)
+                   (concat (make-string spacing ?\ )
+                           right)))
+          (t
+           (concat left
+                   (make-string (- len (length right) (length left)) ?\ )
+                   right)))))
+
+#+end_src
+
+Unwords seems to be undefined we remodel it here
+
+
+#+begin_src emacs-lisp
+
+(defun unwords (&rest words)        ;; unwords seems to be missing this function takes care of it.
+  (mapconcat #'identity words " ")) ;; it joins a list of strings with a blank space as seperator.
+
+#+end_src
+
+*** Date related
+
+A set of date related functions, mostly used for mail display.
+
+#+name: my-date-day
+#+begin_src emacs-lisp
+
+(defun my-date-day (date)
+  "Return DATE day of month (1-31)."
+
+  (nth 3 (decode-time date)))
+
+#+end_src
+
+#+name: my-date-month
+#+begin_src emacs-lisp
+
+(defun my-date-month (date)
+  "Return DATE month number (1-12)."
+
+  (nth 4 (decode-time date)))
+
+#+end_src
+
+#+name: my-date-year
+#+begin_src emacs-lisp
+
+(defun my-date-year (date)
+  "Return DATE year."
+
+  (nth 5 (decode-time date)))
+
+#+end_src
+
+#+name: my-date-equal
+#+begin_src emacs-lisp
+
+(defun my-date-equal (date1 date2)
+  "Check if DATE1 is equal to DATE2."
+
+  (and (eq (my-date-day date1)
+           (my-date-day date2))
+       (eq (my-date-month date1)
+           (my-date-month date2))
+       (eq (my-date-year date1)
+           (my-date-year date2))))
+
+#+end_src
+
+#+name: my-date-inc
+#+begin_src emacs-lisp
+
+(defun my-date-inc (date &optional days months years)
+  "Return DATE + DAYS day & MONTH months & YEARS years"
+
+  (let ((days (or days 0))
+        (months (or months 0))
+        (years (or years 0))
+        (day (my-date-day date))
+        (month (my-date-month date))
+        (year (my-date-year date)))
+    (encode-time 0 0 0 (+ day days) (+ month months) (+ year years))))
+
+#+end_src
+
+#+name: my-date-dec
+#+begin_src emacs-lisp
+
+(defun my-date-dec (date &optional days months years)
+  "Return DATE - DAYS day & MONTH months & YEARS years"
+
+  (let ((days (or days 0))
+        (months (or months 0))
+        (years (or years 0)))
+    (my-date-inc date (- days) (- months) (- years))))
+
+#+end_src
+
+#+name: my-date-today
+#+begin_src emacs-lisp
+
+(defun my-date-today ()
+  "Return today date."
+
+  (current-time))
+
+#+end_src
+
+#+name: my-date-is-today
+#+begin_src emacs-lisp
+
+(defun my-date-is-today (date)
+  "Check if DATE is today."
+
+  (my-date-equal (current-time) date))
+
+#+end_src
+
+#+name: my-date-is-yesterday
+#+begin_src emacs-lisp
+
+(defun my-date-is-yesterday (date)
+  "Check if DATE is yesterday."
+
+  (my-date-equal (my-date-dec (my-date-today) 1) date))
+
+#+end_src
+
+#+name: my-date-relative
+#+begin_src emacs-lisp
+
+(defun my-date-relative (date)
+  "Return a string with a relative date format."
+
+  (let* ((now (current-time))
+         (delta (float-time (time-subtract now date)))
+         (days (ceiling (/ (float-time (time-subtract now date)) (* 60 60 24)))))
+    (cond ((< delta (*       3 60))     "now")
+          ((< delta (*      60 60))     (format "%d minutes ago" (/ delta   60)))
+          ;;  ((< delta (*    6 60 60))     (format "%d hours ago"   (/ delta 3600)))
+          ((my-date-is-today date)      (format-time-string "%H:%M" date))
+          ((my-date-is-yesterday date)  (format "Yesterday"))
+          ((< delta (* 4 24 60 60))     (format "%d days ago" (+ days 1)))
+          (t                            (format-time-string "%d %b %Y" date)))))
+
+#+end_src
+
+*** Mini frame
+
+A set of functions to create a mini-frame over the header line.
+
+#+begin_src emacs-lisp
+
+(defun my-mini-frame (&optional height foreground background border)
+  "Create a child frame positioned over the header line whose
+width corresponds to the width of the current selected window.
+
+The HEIGHT in lines can be specified, as well as the BACKGROUND
+color of the frame. BORDER width (pixels) and color (FOREGROUND)
+can be also specified."
+
+  (interactive)
+  (let* ((foreground (or foreground
+                         (face-foreground 'font-lock-comment-face nil t)))
+         (background (or background (face-background 'highlight nil t)))
+         (border (or border 1))
+         (height (round (* (or height 8) (window-font-height))))
+         (edges (window-pixel-edges))
+         (body-edges (window-body-pixel-edges))
+         (top (nth 1 edges))
+         (bottom (nth 3 body-edges))
+         (left (- (nth 0 edges) (or left-fringe-width 0)))
+         (right (+ (nth 2 edges) (or right-fringe-width 0)))
+         (width (- right left))
+
+         ;; Window divider mode
+         (width (- width (if (and (bound-and-true-p window-divider-mode)
+                                  (or (eq window-divider-default-places 'right-only)
+                                      (eq window-divider-default-places t))
+                                  (window-in-direction 'right (selected-window)))
+                             window-divider-default-right-width
+                           0)))
+         (y (- top border))
+         (child-frame-border (face-attribute 'child-frame-border :background)))
+    (set-face-attribute 'child-frame-border t :background foreground)
+    (let ((frame (make-frame
+                  `((parent-frame . ,(window-frame))
+                    (delete-before . ,(window-frame))
+                    (minibuffer . nil)
+                    (modeline . nil)
+                    (left . ,(- left border))
+                    (top . ,y)
+                    (width . (text-pixels . ,width))
+                    (height . (text-pixels . ,height))
+                    ;; (height . ,height)
+                    (child-frame-border-width . ,border)
+                    (internal-border-width . ,border)
+                    (background-color . ,background)
+                    (horizontal-scroll-bars . nil)
+                    (menu-bar-lines . 0)
+                    (tool-bar-lines . 0)
+                    (desktop-dont-save . t)
+                    (unsplittable . nil)
+                    (no-other-frame . t)
+                    (undecorated . t)
+                    (pixelwise . t)
+                    (visibility . t)))))
+      (set-face-attribute 'child-frame-border t :background child-frame-border)
+      frame)))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+(defun my-mini-frame-reset (frame)
+  "Reset FRAME size and position.
+
+  Move frame at the top of parent frame and resize it
+  horizontally to fit the width of current selected window."
+
+  (interactive)
+  (let* ((border (frame-parameter frame 'internal-border-width))
+         (height (frame-parameter frame 'height)))
+    (with-selected-frame (frame-parent frame)
+      (let* ((edges (window-pixel-edges))
+             (body-edges (window-body-pixel-edges))
+             (top (nth 1 edges))
+             (bottom (nth 3 body-edges))
+             (left (- (nth 0 edges) (or left-fringe-width 0)))
+             (right (+ (nth 2 edges) (or right-fringe-width 0)))
+             (width (- right left))
+             (y (- top border)))
+        (set-frame-width frame width nil t)
+        (set-frame-height frame height)
+        (set-frame-position frame (- left border) y)))))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+(defun my-mini-frame-shrink (frame &optional delta)
+  "Make the FRAME DELTA lines smaller.
+
+  If no argument is given, make the frame one line smaller. If
+  DELTA is negative, enlarge frame by -DELTA lines."
+
+  (interactive)
+  (let ((delta (or delta -1)))
+    (when (and (framep frame)
+               (frame-live-p frame)
+               (frame-visible-p frame))
+      (set-frame-parameter frame 'height
+                           (+ (frame-parameter frame 'height) delta)))))
+
+#+end_src
+
+*** Mu4e related
+
+A set of mail (mu4e) related functions.
+
+
+** TODO Configuration :BINDING:HOOK:DEFER:
+# :PROPERTIES:
+# :header-args:emacs-lisp: :prologue "(with-eval-after-load 'org" :epilogue ")"
+# :END:
+
+*** General
+
+This section is meant to ease the writing of the configuration file using a dedicated minor mode (~my-config-mode~) with a few key bindings:
+
+=C-`=       : Toggle navigation sidebar
+=C-c C-p=   : Go to previous subsection
+=C-c C-n=   : Go to next subsection
+=C-c C-S-p= : Go to previous section
+=C-c C-S-n= : Go to next section
+=C-c t=     : Fold code blocks
+=C-c f=     : Filter block visibility (sidebar)
+=C-c C-v t= : Export (tangle) code
+=C-c C-v s= : Execute current subsection
+
+Before being able to use it, you need to execute the whole subtree using [[help:org-babel-execute-subtree][org-babel-execute-subtree]] (generally bound to =C-c C-v s=).
+
+*** Sidebar :INACTIVE:BINDING:
+
+This defines an org sidebar using imenu-list.
+
+#+name: my-org-sidebar
+#+begin_src emacs-lisp
+
+(require 'imenu)
+(require 'imenu-list)
+
+(defun my-org-tree-to-indirect-buffer ()
+  "Create indirect buffer, narrow it to current subtree and unfold blocks"
+
+  (org-tree-to-indirect-buffer)
+  (org-show-block-all)
+  (setq-local my-org-blocks-hidden nil))
+
+(defun my-org-sidebar ()
+  "Open an imenu list on the left that allow navigation."
+
+  (interactive)
+  (setq imenu-list-after-jump-hook #'my-org-tree-to-indirect-buffer
+        imenu-list-position 'left
+        imenu-list-size 36
+        imenu-list-focus-after-activation t)
+
+  (let ((heading (substring-no-properties (or (org-get-heading t t t t) ""))))
+    (when (buffer-base-buffer)
+      (switch-to-buffer (buffer-base-buffer)))
+    (imenu-list-minor-mode)
+    (imenu-list-stop-timer)
+    (hl-line-mode)
+    (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
+    (setq header-line-format
+          '(:eval
+            (nano-modeline-render nil
+                                  (buffer-name imenu-list--displayed-buffer)
+                                  "(outline)"
+                                  "")))
+    (setq-local cursor-type nil)
+    (when (> (length heading) 0)
+      (goto-char (point-min))
+      (search-forward heading)
+      (imenu-list-display-dwim))))
+
+#+end_src
+
+#+RESULTS: my-org-sidebar
+: my-org-sidebar
+
+This toggles the org-sidebar.
+
+#+name: org-sidebar-toggle
+#+begin_src emacs-lisp
+
+(defun my-org-sidebar-toggle ()
+  "Toggle the org-sidebar"
+
+  (interactive)
+  (if (get-buffer-window "*Ilist*")
+      (progn
+        (quit-window nil (get-buffer-window "*Ilist*"))
+        (switch-to-buffer (buffer-base-buffer)))
+    (my-org-sidebar)))
+
+#+end_src
+
+#+RESULTS: org-sidebar-toggle
+: my-org-sidebar-toggle
+
+Make sure tangle is applied to the base buffer and not the subtree.
+
+#+name: my-org-babel-tangle
+#+begin_src emacs-lisp
+
+(defun my-org-babel-tangle ()
+  "Write code blocks to source-specific files from the base buffer."
+
+  (interactive)
+  (with-current-buffer (or (buffer-base-buffer)
+                           (current-buffer))
+    (org-babel-tangle)))
+
+#+end_src
+
+#+RESULTS: my-org-babel-tangle
+: my-org-babel-tangle
+
+
+Toggle code blocks folding, starting folded.
+
+#+name: my-org-toggle-blocks
+#+begin_src emacs-lisp
+
+(defvar my-org-blocks-hidden nil)
+
+(defun my-org-toggle-blocks ()
+  "Toggle code blocks folding."
+
+  (interactive)
+  (if my-org-blocks-hidden
+      (org-show-block-all)
+    (org-hide-block-all))
+  (setq-local my-org-blocks-hidden (not my-org-blocks-hidden)))
+
+(add-hook 'config-mode-hook #'my-org-toggle-blocks)
+
+#+end_src
+
+
+
+#+begin_src emacs-lisp
+
+(defvar my-imenu-list-folding-status t
+  "Folding status of the imenu-list")
+
+(defun my-imenu-list-toggle-folding ()
+  "Toggle top level nodes of the imenu-list buffer"
+
+  (interactive)
+  (with-current-buffer "*Ilist*"
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^\\+ " nil t)
+        (if my-imenu-list-folding-status
+            (hs-hide-block)
+          (hs-show-block)))
+      (setq my-imenu-list-folding-status (not my-imenu-list-folding-status)))))
+
+(bind-key "S-<tab>" #'my-imenu-list-toggle-folding imenu-list-major-mode-map)
+
+#+end_src
+
+#+RESULTS:
+: my-imenu-list-toggle-folding
+
+Some information for when a top node is closed
+
+#+begin_src emacs-lisp
+
+(defun my-display-code-line-counts (ov)
+  (when (eq 'code (overlay-get ov 'hs))
+    (overlay-put ov 'display
+                 (propertize
+                  (format " [%d sections] … "
+                          (- (count-lines (overlay-start ov)
+                                          (overlay-end ov)) 1))
+                  'face 'nano-faded))))
+
+(setq hs-set-up-overlay #'my-display-code-line-counts)
+
+#+end_src
+
+#+RESULTS:
+: my-display-code-line-counts
+
+#+begin_src emacs-lisp
+
+(defun my-imenu-list-display-dwim ()
+  "Display or toggle the entry at `point'."
+  (interactive)
+  (save-selected-window
+    (save-excursion
+      (my-imenu-list-ret-dwim))))
+
+(defun my-imenu-list-ret-dwim ()
+  "Jump to or toggle the entry at `point'."
+  (interactive)
+  (save-excursion
+    (let ((entry (imenu-list--find-entry)))
+      (when (imenu--subalist-p entry)
+        (setq entry (cons
+                     (car entry)
+                     (get-text-property 0 'marker (car entry)))))
+      (imenu-list--goto-entry entry))))
+
+(bind-key "<SPC>" #'my-imenu-list-display-dwim imenu-list-major-mode-map)
+(bind-key "<return>" #'my-imenu-list-ret-dwim imenu-list-major-mode-map)
+
+#+end_src
+
+#+RESULTS:
+: my-imenu-list-ret-dwim
+
+
+*** Filter :INACTIVE:BINDING:
+
+This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries using the specified expression (e.g. "+HOOK +DEFER").
+
+#+begin_src emacs-lisp
+
+(bind-key "C-c f" #'my-org-imenu-filter)
+(bind-key "f" #'my-org-imenu-filter imenu-list-major-mode-map)
+(bind-key "U" #'imenu-list-refresh imenu-list-major-mode-map)
+
+#+end_src
+
+#+RESULTS:
+: imenu-list-refresh
+
+3 levels for org-imenu
+
+#+begin_src emacs-lisp
+
+(setq org-imenu-depth 3)
+
+#+end_src
+
+#+RESULTS:
+: 3
+
+
+#+begin_src emacs-lisp
+(require 'org)
+(require 'svg-tag-mode)
+
+(defvar my-org-imenu-filter-history
+  '("BINDING" "HOOK" "ADVICE" "FACE" "MODE" "DEFER"
+    "PERSONAL" "INACTIVE" "BUGFIX" "OTHER" "TIMER" "OS")
+  "Filter history list.")
+
+(with-eval-after-load 'org
+  (defvar my-org-imenu-filter-function
+    (cdr (org-make-tags-matcher "*"))
+    "Filter function to decide if a headline is kept"))
+
+(defun my-org-imenu-filter ()
+  "Define and apply a new filter"
+
+  (interactive)
+  (let* ((match (completing-read-multiple
+                 "FILTER: "
+                 my-org-imenu-filter-history
+                 nil nil nil
+                 'my-org-imenu-filter-history))
+         (match (mapconcat #'identity match " ")))
+    (when (string= "" match)
+      (setq match "*"))
+    (setq my-org-imenu-filter-function
+          (cdr (org-make-tags-matcher match)))
+    (imenu-list-refresh)))
+
+
+(defun my-org-imenu-filter-tree (&optional bound parent-match)
+  "Build a imenu list using current filter function"
+
+  (let* ((headlines '()))
+    (save-excursion
+      (org-with-wide-buffer
+       (unless bound
+         (setq bound (point-max))
+         (goto-char (point-min)))
+       (while (re-search-forward org-heading-regexp bound t)
+         (let* ((element (org-element-at-point))
+                (begin (org-element-property :begin element))
+                (end (org-element-property :end element))
+                (marker (copy-marker begin))
+                (level (org-element-property :level element))
+                (tags (save-excursion
+                        (goto-char begin)
+                        (org-get-tags)))
+                (match (save-excursion
+                         (goto-char begin)
+                         (funcall my-org-imenu-filter-function
+                                  nil (org-get-tags) level)))
+
+                (title (org-element-property :raw-value element))
+                (title (org-link-display-format
+                        (substring-no-properties title)))
+                (title (propertize title 'org-imenu-marker marker
+                                   'org-imenu t))
+                (title (if (member "INACTIVE" tags)
+                           (propertize title 'face 'nano-faded)
+                         title))
+                (svg-tags (mapconcat #'(lambda (tag)
+                                         (propertize tag 'display (svg-tag-make tag :face 'nano-faded)))
+                                     tags " "))
+                (title (if tags (format "%s %s" title svg-tags) title))
+                (title (propertize title 'marker marker))
+                (children (my-org-imenu-filter-tree end match)))
+           (goto-char end)
+
+           (cond ((> level org-imenu-depth)
+                  nil)
+                 ((> (length children) 0)
+                  (add-to-list 'headlines (append (list title) children) t))
+                 ((or match parent-match)
+                  (add-to-list 'headlines (cons title marker) t)))))))
+    headlines))
+
+(advice-add #'org-imenu-get-tree :override #'my-org-imenu-filter-tree)
+
+#+end_src
+
+#+RESULTS:
+
+*** Configuration mode :INACTIVE:
+
+This section defines the ~my-config-mode~ to ease navigating and interacting with the configuration file.
+
+Navigation commands using the ilist menu.
+
+#+begin_src emacs-lisp
+
+(defun my-config-mode-prev-header ()
+  "Move to previous header"
+
+  (interactive)
+  (with-current-buffer "*Ilist*"
+    (search-backward-regexp "^  ")
+    (imenu-list-display-dwim)))
+
+(defun my-config-mode-next-header ()
+  "Move to next header"
+
+  (interactive)
+  (with-current-buffer "*Ilist*"
+    (forward-line)
+    (search-forward-regexp "^  ")
+    (imenu-list-display-dwim)))
+
+(defun my-config-mode-prev-section ()
+  "Move to previous section"
+
+  (interactive)
+  (with-current-buffer "*Ilist*"
+    (search-backward-regexp "\\+ " nil nil 2)
+    (forward-line)
+    (imenu-list-display-dwim)))
+
+(defun my-config-mode-next-section ()
+  "Move to next section"
+
+  (interactive)
+  (with-current-buffer "*Ilist*"
+    (previous-line)
+    (search-forward-regexp "\\+ ")
+    (forward-line)
+    (imenu-list-display-dwim)))
+
+#+end_src
+
+#+RESULTS:
+: my-config-mode-next-section
+
+A minor mode for configuration
+
+#+name: config-mode
+#+begin_src emacs-lisp
+
+(define-minor-mode my-config-mode
+  "Configuration mode"
+
+  :init-value nil
+  :global nil
+  :keymap (let* ((map (make-sparse-keymap)))
+            (bind-key "C-c C-p"   #'my-config-mode-prev-header map)
+            (bind-key "C-c C-n"   #'my-config-mode-next-header map)
+            (bind-key "C-c C-S-p" #'my-config-mode-prev-section map)
+            (bind-key "C-c C-S-n" #'my-config-mode-next-section map)
+            (bind-key "C-`"       #'my-org-sidebar-toggle map)
+            (bind-key "C-c C-v t" #'my-org-babel-tangle map)
+            (bind-key "C-c t"     #'my-org-toggle-blocks map)
+            map)
+
+  (require 'org)
+  (if my-config-mode
+      (my-org-sidebar)))
+
+
+#+end_src
+
+
+
+A shortcut to edit configuration
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+(defun my-config ()
+  "Create a new for editing configuration"
+
+  (interactive)
+  (select-frame (make-frame '((name . "my-config")
+                              (width . 150)
+                              (height . 45))))
+  (find-file "~/Documents/GitHub/dotemacs/dotemacs.org")
+  (my-config-mode))
+
+#+end_src
+
+
+An autoload function for my-config (that will load org mode).
+
+#+begin_src emacs-lisp :prologue "" :epilogue ""
+
+(autoload 'my-config
+  (expand-file-name "init.el" user-emacs-directory)
+  "Autoloaded my-config command."
+  t)
+
+#+end_src
+
+#+RESULTS:
+
+*** Bugfix :BUGFIX:
+
+*Temporary bugfix* for babel emacs-lisp that does not take into account prologue/epilogue.
+See https://list.orgmode.org/CA+G3_PNrdhx0Ejzw8UO7DgZ+ju1B7Ar_eTch5MMViEpKGwqq3w@mail.gmail.com/T/
+(November 2020)
+
+#+name: org-babel-expand-body:emacs-lisp
+#+begin_src emacs-lisp
+
+(defun my-org-babel-expand-body:emacs-lisp (orig-fun body params)
+  "Expand BODY according to PARAMS and call original function with new body"
+
+  (let* ((pro (or (cdr (assq :prologue params)) ""))
+         (epi (or (cdr (assq :epilogue params)) ""))
+         (body (concat pro body epi)))
+    (apply orig-fun `(,body ,params))))
+
+(advice-add 'org-babel-expand-body:emacs-lisp
+            :around
+            #'my-org-babel-expand-body:emacs-lisp)
+
+#+end_src
+
+#+RESULTS: org-babel-expand-body:emacs-lisp
+
+
+Some compat tools do not work as expected:
+
+#+begin_src emacs-lisp
+
+(defun compat-executable-find (command &optional remote)
+  "Search for COMMAND in `exec-path' and return the absolute file name.
+Return nil if COMMAND is not found anywhere in `exec-path'.  If
+REMOTE is non-nil, search on the remote host indicated by
+`default-directory' instead."
+  (if (and remote (file-remote-p default-directory))
+      (let ((res (locate-file
+                  command
+                  (mapcar
+                   (lambda (x) (concat (file-remote-p default-directory) x))
+                   (exec-path))
+                  exec-suffixes 'file-executable-p)))
+        (when (stringp res) (file-local-name res)))
+    ;; Use 1 rather than file-executable-p to better match the
+    ;; behavior of call-process.
+    (let ((default-directory (file-name-quote default-directory 'top)))
+      (locate-file command exec-path exec-suffixes 1))))
+
+#+end_src
+
+Flyspell causes some problems. We try to fix them here
+
+
+#+begin_src emacs-lisp
+
+(defun flyspell() (flyspell-mode))
+
+#+end_src
+
+*** Auto-tangle
+
+Automatically tangle org-mode files with the option #+auto_tangle: t
+
+#+begin_src emacs-lisp
+
+;;(add-hook 'org-mode-hook 'org-auto-tangle-mode)
+
+#+end_src
+
+** Benchmark
+
+#+begin_src emacs-lisp
+
+(my-report-time "Personal library")
+
+#+end_src
+
+
+** Interface
+
+#+begin_src emacs-lisp
+
+(setq my-section-start-time (current-time))
+
+#+end_src
+
+** TODO Frame :BINDING:
+
+A [[help:make-frame][make-frame]] rewrite that creates the frame and switch to the ~*scratch*~ buffer.
+
+#+name: my-new-frame
+#+begin_src emacs-lisp
+
+(defun my-make-frame ()
+  "Create a new frame and switch to *scratch* buffer."
+
+  (interactive)
+  (select-frame (make-frame))
+  (switch-to-buffer "*scratch*"))
+
+#+end_src
+
+A function that close the current frame and kill emacs if it was the last frame.
+
+#+name: my-kill-emacs
+#+begin_src emacs-lisp
+
+(defun my-kill-emacs ()
+  "Delete frame or kill Emacs if there is only one frame."
+
+  (interactive)
+  (condition-case nil
+      (delete-frame)
+    (error (save-buffers-kill-terminal))))
+
+#+end_src
+
+Default frame geometry (large margin: 24 pixels).
+
+#+begin_src emacs-lisp
+
+(require 'frame)
+
+;; Default frame settings
+(setq default-frame-alist '((min-height . 1)  '(height . 45)
+                            (min-width  . 1)  '(width  . 81)
+                            (vertical-scroll-bars . nil)
+                            (internal-border-width . 24)
+                            (left-fringe . 0)
+                            (right-fringe . 0)
+                            (tool-bar-lines . 0)
+                            (menu-bar-lines . 0)))
+
+;; Default frame settings
+(setq initial-frame-alist default-frame-alist)
+
+
+#+end_src
+
+Frame related binding (self explanatory).
+
+#+begin_src emacs-lisp
+
+
+(bind-key "M-n"        #'my-make-frame `ergoemacs-override-keymap)
+(bind-key "C-x C-c"    #'my-kill-emacs `ergoemacs-override-keymap)
+(bind-key "M-`"        #'other-frame `ergoemacs-override-keymap)
+;; (bind-key "<M-return>" #'toggle-frame-maximize `ergoemacs-override-keymap)
+
+#+end_src
+
+For frame maximisation, we have to make a specific case for [[help:org-mode][org-mode]].
+
+#+begin_src emacs-lisp
+
+(with-eval-after-load 'org
+  (bind-key "<M-return>" #'toggle-frame-maximized 'org-mode-map))
+
+#+end_src
+
+** Window :BINDING:MODE:
+
+#+name: my-delete-window
+#+begin_src emacs-lisp
+(defvar my-kill-buffer-by-regexp "^\*.+\*" "Buffers whose name matches this regular expression are killed upon closing their window")
+
+(defun my-delete-window()
+  (interactive)
+  "Close the active window. If the buffer-name matches the my-kill-buffer-by-regexp variable, close the buffer first."
+  (let ((currently-active-windows (count-windows)))
+    (when (or (eq currently-active-windows 1)
+              (string-match my-kill-buffer-by-regexp (buffer-name)))
+      (ergoemacs-close-current-buffer))
+    (unless (eq currently-active-windows 1) (delete-window))))
+
+(bind-key "C-w" #'my-delete-window `ergoemacs-override-keymap)
+(bind-key "M-w" #'ergoemacs-close-current-buffer `ergoemacs-override-keymap)
+#+end_src
+
+** Buffer :BINDING:
+
+Size of temporary buffers
+
+#+begin_src emacs-lisp
+
+(temp-buffer-resize-mode)
+(setq temp-buffer-max-height 8)
+
+#+end_src
+
+Unique buffer names
+
+#+begin_src emacs-lisp
+
+(require 'uniquify)
+
+(setq uniquify-buffer-name-style 'reverse
+      uniquify-separator " • "
+      uniquify-after-kill-buffer-p t
+      uniquify-ignore-buffers-re "^\\*")
+
+#+end_src
+
+No question after killing a buffer (kill-buffer asks you which buffer to switch to)
+
+#+begin_src emacs-lisp
+
+(bind-key "C-x k" #'kill-current-buffer `ergoemacs-override-keymap)
+
+#+end_src
+** TODO Files :BINDING:PERSONAL:
+
+We first set some settings for dired,
+
+#+begin_src emacs-lisp
+
+(use-package dired
+  :bind
+  (nil
+   :map dired-mode-map
+   ("c"      . dired-do-copy)
+   ("/"      . dired-goto-file)
+   ("+"      . dired-create-empty-file)
+   ("n"      . dired-create-directory)
+   ("p"      . dired-insert-subdir)
+   ("d"      . dired-kill-subdir)
+   ("f"      . dired-find-file-other-window)
+   ("<up>"   . (lambda () (interactive) (dired-next-line -1)))
+   ("<down>" . dired-next-line)
+   ("<left>" . dired-up-directory)
+   ("x"      . dired-do-delete)
+   ("X"      . dired-do-flagged-delete))
+  :config
+  (setq dired-mouse-drag-files t) ; added in Emacs 29
+  (setq mouse-drag-and-drop-region-cross-program t) ; added in Emacs 29
+  (setq dired-kill-when-opening-new-dired-buffer t) ; added in Emacs 28
+  (setq dired-recursive-copies 'always)
+  (setq dired-recursive-deletes 'always)
+  (setq delete-by-moving-to-trash t)
+  (setq dired-dwim-target t)
+  (setq dired-listing-switches
+        "-g --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group"))
+
+#+end_src
+
+We define some standard directories.
+
+#+begin_src emacs-lisp
+
+(use-package files
+  :config
+  ;; (setq my-files-dir-alist
+  ;;       '(((title . "  Research")     (path . "~/Documents/mathematics/research"))
+  ;;         ((title . "  Teaching")     (path . "~/Documents/mathematics/research"))
+  ;;         ((title . "  Literature")   (path . "~/Documents/mathematics/literature"))
+  ;;         ((title . "  Notes")        (path . "~/Documents/org-files"))
+  ;;         ((title . "  Photos")       (path . "~/Documents/Pictures"))
+  ;;         ((title . "ﱘ  Music")        (path . "~/Documents/Music"))
+  ;;         ((title . "  Downloads")    (path . "~/Downloads"))))
+  (setq large-file-warning-threshold (* 16 1024 1024))
+  )
+
+#+end_src
+
+
+Thanks to dirvish, navigating through files is now like dancing.
+
+#+begin_src emacs-lisp
+
+(use-package dirvish
+  :hook ((dirvish-setup . dirvish-emerge-mode))
+  :bind
+  (:map ergoemacs-override-keymap
+        ("C-x d" . dirvish)
+        ("C-x D" . dirvish-side)
+        ("C-x a" . dirvish-quick-access)
+        :map dirvish-mode-map
+        ("SPC"      . consult-buffer)
+        ("C-<up>"   . dirvish-history-go-forward)
+        ("C-<down>" . dirvish-history-go-backward)
+        ("TAB"      . dirvish-subtree-toggle)
+        ("a"        . dirvish-quick-access)
+        ("p"        . dirvish-move)
+        ("P"        . dirvish-yank-menu)
+        ("f"        . dirvish-file-info-menu)
+        ("*"        . dirvish-mark-menu)
+        ("M-e"      . dirvish-emerge-menu)
+        ([remap dired-sort-toggle-or-edit] . dirvish-quicksort)
+        ([remap dired-do-redisplay] . dirvish-ls-switches-menu)
+        ([remap dired-do-copy] . dirvish-yank-menu))
+  :config
+  (dirvish-override-dired-mode)
+  (dirvish-define-preview exa (file)
+                          "Use `exa' to generate directory preview."
+                          :require ("exa")
+                          (when (file-directory-p file)
+                            `(shell . ("exa" "--color=always" "-al" "--group-directories-first" ,file))))
+  (add-to-list 'dirvish-preview-dispatchers 'exa)
+  ;; (add-to-list 'nano-modeline-mode-formats '(dirvish-mode
+  ;;                                            :mode-p my-nano-modeline-dirvish-list-mode-p
+  ;;                                            :format my-nano-modeline-dirvish-list-mode
+  ;;                                            :icon "") t)
+  (setq dirvish-quick-access-entries
+        '(("h" "~/"                                " Home")
+          ("e" "~/.emacs.d/    "                   " Emacs cache")
+          ("r" "~/Documents/mathematics/research"  " Research")
+          ("t" "~/Documents/mathematics/teaching"  " Teaching")
+          ("d" "~/Documents/organisation"          " Organisation")
+          ;; ("o" "fd -e org"   "All org files in ~/Documents") TODO
+          ("t" "~/.local/share/Trash/files/" "Trash")))
+  (setq dirvish-emerge-groups '(("Research documents"
+                                 (extensions "tex" "bib")
+                                 nil nil)
+                                ("Plaintext documents"
+                                 (extensions "pdf" "epub" "org" "txt")
+                                 nil nil)
+                                ("Recent files"
+                                 (predicate . recent-files-today)
+                                 nil nil)
+                                ("Directories"
+                                 (predicate . directories)
+                                 nil nil)
+                                ("Pictures"
+                                 (extensions "jpg" "png" "svg" "gif")
+                                 t t)
+                                ("Video"
+                                 (extensions "mp4" "mkv" "webm")
+                                 t t)
+                                ("Audio"
+                                 (extensions "mp3" "flac" "wav" "ape" "aac")
+                                 t t)
+                                ("Archives"
+                                 (extensions "gz" "rar" "zip")
+                                 t t)
+                                ("Auxiliary files"
+                                 (extensions "aux" "auxlock" "bbl" "blg" "fls" "log" "out" "latexmkrc")
+                                 t t)
+                                ("other files"
+                                 (regex . ".*")
+                                 t t)
+                                ))
+  (setq dirvish-open-with-programs
+        `((,dirvish-video-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))
+          (,dirvish-audio-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))))
+  (setq dirvish-attributes '(vc-state file-size git-msg subtree-state all-the-icons collapse))
+  (setq dirvish-all-the-icons-height 0.8)
+  (setq dirvish-side-attributes dirvish-attributes)
+  (setq dirvish-side-preview-dispatchers (append '(vc-diff) dirvish-preview-dispatchers))
+  (setq dirvish-side-display-alist '((side . left) (slot . -1) (window-width . 0.2)))
+  (setq dirvish-side-header-line-format '(:left (project) :right (vc-info)))
+  (setq dirvish-side-mode-line-format '(:left (sort omit) :right (index)))
+  )
+
+#+end_src
+
+Follow symlinks without prompt
+
+#+begin_src emacs-lisp
+
+(setq vc-follow-symlinks t)
+
+#+end_src
+
+** Dialogues :OS:
+
+Emacs can use a large number of dialogs and popups. Here we get rid of them.
+
+#+begin_src emacs-lisp
+
+(setq-default show-help-function nil    ; No help text
+              use-file-dialog nil       ; No file dialog
+              use-dialog-box nil        ; No dialog box
+              pop-up-windows nil)       ; No popup windows
+
+#+end_src
+
+** Keyboard :MODE:
+
+The mode displays the key bindings following your currently entered incomplete command (a ;; prefix) in a popup.
+
+#+begin_src emacs-lisp
+
+(require 'which-key)
+
+(which-key-mode)
+
+#+end_src
+
+** Cursor :MODE:
+
+We set the appearance of the cursor: vertical line, 3 pixels thick, no blinking
+
+#+begin_src emacs-lisp
+
+(setq-default cursor-in-non-selected-windows nil ; Hide the cursor in inactive windows
+              cursor-type '(bar . 3)             ; Vertical cursor
+              cursor-intangible-mode t           ; Enforce cursor intangibility
+              x-stretch-cursor nil)
+                                        ; Don't stretch cursor to the glyph width
+
+(blink-cursor-mode 0)                            ; Blinking cursor
+
+#+end_src
+
+** Text :BINDING:
+
+Pretty self-explanatory
+
+#+begin_src emacs-lisp
+
+(setq-default use-short-answers t ; Replace yes/no prompts with y/n
+              confirm-nonexistent-file-or-buffer nil ; Ok to visit non existent files
+              words-include-escapes nil) ; Don't treat escape chars as part of words
+
+#+end_src
+
+Replace region when inserting text
+
+#+begin_src emacs-lisp
+
+(delete-selection-mode 1)
+
+#+end_src
+
+A smarter fill/unfill command
+
+#+begin_src emacs-lisp
+
+(defun my-fill-unfill ()
+  "Like `fill-paragraph', but unfill if used twice."
+
+  (interactive)
+  (let ((fill-column
+         (if (eq last-command #'my-fill-unfill)
+             (progn (setq this-command nil)
+                    (point-max))
+           fill-column)))
+    (call-interactively #'fill-paragraph)))
+
+(bind-key "M-q"  #'my-fill-unfill)
+;; (bind-key [remap fill-paragraph]  #'my-fill-unfill)
+
+#+end_src
+
+** Sound
+
+Disable the bell (auditory or visual).
+
+#+begin_src emacs-lisp
+
+(setq-default visible-bell nil             ; No visual bell
+              ring-bell-function 'ignore)  ; No bell
+
+#+end_src
+
+** Mouse :MODE:
+
+Mouse behavior can be finely controlled using the [[help:mouse-avoidance-mode][mouse-avoidance-mode]].
+
+#+begin_src emacs-lisp
+
+(setq-default mouse-yank-at-point t) ; Yank at point rather than pointer
+(mouse-avoidance-mode 'exile)        ; Avoid collision of mouse with point
+
+#+end_src
+
+Mouse active in tty mode.
+
+#+begin_src emacs-lisp
+
+(unless (display-graphic-p)
+  (xterm-mouse-mode 1)
+  (global-set-key (kbd "<mouse-4>") #'scroll-down-line)
+  (global-set-key (kbd "<mouse-5>") #'scroll-up-line))
+
+#+end_src
+
+** Scroll
+
+Smoother scrolling.
+
+#+begin_src emacs-lisp
+
+(setq-default scroll-conservatively 101       ; Avoid recentering when scrolling far
+              scroll-margin 2                 ; Add a margin when scrolling vertically
+              recenter-positions '(5 bottom)) ; Set re-centering positions
+
+#+end_src
+
+** Clipboard :OS:
+
+Allows system and Emacs clipboard to communicate smoothly (both ways)
+
+#+begin_src emacs-lisp
+
+(setq-default select-enable-clipboard t) ; Merge system's and Emacs' clipboard
+
+#+end_src
+
+Make sure clipboard works properly in tty mode on OSX.
+
+#+begin_src emacs-lisp
+
+(defun my-paste-from-osx ()
+  (shell-command-to-string "pbpaste"))
+
+(defun my-copy-to-osx (text &optional push)
+  (let ((process-connection-type nil))
+    (let ((proc (start-process "pbcopy" "*Messages*" "pbcopy")))
+      (process-send-string proc text)
+      (process-send-eof proc))))
+
+(when (and (not (display-graphic-p))
+           (eq system-type 'darwin))
+  (setq interprogram-cut-function   #'my-copy-to-osx
+        interprogram-paste-function #'my-paste-from-osx))
+
+#+end_src
+
+** Help :BINDING:
+
+[[https://github.com/Wilfred/helpful][Helpful]] is an alternative to the built-in Emacs help that provides much more contextual information.
+It is a bit slow to load so we do need load it explicitely.
+
+#+begin_src emacs-lisp
+
+(setq help-window-select t)             ; Focus new help windows when opened
+
+(bind-key "C-h f"   #'helpful-callable) ; Look up callable
+(bind-key "C-h v"   #'helpful-variable) ; Look up variable
+(bind-key "C-h k"   #'helpful-key)      ; Look up key
+(bind-key "C-c C-d" #'helpful-at-point) ; Look up the current symbol at point
+(bind-key "C-h F"   #'helpful-function) ; Look up *F*unctions (excludes macros).
+(bind-key "C-h C"   #'helpful-command)  ; Look up *C*ommands.
+
+#+end_src
+
+** Benchmark
+
+#+begin_src emacs-lisp
+
+(my-report-time "Interface")
+
+#+end_src
+
+
+** Visual
+
+
+#+begin_src emacs-lisp
+
+(setq my-section-start-time (current-time))
+
+#+end_src
+
+** TODO Colours :MODE:TIMER:
+
+A consistent theme for GNU Emacs. The light theme is based on Material colors and the dark theme is based on Nord colors. The theme is based on a set of six faces (only).
+
+#+begin_src emacs-lisp
+
+(require 'nano-theme)
+(setq nano-fonts-use t) ; Use theme font stack
+;;(nano-mode)             ; Recommended settings
+
+
+(defun my-set-face (face style)
+  "Reset FACE and make it inherit STYLE."
+  (set-face-attribute face nil
+                      :foreground 'unspecified :background 'unspecified
+                      :family     'unspecified :slant      'unspecified
+                      :weight     'unspecified :height     'unspecified
+                      :underline  'unspecified :overline   'unspecified
+                      :box        'unspecified :inherit    style))
+(my-set-face 'italic 'nano-faded)
+
+#+end_src
+
+We define a set of colours as defined by Paul Tol in his blog [[https://personal.sron.nl/~pault/][]].
+
+#+begin_src emacs-lisp
+
+(setq bright-blue   '"#4477AA"
+      bright-cyan   '"#66CCEE"
+      bright-green  '"#228833"
+      bright-yellow '"#CCBB44"
+      bright-red    '"#EE6677"
+      bright-purple '"#AA3377"
+      bright-grey   '"#BBBBBB")
+
+(setq high-contrast-white  '"#FFFFFF"
+      high-contrast-yellow '"#DDAA33"
+      high-contrast-red    '"#BB5566"
+      high-contrast-blue   '"#004488"
+      high-contrast-black  '"#000000")
+
+(setq vibrant-blue    '"#0077BB"
+      vibrant-cyan    '"#33BBEE"
+      vibrant-teal    '"#009988"
+      vibrant-orange  '"#EE7733"
+      vibrant-red     '"#CC3311"
+      vibrant-magenta '"#EE3377"
+      vibrant-gray    '"#BBBBBB")
+
+(setq muted-indigo '"#332288"
+      muted-cyan   '"#88CCEE"
+      muted-teal   '"#44AA99"
+      muted-green  '"#117733"
+      muted-olive  '"#999933"
+      muted-sand   '"#DDCC77"
+      muted-rose   '"#CC6677"
+      muted-wine   '"#882255"
+      muted-purple '"#AA4499"
+      muted-gray   '"#DDDDDD")
+
+(setq medium-contrast-white        '"#FFFFFF"
+      medium-contrast-light-yellow '"#EECC66"
+      medium-contrast-light-red    '"#EE99AA"
+      medium-contrast-light-blue   '"#6699CC"
+      medium-contrast-dark-yellow  '"#997700"
+      medium-contrast-dark-red     '"#994455"
+      medium-contrast-dark-blue    '"#004488"
+      medium-contrast-black        '"#000000")
+
+(setq pale-blue   '"#BBCCEE"
+      pale-cyan   '"#CCEEFF"
+      pale-green  '"#CCDDAA"
+      pale-yellow '"#EEEEBB"
+      pale-red    '"#FFCCCC"
+      pale-gray   '"#DDDDDD")
+
+(setq dark-blue   '"#222255"
+      dark-cyan   '"#225555"
+      dark-green  '"#225522"
+      dark-yellow '"#666633"
+      dark-red    '"#663333"
+      dark-gray   '"#555555")
+
+(setq light-black  '"#454545"
+      light-blue   '"#77AADD"
+      light-cyan   '"#99DDFF"
+      light-mint   '"#44BB99"
+      light-pear   '"#BBCC33"
+      light-olive  '"#AAAA00"
+      light-yellow '"#EEDD88"
+      light-orange '"#EE8866"
+      light-pink   '"#FFAABB"
+      light-gray   '"#DDDDDD")
+
+(setq almost-black '"#111A1A"
+      almost-white '"#FBFAFC"
+      almost-blue  '"#4F5565"
+      almost-gray  '"#F1F1F1")
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+(defun my-nano-light-muted ()
+  (nano-light)
+  (my-thin-modeline)
+  (set-face-attribute 'nano-critical   nil :foreground muted-rose)
+  (set-face-attribute 'nano-critical-i nil :background muted-rose)
+  (set-face-attribute 'nano-popout     nil :foreground vibrant-red)
+  (set-face-attribute 'nano-popout-i   nil :background vibrant-red)
+  (set-face-attribute 'nano-strong     nil :foreground almost-black)
+  (set-face-attribute 'nano-strong-i   nil :background almost-black)
+  (set-face-attribute 'nano-salient    nil :foreground medium-contrast-light-blue)
+  (set-face-attribute 'nano-salient-i  nil :background bright-blue)
+  (set-face-attribute 'nano-faded      nil :foreground dark-gray)
+  (set-face-attribute 'nano-faded-i    nil :background dark-gray)
+  (set-face-attribute 'nano-subtle     nil :foreground light-black)
+  (set-face-attribute 'nano-subtle     nil :background almost-gray)
+  (set-face-attribute 'nano-subtle-i   nil :foreground almost-gray)
+  (set-face-attribute 'nano-subtle-i   nil :background light-black)
+  (set-face-attribute 'nano-modeline-active nil :foreground almost-gray)
+  (set-face-attribute 'nano-modeline-active nil :background almost-blue)
+  (setopt nano-modeline-faces '((header-active nano-modeline-active)
+                                (header-inactive nano-modeline-inactive)
+                                (footer-active nano-modeline-active)
+                                (footer-inactive nano-modeline-inactive)
+                                (status-RW-active nano-modeline-status)
+                                (status-RO-active nano-modeline-status)
+                                (status-**-active nano-modeline-status nano-popout-i)
+                                (name-active bold)
+                                (primary-active)
+                                (secondary-active nano-modeline-active)))
+  )
+
+(defun my-nano-dark-muted ()
+  (nano-dark)
+  (my-thin-modeline)
+  (set-face-attribute 'nano-critical   nil :foreground muted-rose)
+  (set-face-attribute 'nano-critical-i nil :background muted-rose)
+  (set-face-attribute 'nano-popout     nil :foreground vibrant-red)
+  (set-face-attribute 'nano-popout-i   nil :background vibrant-red)
+  (set-face-attribute 'nano-strong     nil :foreground almost-white)
+  (set-face-attribute 'nano-strong-i   nil :background almost-white)
+  (set-face-attribute 'nano-salient    nil :foreground pale-cyan)
+  (set-face-attribute 'nano-salient-i  nil :background pale-cyan)
+  (set-face-attribute 'nano-faded      nil :foreground pale-blue)
+  (set-face-attribute 'nano-faded-i    nil :background pale-blue)
+  (set-face-attribute 'nano-subtle     nil :foreground almost-white)
+  (set-face-attribute 'nano-subtle     nil :background almost-blue)
+  (set-face-attribute 'nano-subtle-i   nil :foreground almost-blue)
+  (set-face-attribute 'nano-subtle-i   nil :background almost-white)
+  (set-face-attribute 'nano-modeline-active nil :background almost-blue)
+  (set-face-attribute 'nano-modeline-active nil :foreground almost-gray)
+  (setopt nano-modeline-faces '((header-active nano-modeline-active)
+                                (header-inactive nano-modeline-inactive)
+                                (footer-active nano-modeline-active)
+                                (footer-inactive nano-modeline-inactive)
+                                (status-RW-active nano-modeline-status)
+                                (status-RO-active nano-modeline-status)
+                                (status-**-active nano-modeline-status nano-popout-i)
+                                (name-active bold)
+                                (primary-active)
+                                (secondary-active nano-modeline-active)))
+  )
+
+(setq my-current-theme-light t)
+
+(defun my-toggle-theme ()
+  (interactive)
+  (if my-current-theme-light
+      (progn (setq my-current-theme-light nil)
+             (my-nano-dark-muted))
+    (setq my-current-theme-light t)
+    (my-nano-light-muted)))
+
+(bind-key "<f6>" #'my-toggle-theme ergoemacs-override-keymap)
+
+#+end_src
+
+** TODO Fonts :BUGFIX:
+
+This is the font stack we install:
+
+- Default font:  Roboto Mono 14pt Light       [[https://fonts.google.com/specimen/Roboto+Mono][]]
+- /Italic font/:   Victor Mono 14pt Semilight   [[https://github.com/rubjo/victor-mono][]]
+- *Bold font*:     Roboto Mono 14pt Regular     [[https://fonts.google.com/specimen/Roboto+Mono][]]
+- Unicode font:  Inconsolata 16pt Light       [[https://github.com/googlefonts/Inconsolata][]]  TODO: Switch to Fira Code?
+- Icon font:     Roboto Mono Nerd 12pt Light  [[https://www.nerdfonts.com/][]]
+- Serif font:
+- math font:
+
+Text excerpt using a /gorgeous/ and true italic font (Victor Mono),
+chosen to really *stand out* from the default font (Roboto Mono).
+┌─────────────────────────────────────────────────────────────────┐
+│   The quick brown fox jumps over the lazy dog                  │
+│   /The quick brown fox jumps over the lazy dog/                  ┼─ Victor Mono Italic
+│   *The quick brown fox jumps over the lazy dog*                  ├─ Roboto Mono Nerd
+└─┼─────────────────────────────────────┼─────────────────────────┘
+Roboto Mono Nerd                     Roboto Mono
+
+Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): \copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
+
+
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil
+                    :family "Roboto Mono"
+                    :weight 'light
+                    :height 140)
+
+(set-face-attribute 'bold nil
+                    :family "Roboto Mono"
+                    :weight 'regular)
+
+(set-face-attribute 'italic nil
+                    :family "Victor Mono"
+                    :weight 'semilight
+                    :slant 'italic
+                    :height (lambda (x)
+                              (cond ((< x 100) (+ x 5))
+                                    ((and (>= x 100) (< x 110)) 110)
+                                    ((and (>= x 110) (< x 120)) 132)
+                                    ((and (>= x 120) (< x 130)) 132)
+                                    ((and (>= x 130) (< x 140)) 140)
+                                    ((and (>= x 140) (< x 150)) 150)
+                                    ((and (>= x 150) (< x 160)) 170)
+                                    ((and (>= x 160) (< x 170)) 180)
+                                    ((and (>= x 170) (< x 180)) 190)
+                                    ((and (>= x 180) (< x 190)) 200)
+                                    ((>= x 190) (round(* x 1.1)))))
+                    )
+
+
+(set-fontset-font t 'unicode "Roboto Mono Nerd")
+
+(set-fontset-font t '(#xe000 . #xffdd) "Roboto Mono Nerd")
+
+(set-fontset-font t 'emoji "Roboto Mono Nerd")
+
+#+end_src
+
+
+** Typography and layout
+
+#+begin_src emacs-lisp
+
+(setq-default fill-column 100                         ; Default line width
+              sentence-end-double-space nil           ; Use a single space after dots
+              bidi-paragraph-direction 'left-to-right ; Faster
+              truncate-string-ellipsis "…")           ; Nicer ellipsis
+
+#+end_src
+
+
+#+begin_src emacs-lisp
+
+(use-package visual-fill-column
+  :ensure adaptive-wrap
+  :custom (visual-fill-column-center-text t)
+  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
+          )
+  )
+
+#+end_src
+Changing the symbol for truncation (…) and wrap (↩).
+
+#+begin_src emacs-lisp
+
+(require 'nano-theme)
+
+;; Nicer glyphs for continuation and wrap
+(set-display-table-slot standard-display-table
+                        'truncation (make-glyph-code ?… 'nano-faded))
+
+(defface wrap-symbol-face
+  '((t (:family "Fira Code"
+                :inherit nano-faded)))
+  "Specific face for wrap symbol")
+
+(set-display-table-slot standard-display-table
+                        'wrap (make-glyph-code ?↩ 'wrap-symbol-face))
+
+#+end_src
+
+Fix a bug on OSX in term mode & zsh (spurious "%" after each command)
+
+#+begin_src emacs-lisp
+
+(when (eq system-type 'darwin)
+  (add-hook 'term-mode-hook
+            (lambda ()
+              (setq buffer-display-table (make-display-table)))))
+
+#+end_src
+
+Make sure underline is positioned at the very bottom.
+
+#+begin_src emacs-lisp
+
+(setq x-underline-at-descent-line nil
+      x-use-underline-position-properties t
+      underline-minimum-offset 10)
+
+#+end_src
+** Benchmark
+
+#+begin_src emacs-lisp
+
+(my-report-time "Visual")
+
+#+end_src
+
+
+** Editing
+
+#+begin_src emacs-lisp
+
+(setq my-section-start-time (current-time))
+
+#+end_src
+
+** Default mode :HOOK:MODE:
+
+Default & initial mode is text.
+
+#+begin_src emacs-lisp
+
+(setq-default initial-major-mode 'text-mode   ; Initial mode is text
+              default-major-mode 'text-mode)  ; Default mode is text
+
+#+end_src
+
+Visual line mode for prog and text modes
+
+#+begin_src emacs-lisp
+
+(add-hook 'text-mode-hook 'visual-line-mode)
+(add-hook 'prog-mode-hook 'visual-line-mode)
+
+#+end_src
+
+** Tabulations
+
+No tabulation, ever.
+
+#+begin_src emacs-lisp
+
+;; Let Emacs guess Python indent silently
+(setq python-indent-guess-indent-offset t
+      python-indent-guess-indent-offset-verbose nil)
+
+#+end_src
+
+** Parenthesis :MODE:
+
+We enable paren mode for highlighting matching parenthesis and rainbow-delimiters in order to be able to visually distinguish delimiters of different depths.
+
+#+begin_src emacs-lisp
+
+(use-package emacs
+  :init (show-paren-mode t); Matches parentheses and such in every mode
+  )
+
+(use-package rainbow-delimiters
+  :hook ((prog-mode org-mode LaTeX-mode) . rainbow-delimiters-mode)
+  )
+
+#+end_src
+
+We need a small helper to distinguish between words and special characters  which should be treated differently.
+
+
+#+begin_src emacs-lisp
+
+(defvar my-backward-special-characters '".,:;!?(){}[]~@#$%^&*<>_=-+\\\"' \n\t/`")
+
+
+(defun my-backward-word ()
+  " muW4e want to go back by words in a smart way"
+  (interactive)
+  (if (string-search (string (preceding-char)) my-backward-special-characters)
+      (backward-char)
+    (backward-word))
+  )
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+(use-package puni
+  :hook ((text-mode prog-mode LaTeX-mode org-mode eval-expression-minibuffer-setup haskell-interactive-mode) . puni-mode)
+  :bind (:map puni-mode-map
+              ("C-<right>" . puni-slurp-forward)
+              ("C-<left>"  . puni-barf-forward)
+              ("M-<left>"  . puni-slurp-backward)
+              ("M-<right>" . puni-barf-backward)
+              ("C-x C-d"   . puni-splice)
+              ("M-i"       . puni-squeeze)
+              ("C-<up>"    . my-puni-rewrap)
+              ("<left>"    . my-backward-word)
+              ))
+
+(defun my-puni-rewrap ()
+  (interactive)
+  (let*((next-delimiters (completing-read
+                          "Rewrap the sexp at point with: "
+                          '("(...)" "{...}" "[...]" "\\langle...\\rangle" "\\|...\\|"  "<...>" "\\left(...\\right)" )
+                          nil
+                          t
+                          ))
+        (opening-del "A"))
+    (puni-squeeze)
+    (insert (car (split-string next-delimiters "\\.+" t)))
+    (yank)
+    (insert (car (cdr (split-string next-delimiters "\\.+" t))))))
+
+#+end_src
+
+** Spell-checking
+
+We set up multi-language lazy flyspell checks in text modes.
+
+Now we can set up flyspell and guess-language.
+
+#+begin_src emacs-lisp
+
+(use-package flyspell
+  :hook (text-mode org-mode latex-mode mu4e-compose-mode)
+  :config
+  (setq ispell-program-name "aspell")
+  (setq ispell-list-command "--list")
+  (setq ispell-alternate-dictionary "/usr/share/dict/en_GB.txt")
+  )
+
+;; (use-package flyspell-lazy
+;;   :after flyspell
+;;   :hook (text-mode org-mode latex-mode mu4e-compose-mode))
+
+(use-package flyspell-correct
+  :after flyspell
+  :bind (:map ergoemacs-override-keymap ("M-t" . flyspell-correct-wrapper)))
+
+;; (use-package flyspell-correct-popup
+;;   :after flyspell-correct)
+
+(use-package guess-language
+  :hook (mu4e-compose-mode . guess-language-mode)
+  :config
+  (setq guess-language-langcodes '((en . ("en_GB" "English"))
+                                   (de . ("de_DE" "German")))
+        guess-language-languages '(en de)
+        guess-language-min-paragraph-length 45))
+
+(use-package mu4e
+  :after flyspell
+  :init (setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify))
+#+end_src
+
+We use powerthesaurus for fancy word juggling.
+#+begin_src emacs-lisp
+
+;; (use-package powerthesaurus
+;;   :ensure jeison
+;;   )
+#+end_src
+
+** Imenu list
+
+Imenu setup
+
+#+begin_src emacs-lisp
+
+(require 'imenu-list)
+
+(setq-default imenu-list-position 'left
+              imenu-max-item-length 1000)
+
+#+end_src
+** Highlighting :MODE:INACTIVE:
+
+Highlighting of the current line (native mode)
+
+#+begin_src emacs-lisp
+
+;; (require 'hl-line)
+
+;; (global-hl-line-mode)
+
+#+end_src
+
+** PDF Tools
+
+For retina display (OSX)
+
+#+begin_src emacs-lisp
+;; (require 'pdf-tools)
+
+(add-hook 'doc-view-mode-hook 'pdf-tools-install)
+
+(setq-default pdf-view-use-scaling t
+              pdf-view-use-imagemagick nil)
+
+#+end_src
+
+** Benchmark
+
+#+begin_src emacs-lisp
+
+(my-report-time "Editing")
+
+#+end_src
 
 
 ** Versioning
