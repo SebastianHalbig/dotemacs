@@ -160,6 +160,7 @@ The actual code-blocks will be found in different sections and inserted once the
   <<recursive-minibuffers>>
   <<server>>
   <<cus-edit>>
+  <<todo-faces>>
   (elpaca-wait)
   )
 #+end_src
@@ -1729,6 +1730,13 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
                 org-indirect-buffer-display 'other-window    ; Tab on a task expand it in a
                                         ; new window
                 org-outline-path-complete-in-steps nil       ; No steps in path display
+                org-refile-targets                   ; where to refile to
+                '(
+                  ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 2)
+                  ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 3)
+                  ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 2)
+                  ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 2)
+                  )
                 org-fold-catch-invisible-edits 'smart        ; Check if in invisible region
                 org-insert-heading-respect-content nil       ; Insert new heading at point.
                 org-pretty-entities t                        ; Show entities as UTF-8
@@ -1798,24 +1806,23 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
   (add-to-list 'org-structure-template-alist
              '("S" . "src emacs-lisp")))
 #+end_src
-
 ** Modern Org mode
 #+begin_src emacs-lisp
 
-;; Modern org mode
 (use-package org-modern
   :elpaca (:type git :host github :repo "minad/org-modern")
   :config
   (setq org-todo-keywords
-        '((sequence "TODO(t)"   "NEXT(n)"                 "|" "DONE(d)")
-          (sequence "|" "CANCELED(C)")))
+        '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CANCELED(c)")
+          (sequence "WAIT(p)" "|")))
   (global-org-modern-mode)
   :custom
   org-modern-todo-faces
-  '(("TODO"        :background "#fdf096" :weight semi-bold) ;;straw-yellow
-    ("NEXT"        :background "#d65848" :weight bold)      ;;aurora-red
-    ("DONE"        :background "#97b578" :weight semi-bold) ;;emerald-green
-    ("CANCELED"    :background "#DDDDDD" :weight normal)))
+  '(("TODO"     . todo-face)
+    ("NEXT"     . next-face)
+    ("DONE"     . done-face)
+    ("WAIT"   . wait-face)
+    ("CANCELED" . canceled-face)))
 #+end_src
 *** Org appear mode
 
@@ -1901,7 +1908,7 @@ Retrieve the theme.
 Set the style for the file.
 
 #+NAME: my-set-org-html-style
-#+begin_src my-emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle no
 (defun my-set-org-html-style (&optional backend)
   "Include the css-file in the exportet html file."
   (interactive)
@@ -3888,8 +3895,52 @@ Emacs can use a large number of dialogs and popups. Here we get rid of them.
               use-file-dialog nil       ; No file dialog
               use-dialog-box nil        ; No dialog box
               pop-up-windows nil)       ; No popup windows
+First we define a consisted set of faces for todo keywords. This is incorporated into the emacs default settings.
 
+#+NAME: todo-faces
+#+begin_src emacs-lisp :tangle no
+(defface todo-face '((t (:foreground "#fdf096"
+                                     :background "#494f67"
+                                     :weight semibold :inverse-video t)))
+  "A consistent emacs-wide TODO face") ;;straw-yellow and blackish-grey
+(defface next-face '((t (:foreground "#d65848"
+                                     :background "#494f67"
+                                     :weight semibold
+                                     :inverse-video t)))
+  "A consistent emacs-wide NEXT face") ;;aurora-red and blackish-grey
+(defface done-face '((t (:foreground "#97b578"
+                                     :background "#494f67"
+                                     :weight semibold
+                                     :inverse-video t)))
+  "A consistent emacs-wide DONE face") ;;emerald-green and blackish-grey
+(defface wait-face '((t (:foreground "#fdf096"
+                                       :background "#494f67"
+                                       :weight semibold
+                                       :inverse-video t)))
+  "A consistent emacs-wide WAIT face") ;;straw-yellow and blackish-grey
+(defface canceled-face '((t (:foreground "#edf0f2"
+                                         :background "#494f67"
+                                         :weight semibold
+                                         :inverse-video t)))
+  "A consistent emacs-wide CANCELED face") ;;skimmed-milk-white and blackish-grey
 #+end_src
+
+#+begin_src emacs-lisp
+(use-package hl-todo
+  :elpaca (:type git :host github :repo "tarsius/hl-todo")
+  :config
+  (setq hl-todo-exclude-modes nil)
+  (setq hl-todo-keyword-faces
+      '(("TODO"     . todo-face)
+        ("NEXT"     . next-face)
+        ("DONE"     . done-face)
+        ("WAIT"     . wait-face)
+        ("CANCELED" . canceled-face)))
+  (global-hl-todo-mode 1)
+  )
+#+end_src
+* Other visuals
+** TODO Nerd icons
 
 ** Keyboard :MODE:
 
@@ -7450,7 +7501,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
            init-time (- total-time init-time)))
 (message "---------------------------------------------------------------")
 #+end_src
-** Org Timeblock
+** TODO Org Timeblock
 
 #+begin_src emacs-lisp
 (use-package org-timeblock
