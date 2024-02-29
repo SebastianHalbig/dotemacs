@@ -356,7 +356,6 @@ We can now configure recentf.
 ;; Disable the emacs custom block by making it disposable.
 (setq custom-file (make-temp-file "emacs-custom-"))
 #+end_src
-
 ** Default input method, ergoemacs and and multilingual environments
 
 We use [[https://ergoemacs.github.io/][ergoemacs]] to change many keybindings to a more modern version.
@@ -376,7 +375,6 @@ To switch between input methods use [[help:toggle-input-method][toggle-input-met
   )
 (elpaca-wait)
 #+end_src
-
 ** Enable and disable certain commands
 
 #+NAME: enable-disable-commands
@@ -393,7 +391,6 @@ To switch between input methods use [[help:toggle-input-method][toggle-input-met
    (put command 'disabled t))
  '(eshell project-eshell overwrite-mode iconify-frame diary))
 #+end_src
-
 ** Encoding
 
 We tell emacs to use UTF-8 encoding as much as possible.
@@ -407,7 +404,6 @@ We tell emacs to use UTF-8 encoding as much as possible.
 (set-keyboard-coding-system 'utf-8)     ; Set coding system for keyboard input on TERMINAL
 
 #+end_src
-
 ** Auto-save
 
 If Emacs or the computer crashes, you can recover the files you were editing at the time of the crash from their auto-save files. To do this, start Emacs again and type the command ~M-x recover-session~. Here, we parameterise how files are saved in the background.
@@ -420,7 +416,6 @@ If Emacs or the computer crashes, you can recover the files you were editing at 
       auto-save-timeout 30       ; Number of seconds between auto-save
       auto-save-interval 200)    ; Number of keystrokes between auto-saves
 #+end_src
-
 ** History
 
 Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
@@ -510,7 +505,6 @@ A buffer can get out of sync with respect to its visited file on disk if that fi
   (global-auto-revert-mode))   ; Start global-auto-revert-mode
 
 #+end_src
-
 ** Saving buffers
 
 #+NAME: save-buffers
@@ -520,7 +514,6 @@ A buffer can get out of sync with respect to its visited file on disk if that fi
 (setq require-final-newline t)                           ; Require a final newline—POSIX BOIS
 
 #+end_src
-
 ** Restoring buffer positions on load.
 
 Record cursor position using [[https://github.com/emacs-mirror/emacs/blob/master/lisp/saveplace.el][saveplace]].
@@ -536,7 +529,6 @@ Record cursor position using [[https://github.com/emacs-mirror/emacs/blob/master
   (save-place-mode 1))                        ; Start save-place-mode
 
 #+end_src
-
 ** Allow for recursive minibuffers
 
 We want to use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Recursive-Mini.html][recursive minibuffers]].
@@ -545,7 +537,6 @@ We want to use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Recur
 #+begin_src emacs-lisp :tangle no
 (setq enable-recursive-minibuffers t)
 #+end_src
-
 ** Server
 
 We run emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Emacs-Server.html][server]].
@@ -586,7 +577,6 @@ Lambda-themes is a collection of four higher and lower contrast light and dark t
 
 In general the theme aims to use as few highly distinct colors as possible without crossing over into full “monochrome” territory. It also means that the themes use various devices other than foreground face color to capture meaningful differences in text. Different text weights are used throughout, as are subtle differences in background coloring. Colored headlines are largely avoided.
 #+end_quote
-
 ** Lambda theme :BIND:
 *** Prelude: Werner's nomenclature
 
@@ -1042,7 +1032,6 @@ To get a list of all character sets type "M-x list-character-sets"
     (symbol  "Roboto Mono Nerd Font")
     (emoji   "Roboto Mono Nerd Font")))
 #+end_src
-
 ** Lambda modeline
 
 The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
@@ -1114,7 +1103,6 @@ We will have a status line at the top of the frames and therefore disable the mo
   (my-lambda-light-werner)
   )
 #+end_src
-
 * Completion :BIND:FACE:HOOK:
 
 Emacs has many completion-at-point functionalities.
@@ -1131,7 +1119,6 @@ We use the eco-system:
 On top-for some specific settings, we have
 + LSP-mode
 + YASnippet
-
 ** Cape :BIND:HOOK:
 
 [[https://github.com/minad/cape][Cape: completion at point]] is a package by [[https://github.com/minad][Minad]] that enhances the completion ecosystem.
@@ -1199,7 +1186,6 @@ We will use the power of [[https://company-mode.github.io/][company]] but hide i
 (use-package company-yasnippet
   :elpaca(company-yasnippet :type git :host github :repo "company-mode/company-mode"))
 #+end_src
-
 ** Consult :BIND:
 We replace some of emacs functions with their [[https://github.com/minad/consult][consult]] equivalent.
 
@@ -1316,7 +1302,6 @@ The embark-consult also contains some candidates collectors that allow you to ru
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
-
 ** Corfu :BIND:HOOK:
 
 [[https://github.com/minad/corfu][Corfu]] enhances completion at point with a small completion popup.
@@ -1382,7 +1367,6 @@ default lsp-passthrough."
           '(orderless)))
   )
 #+end_src
-
 ** TODO Embark :BIND:
 The following code is taken from the literate config of [[https://protesilaos.com/emacs/dotemacs][Protesilaos Stavrou]].
 It could use a lot(!) of work to optimise [[https://github.com/oantolin/embark/tree/master][embark]].
@@ -1434,7 +1418,6 @@ Embark makes it easy to choose a command to run based on what is near point, bot
   (setq embark-verbose-indicator-display-action nil)
   )
 #+end_src
-
 ** Marginalia :BIND:
 
 [[https://github.com/minad/marginalia][Marginalia]] offers annotations for the minibuffer.
@@ -1459,7 +1442,6 @@ The annotations are added based on the completion category. For example find-fil
   (marginalia-max-relative-age 0) ; Supresses showing the file age
   )
 #+end_src
-
 ** Orderless :FACE:
 
 [[https://github.com/oantolin/orderless][Orderless]] allows for completions based on space-separated tokens, in any order.
@@ -1506,7 +1488,6 @@ A completion style is a back-end for completion and is used from a front-end tha
   (completion-category-overrides '((file (styles . (partial-completion)))))
   )
 #+end_src
-
 ** LSP-Mode :BIND:HOOK:
 
 A few more niceties for our completion setup are provided by using the [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
@@ -1573,7 +1554,6 @@ It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].T
   (lsp-ui-sideline-show-hover t)
   )
 #+end_src
-
 ** Vertico :BIND:HOOK:FACE:
 
 [[https://github.com/minad/vertico][Vertico]] is the minibuffer UI for our completion system.
@@ -1684,7 +1664,6 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
   (yas-inhibit-overlay-modification-protection nil))
 
 #+end_src
-
 * Org mode
 
 [[https://orgmode.org/][Org mode]] is arguably one of the best features of emacs.
@@ -1694,7 +1673,6 @@ A GNU Emacs major mode for keeping notes, authoring documents, computational not
 #+end_quote
 
 A extensive documentation can be found [[https://orgmode.org/org.html][here]].
-
 ** General settings
 
 #+NAME: org-config
