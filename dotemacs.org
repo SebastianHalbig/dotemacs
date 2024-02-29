@@ -51,9 +51,7 @@ The documentation of each package-based (sub-)section is build like follows:
 + Optionally some explanations why (but not how) things are done in a certain way.
 
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
-
-
-** [1/9] Open Tasks
+** [1/13] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
@@ -63,6 +61,11 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] Write a transient (i.e. 21st century) date-picker.
 - [ ] Create/use a template system for latex-based projects.
 - [X] Move the early-loading of org to a later stage.
+- [ ] Org agenda align tags.
+- [ ] Modify org-timeblock colours.
+- [ ] BUGFIX: org-timeblock columns has a wrong width.(See the subsection)
+- [ ] BUGFIX: org-timeblock-quit close all agenda buffers.
+- [ ] BUGFIX: mu4e execute "make-symbolic-link" in pre-build as sudo
 ** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
