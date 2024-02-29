@@ -1909,36 +1909,97 @@ Set the style for the file.
 
 
 #+end_src
+** GTD
+In this subsection, we set up our variant of the "getting things done"-ecosystem.
+This involves:
+- the org agenda
+- the task-capturing ecosystem
+- the org-gtd package
 
-** Babel :INACTIVE:
+*** org-agenda
 
-#+begin_src emacs-lisp
+Quoted from the manual of [[https://orgmode.org/manual/Agenda-Views.html][org agenda]].
+#+begin_quote
+To get an overview of open action items, or of events that are important for a particular date, this information must be collected, sorted and displayed in an organized way.
+#+end_quote
+#+begin_src emacs-lisp :noweb yes
+(use-package org-agenda
+  :elpaca nil
+  :hook (org-agenda-finalize . my-org-agenda-mode-hook)
+  :bind (:map ergoemacs-override-keymap ("C-c a" . org-agenda))
+  (:map org-agenda-mode-map ("q" . org-agenda-exit))
+  :config
+  <<general-settings>>
+  <<agenda-formatting>>
+  <<org-tags>>
+  )
+#+end_src
 
-(setq-default org-src-fontify-natively t         ; Fontify code in code blocks.
-              org-adapt-indentation nil          ; No adaptive indentation
-              org-src-tab-acts-natively t        ; Tab acts as in source editing
-              org-confirm-babel-evaluate nil     ; No confirmation before executing code
-              org-edit-src-content-indentation 0 ; No relative indentation for code blocks
-              org-fontify-whole-block-delimiter-line t) ; Fontify whole block
+
+#+NAME: general-settings
+#+begin_src emacs-lisp :tangle no
+(setq org-agenda-files '("~/Documents/org-files/agenda")
+      org-inbox (concat (file-name-as-directory (car org-agenda-files)) "inbox.org")
+      org-agenda-include-diary nil        ; We do not use the diary
+      org-agenda-skip-scheduled-if-done t ; Don't show scheduled meetings that are done
+      org-agenda-skip-deadline-if-done t  ; Don't show deadlines when the item is done
+      org-agenda-include-deadlines t      ; Include deadlines
+      org-agenda-compact-blocks t         ; more compact blocks
+      org-agenda-start-day nil            ; start today today
+      org-agenda-span 3                   ; number of days to include in overview
+      org-agenda-start-on-weekday nil     ; start on current day
+      org-agenda-window-setup 'current-window ; Show agenda in the current window
+      org-agenda-restore-windows-after-quit t ; Restore window configuration
+      org-agenda-show-all-dates t         ; All dates in the specified timespan are shown
+      org-agenda-show-current-time-in-grid t  ; Show the current time in the agenda view
+      org-agenda-block-separator nil      ; No speparators
+      org-agenda-category-icon-alist nil  ; No category icons in agenda views
+      org-agenda-start-with-log-mode t    ; Activate log mode
+      org-log-done 'time                  ; Log the time a task is marked as done
+      org-log-into-drawer t               ; Insert time stamps into a drawer.
+      org-read-date-prefer-future 'time)  ; We schedule tasks in the future.
 
 #+end_src
 
-** Agenda :INACTIVE:
+#+NAME: agenda-formatting
+#+begin_src emacs-lisp :tangle no
+(setq org-agenda-sorting-strategy
+      '((agenda deadline-down scheduled-down todo-state-up time-up
+                habit-down priority-down category-keep)
+        (todo   priority-down category-keep)
+        (tags   timestamp-up priority-down category-keep)
+        (search category-keep)))
 
-*** General settings
+(setq org-agenda-deadline-faces
+      '((1.0 . org-warning)              ; due yesterday or before
+        (0.0 . org-upcoming-deadline)))  ; due today or later
 
-#+begin_src emacs-lisp
-(setq org-agenda-files '("~/Documents/org-files/agenda"))
-(setq org-agenda-include-diary t) ;; allows you to integrate your calendar into the agenda
+(setq org-agenda-current-time-string " ┈┈ now"
+      org-agenda-time-grid
+      '((daily today require-timed)
+        ()
+        "┄┄┄" "┄┄┄")
+      org-agenda-prefix-format
+      '((agenda . "%i %?-12t%s")
+        (todo .   "%i")
+        (tags .   "%i")
+        (search . "%i")))
 
-(setq org-agenda-start-with-log-mode t
-      org-log-done 'time
-      org-log-into-drawer t)
+(setq org-agenda-format-date (lambda (date) (org-agenda-format-date-aligned date)))
+(setq org-cycle-separator-lines 2) ;Number of empty lines needed to keep an empty line between collapsed trees.
 
+(setq org-agenda-current-time-string "   now")
+(setq org-agenda-tags-column 'auto)
+
+(defun my-org-agenda-mode-hook ()
+  (hl-line-mode t)
+  (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
+  (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
+  (setq cursor-type nil))
 #+end_src
 
-
-#+begin_src emacs-lisp
+#+NAME: org-tags
+#+begin_src emacs-lisp :tangle no
 ;;  Auto-update tags whenever the state is changed
 (setq org-tag-alist
       '((:startgroup)
@@ -1958,1019 +2019,998 @@ Set the style for the file.
 
 #+end_src
 
-#+begin_src emacs-lisp
-(setq  org-agenda-start-with-log-mode t)
-(setq org-agenda-deadline-faces
-      '((1.0001 . org-warning)              ; due yesterday or before
-        (0.0    . org-upcoming-deadline)))  ; due today or later
+**** TODO Org habit
+*** org-gtd
+We organise our tasks using[[https://github.com/Trevoke/org-gtd.el][ org-gtd]], a org-based implementation of the GTD workflow.
+It is summarised in the following pictogram, taken from the org-gtd manual:
 
-(setq org-agenda-breadcrumbs-separator " ❱ "
-      org-agenda-current-time-string " ┈┈┈┈┈┈┈┈┈┈┈┈┈ now"
-      org-agenda-time-grid '((weekly today require-timed)
-                             (800 1000 1200 1400 1600 1800 2000)
-                             "---" "┈┈┈┈┈┈┈┈┈┈┈┈┈")
-      org-agenda-prefix-format '((agenda . "%i %-12:c%?-12t%b% s")
-                                 (todo . " %i %-12:c")
-                                 (tags . " %i %-12:c")
-                                 (search . " %i %-12:c")))
-
-(setq org-agenda-format-date (lambda (date) (concat "\n" (make-string (window-width) 9472)
-                                                    "\n"
-                                                    (org-agenda-format-date-aligned date))))
-(setq org-cycle-separator-lines 2)
-
-;; (add-hook 'org-agenda-mode-hook 'org-super-agenda-mode)
-
-
-(use-package org-recur
-  :hook ((org-mode . org-recur-mode)
-         (org-agenda-mode . org-recur-agenda-mode))
-  :demand t
-  :config
-  (define-key org-recur-mode-map (kbd "C-c d") 'org-recur-finish)
-
-  ;; Rebind the 'd' key in org-agenda (default: `org-agenda-day-view').
-  (define-key org-recur-agenda-mode-map (kbd "d") 'org-recur-finish)
-  (define-key org-recur-agenda-mode-map (kbd "C-c d") 'org-recur-finish)
-
-  (setq org-recur-finish-done t
-        org-recur-finish-archive t))
-
-;; Refresh org-agenda after rescheduling a task.
-(defun org-agenda-refresh ()
-  "Refresh all `org-agenda' buffers."
-  (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (when (derived-mode-p 'org-agenda-mode)
-        (org-agenda-maybe-redo)))))
-
-(defadvice org-schedule (after refresh-agenda activate)
-  "Refresh org-agenda."
-  (org-agenda-refresh))
-
-;; Log time a task was set to Done.
-(setq org-log-done (quote time))
-
-;; Don't log the time a task was rescheduled or redeadlined.
-(setq org-log-redeadline nil)
-(setq org-log-reschedule nil)
-
-(setq org-read-date-prefer-future 'time)
+#+begin_example
+                                    ╭───────╮
+                                    │"STUFF"│
+                                    ╰───┬───╯
+                                        │
+                                    ╭───v───╮
+                                    │ INBOX │
+                                    ╰───┬───╯
+                                        │              Eliminate  ╭───────────╮
+                                        │            ╭───────────>│  Trash    │
+                                 ╭──────v──────╮     │            ╰───────────╯
+                                 │ What is it? │     │
+                                 ╰──────+──────╯     │            ╭───────────╮
+                                        │            │ Incubate   │  Someday/ │
+                                        │            ├───────────>│   Maybe   │
+╭──────────╮  YES (multi─step)   ╭──────v──────╮  NO │            ╰───────────╯
+│ Projects │<────────────────────┤    Is it    ├─────┤
+╰─┬────^───╯                     │ Actionable? │     │ File       ╭───────────╮
+  │    │                         ╰──────┬──────╯     ╰───────────>│ Reference │
+  │    ├────────────────────╮           │                         ╰───────────╯
+  │    │        Review for  │           │
+╭─v────+───╮      Actions   ╰──────────>│ YES
+│ Planning │                            │
+╰──────────╯                     ╭──────v──────╮     Less than
+                       Delegate  │ What's the  │     2 minutes    ╭───────────╮
+                     ╭───────────┤    NEXT     ├─────────────────>│   DO IT   │
+                     │           │   Action?   │                  ╰───────────╯
+                     │           ╰──────┬──────╯
+                     │                  │
+                     │                  │ FOR ME:
+                     │                  │         Specific Date or Time
+                     │                  ├───────────────────────────────╮
+                     │              ASAP│                               │
+               ╭─────v─────╮      ╭─────v─────╮                   ╭─────v─────╮
+               │           │      │           │                   │           │
+               │           │      │           │                   │           │
+               │           │      │           │                   │           │
+               │           │      │           │                   │           │
+               │           │      │           │                   │           │
+               ╰───────────╯      ╰───────────╯                   ╰───────────╯
+                Waiting For        Next Actions                      Calendar
+#+end_example
 
 
-#+end_src
-
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
-*** General
-
-Load libraries.
-
-#+begin_src emacs-lisp
-
-(require 'org-agenda)
-(require 'org-agenda-property)
-
-#+end_src
-
-Open agenda(s)
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(bind-key "C-c a" #'org-agenda)
-
-#+end_src
-
-Settings
-
-#+begin_src emacs-lisp
-
-(use-package org-agenda
-  :hook (org-agenda-finalize-hook . my-org-agenda-mode-hook)
-  :config
-  (setq org-agenda-skip-scheduled-if-done t
-        org-agenda-skip-deadline-if-done t
-        org-agenda-include-deadlines t
-        org-agenda-compact-blocks t
-        org-agenda-start-day nil ;; i.e. today
-        org-agenda-span 3
-        org-agenda-start-on-weekday nil
-        org-agenda-window-setup 'current-window
-        org-agenda-restore-windows-after-quit t
-        org-agenda-show-all-dates nil
-        org-agenda-time-in-grid t
-        org-agenda-show-current-time-in-grid t
-        org-agenda-block-separator nil
-        org-agenda-category-icon-alist nil
-        org-agenda-sticky t)
-  (setq org-agenda-prefix-format
-        '((agenda . "%i %?-12t%s")
-          (todo .   "%i")
-          (tags .   "%i")
-          (search . "%i")))
-  (setq org-agenda-sorting-strategy
-        '((agenda deadline-down scheduled-down todo-state-up time-up
-                  habit-down priority-down category-keep)
-          (todo   priority-down category-keep)
-          (tags   timestamp-up priority-down category-keep)
-          (search category-keep)))
-  (setq org-agenda-time-grid
-        '((daily today require-timed)
-          ()
-          "......" "----------------"))
-
-  (setq org-agenda-current-time-string "   now"))
-
-#+end_src
-
-A small function to cancel a meeting
-
-#+begin_src emacs-lisp
-
-(defun my-org-cancel-meeting ()
-  (interactive)
-  (org-entry-put (point) "CATEGORY" "cancelled")
-  (org-entry-put (point) "NOTE" "Cancelled")
-  (org-set-tags ":CANCELLED:"))
-
-#+end_src
-
-We activate hl line mode in agenda buffers.
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-mode-hook ()
-  (hl-line-mode t)
-  (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
-  (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
-  (setq cursor-type nil))
-
-#+end_src
-
-*** Holidays :HOOK:PERSONAL:
-
-#+begin_src emacs-lisp
-
-(require 'cal-iso)
-(require 'holidays)
-
-
-(setq calendar-date-style 'european         ; European style calenders
-      calendar-week-start-day '1             ; The week starts on Monday
-      calendar-mark-diary-entries-flag nil) ; Do not show diary entries
-
-
-(add-hook 'calendar-today-visible-hook  #'calendar-mark-today); Mark today in calendar
-
-#+end_src
-
-Week day name with holidays
-
-#+name: my-org-agenda-format-date
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-format-date (date)
-  "Org agenda date format displaying holidays"
-  (let* ((dayname (calendar-day-name date))
-         (day (cadr date))
-         (month (car date))
-         (monthname (calendar-month-name month))
-         (year (nth 2 date))
-         (holidays (calendar-check-holidays date)))
-    (concat "\n"
-            dayname " "
-            (format "%d " day)
-            monthname " "
-            (format "%d" year)
-            (if holidays (format " (%s)" (nth 0 holidays)))
-            "\n")))
-
-(setq org-agenda-format-date #'my-org-agenda-format-date)
-
-#+end_src
-
-*** Daily agenda :HOOK:ADVICE:BINDING:
-
-The daily agenda
-
-#+begin_src emacs-lisp
-
-(use-package org-super-agenda
-  :after org-agenda
+#+begin_src emacs-lisp :noweb yes
+(use-package org-gtd
+  :elpaca (:type git :host github :repo "Trevoke/org-gtd.el")
   :init
-  (setq org-super-agenda-groups
-        '(;; Each group has an implicit boolean OR operator between its selectors.
-          (:name "Today"           ; section name
-                 :time-grid t      ; Items that appear on the time grid
-                 :scheduled today
-                 :deadline today)
-          (:name "Outlook"
-                 :and (:scheduled future :priority>= "B")
-                 :and (:deadline future :priority>= "B")
-                 )
-          (:name "Next"
-                 :todo "NEXT")
-          (:name "Short"
-                 :tag "short")
-          ;; After the last group, the agenda will display items that didn't
-          ;; match any of these groups, with the default order position of 99
-          )
-        (setq org-agenda-custom-commands
-              '(("g" "GTD view"
-                 ((agenda "" ((org-agenda-overriding-header "")
-                              (org-super-agenda-groups
-                               '((:discard (:not (:scheduled today
-                                                             :deadline today)))
-                                 (:name "📅 Today\n"           ; section name
-                                        :time-grid t      ; Items that appear on the time grid
-                                        :scheduled today
-                                        :deadline today
-                                        :order 1)
-                                 ))))
-                  (alltodo "" ((org-agenda-overriding-header "")
-                               (org-super-agenda-groups
-                                '((:log t)
-                                  (:name "🕮 Research\n"
-                                         :tag "research"
-                                         :order 2)
-                                  (:name "🗨 Upcoming teaching\n"
-                                         :tag "teaching"
-                                         :order 3)
-                                  (:name "📧 Mail\n"
-                                         :tag "mail"
-                                         :order 4)
-                                  (:name "🎙 Talks\n"
-                                         :tag "talk"
-                                         :order 5)
-                                  (:name "💬 Meetings"
-                                         :tag "meeting"
-                                         :order 6)
-                                  (:name "📝 Administrative tasks"
-                                         :tag "admin"
-                                         :order 7)
-                                  (:name "⚠ Overdue \n"
-                                         :deadline past
-                                         :order 8)
-                                  (:name "✩ Important \n"
-                                         :priority "A"
-                                         :order 9)
-                                  (:name "🗏 Scheduled soon \n"
-                                         :scheduled future
-                                         :order 10)
-                                  (:discard (:not (:todo "TODO")))))))))))
-        :config
-        (org-super-agenda-mode)))
-
+  (setq org-gtd-update-ack "3.0.0")
+  :custom
+  (setq org-gtd-directory (car org-agenda-files))
+  (org-edna-use-inheritance t)
+  (org-gtd-organize-hooks '(org-gtd-set-area-of-focus org-set-tags-command))
+  :config
+  (setq org-gtd-canceled "CANCELED")
+  (setq org-gtd-inbox (concat (file-name-as-directory org-gtd-directory) "inbox"))
+  (setq org-gtd-archive-location '(lambda() (concat
+                                             (file-name-as-directory org-gtd-directory)
+                                             "archive.org")))
+  <<org-gtd-capture-templates>>
+  (org-edna-mode)
+  (org-gtd-mode 1)
+  :bind
+  (("C-c c"   . org-gtd-capture)
+   ("C-c d e" . org-gtd-engage)
+   ("C-c d p" . org-gtd-process-inbox)
+   :map org-gtd-clarify-map
+   ("C-c C-w" . org-gtd-organize)))
 #+end_src
 
-Some decorations for the agenda
-
-#+name: my-org-agenda-highlight-todo
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-highlight-todo (x)
-  (let* ((done (string-match-p (regexp-quote ":DONE:") x))
-         (canceled (string-match-p (regexp-quote "~") x))
-         (x (replace-regexp-in-string ":TODO:" "" x))
-         (x (replace-regexp-in-string ":DONE:" "" x))
-         (x (replace-regexp-in-string "~" "if canceled" (propertize x 'face 'nano-faded) x)))
-    x))
-
-(advice-add 'org-agenda-highlight-todo
-            :filter-return #'my-org-agenda-highlight-todo)
-
-#+end_src
-
-
-
-*** Update :TIMER:
-
-We install a time to refresh the daily agenda (a) at regular intervals such that the current time is up to date.
-
-#+begin_src emacs-lisp
-
-(defvar my-org-agenda-update-delay 60)
-(defvar my-org-agenda-update-timer nil)
-
-(defun my-org-agenda-update ()
-  "Refresh daily agenda view"
-
-  (when my-org-agenda-update-timer
-    (cancel-timer my-org-agenda-update-timer))
-
-  (let ((window (get-buffer-window "*Org Agenda(a)*" t)))
-    (when window
-      (with-selected-window window
-        (let ((inhibit-message t))
-          (org-agenda-redo)))))
-
-  (setq my-org-agenda-update-timer
-        (run-with-idle-timer
-         (time-add (current-idle-time) my-org-agenda-update-delay)
-         nil
-         'my-org-agenda-update)))
-
-(run-with-idle-timer my-org-agenda-update-delay t 'my-org-agenda-update)
-
-#+end_src
-
-*** Refile
-
-Set refile targets according to my setup
-
-#+begin_src emacs-lisp
-(setq org-outline-path-complete-in-steps nil)
-(setq org-refile-use-outline-path nil)
-(setq org-refile-targets
-      '(
-        ("~/Documents/org-files/agenda/archive.org"  :maxlevel . 2)
-        ("~/Documents/org-files/agenda/maths.org"    :maxlevel . 3)
-        ("~/Documents/org-files/agenda/leisure.org"  :maxlevel . 2)
-        ("~/Documents/org-files/agenda/calendar.org" :maxlevel . 2)
-        ))
-
-#+end_src
-
-
-*** Capture :ADVICE:BINDING:
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
+#+NAME: org-gtd-capture-templates
+#+begin_src emacs-lisp :tangle no
 (setq org-capture-templates
-      `(("i" "Inbox" entry  (file+headline "./agenda/inbox.org" "Miscellaneous")
-         ,(concat "* TODO %?\n"
+      `(("i" "Inbox" entry  (file+headline ,org-gtd-inbox "Miscellaneous")
+         ,(concat "* %?\n"
                   "/Entered on/ %U"))
-        ("m" "Meeting" entry  (file+headline "./agenda/inbox.org" "Meetings")
-         ,(concat "* %? :meeting:\n"
-                  "SCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+1d\"))"))
-        ("n" "Note" entry  (file+headline "./agenda/inbox.org" "Notes")
-         ,(concat "* Note (%a)\n"
-                  "/Entered on/ %U\n" "\n" "%?"))
-        ("@" "Inbox [mu4e]" entry (file+headline "./agenda/inbox.org" "Mails")
-         ,(concat "* TODO Reply to \"%a\" %?\n"
+        ("m" "Meeting" entry  (file+datetree ,org-gtd-inbox)
+         ,(concat "* Metting with %?\n at <%<%Y-%m-%d %a %^{Time}>>\n"
+                  "/Entered on/ %U")
+         :time-prompt t)
+        ("l" "Inbox with link" entry (file+headline ,org-gtd-inbox "Miscellaneous")
+         ,(concat "* %?\n %a"
+                  "/Entered on/ %U"
+                  "%i")
+                  :kill-buffer t)
+        ("@" "Inbox [mu4e]" entry (file+headline ,org-gtd-inbox "Mails")
+         ,(concat "*  Reply to \"%a\" %?\n"
                   "/Entered on/ %U"))))
-
-
+(setq org-gtd-capture-templates org-capture-templates)
 #+end_src
+*** org-timeblocks
 
-Assign key
+We use [[https://github.com/ichernyshovvv/org-timeblock][org-timeblocks]] in order to have a timetable view of the weekly tasks.
+#+begin_quote
+Emacs package that provides interactive multiple-day timeblock view for orgmode tasks.
+#+end_quote
 
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(bind-key "C-c c" #'org-capture)
-
-(defun my-org-capture-meeting ()
-  (interactive)
-  (org-capture nil "m"))
-
-(bind-key "C-c m" #'my-org-capture-meeting)
-
-(defun my-org-capture-inbox ()
-  (interactive)
-  (org-capture nil "i"))
-
-(bind-key "C-c i" #'my-org-capture-inbox)
-
-
-(defun org-capture-mail ()
-  (interactive)
-  (call-interactively 'org-store-link)
-  (org-capture nil "@"))
-
-(require 'mu4e)
-(define-key mu4e-headers-mode-map (kbd "C-c i") 'org-capture-mail)
-(define-key mu4e-view-mode-map    (kbd "C-c i") 'org-capture-mail)
-
-#+end_src
-
-Here we orverwrite the [[help:org-capture-place-template][org-capture-place-template]] to have the capture window below the current one. There must be a better way to do that but I did not find it yet. Since we are in org-agenda deferred mode, we need to cancel epiloque/prologue.
-
-#+begin_src emacs-lisp :prologue "" :epilogue ""
-
-(with-eval-after-load 'org-capture
-
-  (defun org-capture-place-template (&optional inhibit-wconf-store)
-    "Insert the template at the target location, and display the buffer.
-when `inhibit-wconf-store', don't store the window configuration, as it
-may have been stored before."
-    (unless inhibit-wconf-store
-      (org-capture-put :return-to-wconf (current-window-configuration)))
-    ;; (delete-other-windows)
-    ;; (org-switch-to-buffer-other-window
-    ;;  (org-capture-get-indirect-buffer (org-capture-get :buffer) "CAPTURE"))
-    (select-window (split-window-below -6))
-    (switch-to-buffer
-     (org-capture-get-indirect-buffer (org-capture-get :buffer) "CAPTURE"))
-    (widen)
-    (org-show-all)
-    (goto-char (org-capture-get :pos))
-    (setq-local outline-level 'org-outline-level)
-    (pcase (org-capture-get :type)
-      ((or `nil `entry) (org-capture-place-entry))
-      (`table-line (org-capture-place-table-line))
-      (`plain (org-capture-place-plain-text))
-      (`item (org-capture-place-item))
-      (`checkitem (org-capture-place-item)))
-    (setq-local org-capture-current-plist org-capture-plist)
-    (org-capture-mode 1)))
-
-#+end_src
-
-*** Capture 2 :ADVICE:BINDING:
+The column width is computed wrongly. Currently, we have a hard-coded solution to make them approx. 30 pixel smaller.
 
 #+begin_src emacs-lisp
-
-(defun my-org-capture-frame (orig-fun &optional goto keys)
-  (if (not (org-capture-get :description))
-      (funcall orig-fun goto keys))
-  (progn
-    (select-frame (my-mini-frame 8))
-    (let ((split-width-threshold nil)
-          (split-height-threshold 0))
-      (funcall orig-fun goto keys))
-    (delete-other-windows)
-    (setq word-wrap nil)
-    (setq truncate-lines nil)
-    (nano-modeline--update-selected-window)
-    (let* ((left (concat (propertize " "
-                                     'face '(nano-subtle)
-                                     'display '(raise +0.20))
-                         (propertize " Capture"
-                                     'face '(nano-strong nano-subtle))
-                         (propertize " "
-                                     'face 'nano-subtle
-                                     'display '(raise -0.30))
-                         (propertize (org-capture-get :description)
-                                     'face 'nano-default)))
-           (right (propertize "C-c C-c: capture, C-c C-k: abort "
-                              'face '(:inherit (nano-faded nano-subtle)
-                                               :weight light)))
-           (spacer (propertize (make-string (- (window-width)
-                                               (length left)
-                                               (length right)
-                                               0) ?\ )
-                               'face 'nano-subtle))
-           (header (concat left spacer right " ")))
-      (setq-local header-line-format header))
-
-    (set-window-dedicated-p nil t)
-    (set-frame-parameter (selected-frame) 'height 5)
-    (face-remap-add-relative 'mode-line :background (face-background 'highlight))
-    (save-excursion
-      (goto-char (point-min))
-      (let ((overlay (make-overlay
-                      (line-beginning-position) (line-end-position))))
-        (overlay-put overlay 'display '(raise -0.5))))))
-
+(use-package org-timeblock
+  :elpaca (org-timeblock :type git
+                           :host github
+                           :repo "ichernyshovvv/org-timeblock")
+  :bind (:map ergoemacs-override-keymap ("C-c t" . org-timeblock))
+        (:map org-timeblock-mode-map    ("q"     . org-timeblock-quit))
+  :after (org-agenda)
+  :demand t
+  :custom
+  (org-timeblock-scale-options '(7 . 21))
+  (org-timeblock-span 7)
+  )
 #+end_src
+*** TODO nano-calendar :INACTIVE:
 
+At a later stage, we should incorporate[[https://github.com/rougier/nano-calendar][ nano-calendar]]. Since the package is dependent on nano-theme various strong modifications are required.
+#+begin_src
+(use-package nano-calendar
+  :elpaca (:type git :host github :repo "rougier/nano-calendar")
+  :bind (:map ergoemacs-override-keymap ("C-c d" . nano-calendar)))
+#+end_src
+*** nano-agenda
+We use the [[https://github.com/rougier/nano-agenda][nano-agenda]] for a small mini-buffer style agenda overview.
 #+begin_src emacs-lisp
-
-(defun my-org-capture (goto key)
-  (interactive)
-  (unwind-protect
-      (progn
-        (advice-add 'org-capture :around #'my-org-capture-frame)
-        (org-capture goto key))
-    (advice-remove 'org-capture #'my-org-capture-frame)))
-
-(require 'org-capture)
-
-;; (bind-key "C-c m" #'(lambda ()
-;;                       (interactive)
-;;                       (my-org-capture nil "m")))
-
-;; (bind-key "C-c i" #'(lambda ()
-;;                       (interactive)
-;;                       (my-org-capture nil "i")))
-
-;; (bind-key "C-g" #'org-capture-kill 'org-capture-mode-map)
-
+(use-package nano-agenda
+  :elpaca (:type git :host github :repo "rougier/nano-agenda")
+  :bind (:map ergoemacs-override-keymap ("C-c n" . nano-agenda)))
 #+end_src
-
-*** Navigation :ADVICE:
-
-The default [[help:org-agenda-goto][org-agenda-goto]], which is used when =tab= key is pressed or when follow mode (F) is active open a window at a non specific place. Here, we make sure the window is opened where we want. In this case, this is below the agenda window.
-
-#+begin_src emacs-lisp
-
-(defun my-org-agenda-goto (buffer args)
-  "Open a headline in a window below the current window"
-
-  (setq-local mode-line-format nil)
-  (select-window (or (window-in-direction 'below (selected-window))
-                     (split-window nil -6 'below)))
-  (switch-to-buffer buffer)
-  (setq-local header-line-format
-              '((:eval
-                 (let ((nano-modeline-prefix 'none)
-                       (nano-modeline-prefix-padding 0)
-                       (outline-path (org-with-point-at (org-get-at-bol'org-marker)
-                                       (org-display-outline-path nil nil " » " t))))
-                   (nano-modeline-render
-                    ""
-                    (file-name-nondirectory
-                     (buffer-file-name (buffer-base-buffer)))
-                    (format "/ %s" (substring-no-properties outline-path))
-                    "")))))
-  (selected-window))
-
-#+end_src
-
-Install the new function as an advice around [[help:org-agenda-goto][org-agenda-goto]] and apply a narrow to subtree after
-
-#+begin_src emacs-lisp
-
-(define-advice org-agenda-goto (:around (orig-fn &rest args) "my-org-agenda-goto")
-  (let ((display-buffer-overriding-action '(my-org-agenda-goto)))
-    (apply orig-fn args)
-    (org-narrow-to-subtree)))
-
-#+end_src
-
-
-Finally, we disable [[help:org-agenda-show-outline-path][org-agenda-show-outline-path]] since this is now redundant with the header line.
-
-#+begin_src emacs-lisp
-
-(setq org-agenda-show-outline-path nil)
-
-#+end_src
-
-*** Nano agenda :BINDING:
-
-#+header: :prologue "" :epilogue ""
-#+begin_src emacs-lisp
-
-(bind-key "C-c n" #'nano-agenda)
-
-#+end_src
-
-*** Calendar
+** TODO Caldav
 We want to sync the agenda/calendar over multiple devices. Since we're lazy we will use gcal.
 
 #+begin_src emacs-lisp
 (use-package org-gcal
-  :config
+  :init
   (setq org-gcal-client-id         "609704434601-f52c59f8oo68jg4nfkkrbhfrf3senhbl.apps.googleusercontent.com"
         org-gcal-client-secret     "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"
-        org-gcal-fetch-file-alist '(("sebastianhalbig77@googlemail.com" .  "~/Documents/org-files/calendar.org"))
+        org-gcal-fetch-file-alist '(("sebastianhalbig77@googlemail.com" .
+                                     "~/Documents/org-files/agenda/calendar.org"))
         plstore-cache-passphrase-for-symmetric-encryption t)
+  :config
   (org-gcal-reload-client-id-secret))
 #+end_src
+* Mu4e
+ We use [[https://www.djcbsoftware.nl/code/mu/][mu4e]] for dealing with emails.
 
-* Version control
+ #+begin_src emacs-lisp :noweb yes
+ (use-package mu4e
+   :elpaca `(mu4e :host github :files ("mu4e/*.el"
+                                       "build/mu4e/mu4e-meta.el"
+                                       "build/mu4e/mu4e-config.el"
+                                       "build/mu4e/mu4e.info")
+                  :repo "djcb/mu"
+                  :main "mu4e/mu4e.el"
+                  :pre-build (("./autogen.sh")
+                              ("ninja" "-C" "build")
+                              (make-symbolic-link (expand-file-name "./build/mu/mu")
+                                                  (expand-file-name "/bin/mu")
+                                                  t)
+                              )
+                  :build (:not elpaca--compile-info)
+                  :post-build (("mu" "init" "--quiet" "--maildir" ,
+                                (concat (file-name-as-directory (getenv "HOME"))
+                                        "Documents/.mails")
+                                "--my-address=" ,"SebastianHalbig@gmx.de"
+                                "--my-address=" ,"Sebastian.Halbig@uni-marburg.de"
+                                "--my-address=" ,"halbigs@mathematik.uni-marburg.de"
+                                "--my-address=" ,"xolotl.spam@web.de")
+                               ("mu" "--quiet" "index")))
+   :commands (mu4e mu4e-update-index)
+   :bind (:map ergoemacs-override-keymap ("C-c m" . mu4e))
+   (:map mu4e-headers-mode-map ("g" . mu4e-headers-mark-for-tag ))
+   :custom
+   <<mu4e-custom>>
+   :config
+   <<mu4e-config>>
+   )
+ #+end_src
+** variable customisations
 
-We use [[https://magit.vc/][magit]] in combination with git for version control.
-
-#+begin_quote
-Magit is a complete text-based user interface to Git. It fills the glaring gap between the Git command-line interface and various GUIs, letting you perform trivial as well as elaborate version control tasks with just a couple of mnemonic key presses. Magit looks like a prettified version of what you get after running a few Git commands but in Magit every bit of visible information is also actionable to an extent that goes far beyond what any Git GUI provides and it takes care of automatically refreshing this output when it becomes outdated. In the background Magit just runs Git commands and if you wish you can see what exactly is being run, making it possible for you to learn the git command-line.
-#+end_quote
-
-** Magit
-
-#+NAME: magit-add-remove-face-font-lock
+#+NAME: mu4e-custom
 #+begin_src emacs-lisp :tangle no
-(defun my-magit-add-remove-face-font-lock ()
-  "We use  font-locking to replace  `+' or `-' characters at the start of a line with red or green lines."
-  (add-to-list 'font-lock-extra-managed-props 'display)
-  (font-lock-add-keywords 'nil
-                          '(("\\(^-\\)" 1 '(face nil display
-                                                 #("│" 0 1 (face (:inherit lambda-red)))))))
-  (font-lock-add-keywords 'nil
-                          '(("\\(^ \\)" 1 '(face nil display
-                                                 #("│" 0 1 (face (:inherit lambda-meek)))))))
-  (font-lock-add-keywords nil
-                          '(("\\(^+\\)" 1 '(face nil display
-                                                 #("│" 0 1 (face (:inherit lambda-green)))))))
-  )
+(mu4e-update-interval 300          "Update every five minutes")
+;; (mail-user-agent 'mu4e-user-agent  "Use mu4e as default email program")
+(mu4e-org-support t                "org support in mu4e")
+(mu4e-maildir (expand-file-name    "~/Documents/.mails/"))
+(mu4e-contexts nil)
+(mu4e-drafts-folder nil)
+(mu4e-compose-reply-to-address nil)
+(mu4e-sent-folder nil)
+(mu4e-trash-folder nil)
+(mu4e-attachment-dir               "~/Downloads")
+(mu4e-completing-read-function 'completing-read)
+(mu4e-use-fancy-chars t             "allow fancy icons for mail threads")
+(mu4e-sent-messages-behavior 'sent)
+(mu4e-get-mail-command "/usr/bin/offlineimap")
+(mu4e-confirm-quit nil)
+(mu4e-html2text-command  'mu4e-shr2text)
+(mu4e-context-policy 'pick-first)
+(mu4e-compose-context-policy nil)
+(mu4e-index-cleanup t               "Cleanup after indexing")
+(mu4e-index-update-error-warning t  "Warnings during update")
+(mu4e-hide-index-messages t         "Hide indexing messages")
+(mu4e-index-update-in-background t  "Background update")
+(mu4e-index-lazy-check nil          "Don't be lazy, index everything")
+(mu4e-headers-auto-update t         "avoid to type `g' to update")
+(mu4e-headers-date-format           "%d-%m")
+(mu4e-headers-time-format           "%H:%M")
+(mu4e-headers-from-or-to-prefix '("" . "To "))
+(mu4e-search-include-related t)
+(mu4e-search-skip-duplicates t)
+(message-signature (concat
+                      "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
+                      "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
+                      "Hans-Meerwein-Straße 6 Room 04C35, 35043 Marburg\n"
+                      "BBB home room: https://webconf.hrz.uni-marburg.de/d/seb-omn-wqu-r6k"))
+;;(mu4e-view-show-addresses t)
+;;(mu4e-show-images t)
+(mu4e-view-html-plaintext-ratio-heuristic  most-positive-fixnum)
+(shr-use-fonts nil)   ; Simple HTML Renderer / no font
+(shr-use-colors nil) ; Simple HTML Renderer / no color
+#+end_src
+** configurations
+
+#+NAME: mu4e-config
+#+begin_src emacs-lisp :noweb yes :tangle no
+;; User name
+(setq user-full-name "Sebastian Halbig")
+
+;; Main user mail address
+(setq user-mail-address "SebastianHalbig@gmx.de")
+
+(setq personal-mail-signature (concat
+                      "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
+                      "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
+                      "Hans-Meerwein-Straße 6 Room 04C35, 35043 Marburg\n"
+                      "BBB home room: https://webconf.hrz.uni-marburg.de/d/seb-omn-wqu-r6k"))
+
+;; Better refiling and spam handling
+<<mu4e-refile>>
+<<my-mu4e-spam-folder>>
+
+;;Mail contexts
+<<mu4e-web-de>>
+<<mu4e-dresden>>
+<<mu4e-gmx>>
+<<mu4e-marburg-internal>>
+<<mu4e-marburg>>
+<<mu4e-write-settings>>
+<<mu4e-tags>>
+<<mu4e-tag-read>>
+<<mu4e-bookmarks>>
+<<mu4e-headers>>
+#+end_src
+
+Refile/archive depending on the context (via maildir).
+
+#+NAME: mu4e-refile
+#+begin_src emacs-lisp :tangle no
+
+(defun my-mu4e-refile-folder (msg)
+  "Contextual refile"
+
+  (let (
+        (maildir (mu4e-message-field msg :maildir))
+        (tags (mu4e-message-field msg :tags))
+        (subfolder "saved")
+        )
+    (cond
+     ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
+     ((member "INFO" tags) (setq subfolder "info"))
+     ((member "TEACHING" tags) (setq subfolder "teaching"))
+     ((member "RESEARCH" tags) (setq subfolder "research"))
+     ((member "INVOICE" tags) (setq subfolder "invoice"))
+     )
+    (concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
+    ))
+
+(setq mu4e-refile-folder 'my-mu4e-refile-folder)
+
+(add-to-list 'mu4e-marks
+             '(archive
+               :char       "r"
+               :prompt     "Archive"
+               :dyn-target (lambda (target msg) (my-mu4e-refile-folder msg))
+               :action      (lambda (docid msg target)
+                              (mu4e--server-move docid (my-mu4e-refile-folder msg) "+S-u-N")
+                              )))
+
+
+(mu4e~headers-defun-mark-for archive)
+(define-key mu4e-headers-mode-map (kbd "r") 'mu4e-headers-mark-for-archive)
 
 #+end_src
 
-#+begin_src emacs-lisp :noweb yes
-(use-package magit
-  :elpaca (:type git
-                 :host github
-                 :repo "magit/magit")
+Move emails to the relative spam folder.
+
+#+NAME: my-mu4e-spam-folder
+#+begin_src emacs-lisp :tangle no
+
+(defun my-mu4e-spam-folder (msg)
+  "Contextual spam handling"
+
+  (let ((maildir (mu4e-message-field msg :maildir)))
+    (concat "/" (nth 1 (split-string maildir "/")) "/spam")))
+
+(setq mu4e-spam-folder 'my-mu4e-spam-folder)
+
+#+end_src
+
+
+*** Web
+#+NAME: mu4e-web-de
+#+begin_src emacs-lisp :tangle no
+(add-to-list 'mu4e-contexts
+             (make-mu4e-context
+              :name "Spam"
+              :enter-func (lambda () (mu4e-message "Entering Spam context"))
+              :leave-func (lambda () (mu4e-message "Leaving Spam context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches
+                               msg :to "xolotl.spam@web.de")))
+              :vars `((user-mail-address . "xolotl.spam@web.de"  )
+                      (user-full-name . "Sebastian Halbig" )
+                      (mu4e-compose-signature . nil)
+                      (mu4e-sent-folder . "/Web/sent")
+                      (mu4e-trash-folder . "/Web/trash")
+                      (mu4e-drafts-folder . "/Web/drafts")
+                      (mu4e-maildir-shortcuts . (("/Web/inbox" . ?i)
+                                                 ("/Web/archive" . ?a)
+                                                 ("/Web/sent" . ?s)))
+                      (smtpmail-smtp-server . "smtp.staff.uni-marburg.de")
+                      (smtpmail-stream-type . starttls)
+                      (smtpmail-smtp-service . 587))))
+
+message-signature
+#+end_src
+
+*** Dresden(deprecated)
+#+NAME: mu4e-dresden
+#+begin_src emacs-lisp :tangle no
+
+(add-to-list 'mu4e-contexts
+             (make-mu4e-context
+              :name "TUDresden"
+              :enter-func (lambda () (mu4e-message "Entering Dresden(deprecated) context"))
+              :leave-func (lambda () (mu4e-message "Leaving Dresden(deprecated) context"))
+              :match-func (lambda (msg)
+                            (when msg
+                              (mu4e-message-contact-field-matches
+                               msg :to "sebastian.halbig@tu-dresden.de")))
+              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
+                      (user-full-name . "Sebastian Halbig" )
+                      (message-signature . nil)
+                      (mu4e-sent-folder . "/TUD/sent")
+                      (mu4e-trash-folder . "/TUD/trash")
+                      (mu4e-drafts-folder . "/TUD/drafts")
+                      (mu4e-maildir-shortcuts . (("/TUD/inbox" . ?i)
+                                                 ("/TUD/archive" . ?a)
+                                                 ("/TUD/sent" . ?s)))
+                      (smtpmail-smtp-server . "smtp.uni-marburg.de")
+                      (smtpmail-stream-type . starttls)
+                      (smtpmail-smtp-service . 587))))
+
+#+end_src
+
+*** Gmx
+
+#+NAME: mu4e-gmx
+#+begin_src emacs-lisp :tangle no
+
+(add-to-list 'mu4e-contexts
+             (make-mu4e-context
+              :name "GMX"
+              :enter-func (lambda () (mu4e-message "Entering GMX context"))
+              :leave-func (lambda () (mu4e-message "Leaving GMX context"))
+              :match-func (lambda (msg)
+                            (when msg (mu4e-message-contact-field-matches
+                                       msg :to "sebastianhalbig@gmx.de")))
+              :vars `((user-mail-address . "SebastianHalbig@gmx.de"  )
+                      (user-full-name . "Sebastian Halbig" )
+                      (message-signature . nil)
+                      (mu4e-sent-folder . "/GMX/sent")
+                      (mu4e-trash-folder . "/GMX/trash")
+                      (mu4e-drafts-folder . "/GMX/drafts")
+                      (mu4e-maildir-shortcuts . (("/GMX/inbox" . ?i)
+                                                 ("/GMX/archive" . ?a)
+                                                 ("/GMX/sent" . ?s)))
+                      (smtpmail-smtp-server . "mail.gmx.net")
+                      (smtpmail-stream-type . starttls)
+                      (smtpmail-smtp-service . 587))))
+
+#+end_src
+*** TODO Marburg-Internal
+Currently we reroute the mail to the main account to avoid a bug of the mail server.
+
+#+NAME: mu4e-marburg-internal
+#+begin_src emacs-lisp :tangle no
+(add-to-list 'mu4e-contexts
+             (make-mu4e-context
+              :name "Internal-Marburg"
+              :enter-func (lambda () (mu4e-message "Entering Marburg(general) context"))
+              :leave-func (lambda () (mu4e-message "Leaving Marburg(general) context"))
+              :match-func (lambda (msg)
+                            (when msg (mu4e-message-contact-field-matches
+                                       msg :to "halbigs@mathematik.uni-marburg.de")))
+              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de") ;;"halbigs@mathematik.uni-marburg.de"
+                      (user-full-name . "Sebastian Halbig")
+                      (message-signature . ,personal-mail-signature)
+                      (mu4e-sent-folder . "/MarburgInternal/sent")
+                      (mu4e-trash-folder . "/MarburgInternal/trash")
+                      (mu4e-drafts-folder . "/MarburgInternal/drafts")
+                      (mu4e-maildir-shortcuts . (("/MarburgInternal/inbox" . ?i)
+                                                 ("/MarburgInternal/archive" . ?a)
+                                                 ("/MarburgInternal/sent" . ?s)))
+                      (smtpmail-smtp-server . "smtp.uni-marburg.de") ;; "smtp.mathematik.uni-marburg.de"
+                      (smtpmail-stream-type . starttls)
+                      (smtpmail-smtp-service . 587))))
+
+#+end_src
+*** Marburg
+
+#+NAME: mu4e-marburg
+#+begin_src emacs-lisp :tangle no
+
+(add-to-list 'mu4e-contexts
+             (make-mu4e-context
+              :name "Marburg"
+              :enter-func (lambda () (mu4e-message "Entering Marburg(general) context"))
+              :leave-func (lambda () (mu4e-message "Leaving Marburg(general) context"))
+              :match-func (lambda (msg)
+                            (when msg (mu4e-message-contact-field-matches
+                                       msg :to "Sebastian.Halbig@uni-marburg.de")))
+              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
+                      (user-full-name . "Sebastian Halbig")
+                      (message-signature . ,personal-mail-signature)
+                      (mu4e-sent-folder . "/Marburg/sent")
+                      (mu4e-trash-folder . "/Marburg/trash")
+                      (mu4e-drafts-folder . "/Marburg/drafts")
+                      (mu4e-maildir-shortcuts . (("/Marburg/inbox" . ?i)
+                                                 ("/Marburg/archive" . ?a)
+                                                 ("/Marburg/sent" . ?s)))
+                      (smtpmail-smtp-server . "smtp.uni-marburg.de")
+                      (smtpmail-stream-type . starttls)
+                      (smtpmail-smtp-service . 587))))
+
+#+end_src
+** TODO Encryption
+
+See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
+
+#+begin_src emacs-lisp
+(use-package epg-config
+  :elpaca nil
   :config
-  (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
-  (setq magit-diff-refine-hunk 'all)
-  <<magit-add-remove-face-font-lock>>
-  :hook (magit-mode . my-magit-add-remove-face-font-lock)
-  :custom-face
-  (magit-section-heading ((t (:height 1.0 :weight  unspecified :foreground unspecified :inherit lambda-strong))))
-  (magit-header-line ((t (:foreground unspecified :background unspecified))))
-  (magit-diff-removed  ((t (:foreground unspecified
-                                        :background unspecified
-                                        :inherit lambda-meek))))
-  (magit-diff-removed-highlight ((t (:foreground unspecified
-                                                 :background unspecified
-                                                 :inherit lambda-red))))
-  (magit-diff-added    ((t (:foreground unspecified
-                                        :background unspecified
-                                        :inherit lambda-meek))))
-  (magit-diff-added-highlight   ((t (:foreground unspecified
-                                                 :background unspecified
-                                                 :inherit (lambda-green)))))
+  (setq epg-gpg-program "/usr/bin/gpg"        ; What gpg program to use
+        epg-user-id "Sebastian Halbig <Sebastian.Halbig@uni-marburg.de>"
+                                              ; GnuPG ID of your default identity
+        mml2015-use 'epg                      ; The package used for PGP/MIME.
+        mml2015-encrypt-to-self t             ; Add our own key ID to recipient list
+        mml2015-sign-with-sender t)           ; Use message sender to find a key to sign with.
+
+  ;;(setq epa-file-cache-passphrase-for-symmetric-encryption nil)
+  (require 'epa-file)
+  (epa-file-enable)
+  (setq epa-file-select-keys nil)
+  (setq epa-pinentry-mode 'loopback)
+  ;;(pinentry-start)
   )
 #+end_src
+** TODO Read :INACTIVE:BINDING:FACE:
 
-** Abridge
-In order to handles long lines in diffs, which happens in LaTeX-documents quite freqently, we use visual clues about actual changes.
+Various settings
 
-#+begin_quote
-A simple Emacs package for abridging refined diff hunks (for example in magit). Why abridge a diff hunk? Most diffs are line based. If you are working on files with very long lines, for example LaTeX files, or text files with full paragraphs per line (often using visual-line-mode), line-based diffs can be very challenging to read, even with "hunk refining" enabled (highlighting the words which changed).
-#+end_quote
+
+n/p for nevigating unread mails
 
 #+begin_src emacs-lisp
-(use-package abridge-diff
-  :after magit ;; optional, if you'd like to use with magit
-  :init (abridge-diff-mode 1)
-  :custom-face
-  (diff-refine-added   ((t (:foreground unspecified
-                                        :weight bold
-                                        :inherit lambda-green))))
-  (diff-refine-removed ((t (:foreground "#bf616a" :weight bold :strike-through nil :inherit lambda-red))))
-  (diff-refine-changed ((t (:foreground unspecified
-                                        :weight bold
-                                        :inherit lambda-yellow))))
-  )
+
+(bind-key "n" #'mu4e-headers-next-unread mu4e-headers-mode-map)
+(bind-key "p" #'mu4e-headers-prev-unread mu4e-headers-mode-map)
+
 #+end_src
 
-* Other visuals
-** TODO Nerd icons
-
-[[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
-
-#+begin_quote
-Nerd-icons.el is a library for easily using Nerd Font icons inside Emacs, an alternative to all-the-icons.
-
-It works on both GUI and terminal! You only need a Nerd Font installed on your system.
-
-It is inspired by all-the-icons, icons-in-terminal, vim-devicons, and nvim-web-devicons.
-#+end_quote
+Custom faces
 
 #+begin_src emacs-lisp
-(use-package nerd-icons
-  :custom
-  (nerd-icons-font-family "Roboto Mono Nerd Font")
-  )
+
+(set-face-attribute 'mu4e-system-face nil :inherit 'nano-critical)
+(set-face-attribute 'mu4e-header-marks-face nil :inherit 'nano-critical)
+(set-face-attribute 'mu4e-header-highlight-face nil :inherit 'nano-salien-i)
+
+#+end_src
+** TODO Write
+
+See www.gnu.org/software/emacs/manual/html_node/message/Insertion-Variables.html
+We try to sign all mails. Encryption should also be managed automatically
+
+#+NAME: mu4e-write-settings
+#+begin_src emacs-lisp :tangle no
+
+(setq message-send-mail-function 'smtpmail-send-it
+      smtpmail-servers-requiring-authorization '".*"
+      message-cite-reply-position 'below
+      message-citation-line-format "%N [%Y-%m-%d at %R] wrote:"
+      message-citation-line-function 'message-insert-formatted-citation-line
+      message-yank-prefix       "> "
+      message-yank-cited-prefix "> "
+      message-yank-empty-prefix "> "
+      message-indentation-spaces 1
+      message-kill-buffer-on-exit t
+
+      mu4e-compose-format-flowed t
+      mu4e-compose-complete-only-personal t
+      ;; mu4e-compose-complete-only-after "2021-01-01" ; Limit address auto-completion
+      mu4e-compose-dont-reply-to-self t
+      mu4e-compose-crypto-reply-policy 'sign-and-encrypt)
+
+(add-hook 'message-send-hook 'mml-secure-message-sign-pgpmime)
+
 #+end_src
 
-There is an integration into the completion framework, called [[https://github.com/rainstormstudio/nerd-icons-completion][nerd icons completion]].
+Setting up mail composition with org mode.
+
+#+name: my-mu4e-compose-hook
+#+begin_src emacs-lisp
+
+(defun my-mu4e-compose-hook ()
+  "Settings for message composition."
+
+  (auto-save-mode -1)
+  (set-fill-column 80)
+  (delete-other-windows)
+  ;;(auto-fill-mode)
+  (setq flyspell-generic-check-word-predicate
+        'mail-mode-flyspell-verify))
+
+(add-hook 'mu4e-compose-mode-hook #'my-mu4e-compose-hook)
+
+#+end_src
+
 
 #+begin_src emacs-lisp
-(use-package nerd-icons-completion
-  :elpaca (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
-  :after marginalia
-  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
+(use-package org-msg
+  :preface
+  (defun org-msg-no-temp-buffer (orig-fun &rest args)
+    "Advice to set `org-export-show-temporary-export-buffer' to `nil'."
+    (let ((org-export-show-temporary-export-buffer nil))
+      (apply orig-fun args)))
+  :after mu4e
+  :hook (mu4e-main-mode . org-msg-mode)
   :config
-  (nerd-icons-completion-mode))
-#+end_src
+  (setq org-msg-startup "content"
+        org-msg-options "toc:nil author:nil email:nil \\n:t broken-links:t"
+        org-msg-greeting-fmt "\nHi%s,\n\n"
+        org-msg-greeting-name-limit 3
+        org-msg-default-alternatives '((new        . (utf-8))
+                                       (reply-to-html . (utf-8))
+                                       (reply-to-text . (utf-8)))
+        org-msg-convert-citation t
+        org-msg-signature "" )
+  (advice-add 'org-msg-preview :around #'org-msg-no-temp-buffer)
+  (advice-add 'org-msg-ctrl-c-ctrl-c :around #'org-msg-no-temp-buffer)
+  (add-hook 'message-sent-hook
+            (lambda ()
+              (interactive)
+              (switch-to-buffer "*mu4e-article*")
+              (mu4e-view-quit)
+              (kill-buffer "*Org ASCII Export*")))
+(add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*"))))
 
-** Visual fill column and visual line mode
-
-We activate [[help:visual-line-mode][visual-line-mode]] globally.
-Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
-
-#+begin_quote
-visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fill-column in visual-line-mode. Instead of wrapping lines at the window edge, which is the standard behaviour of visual-line-mode, it wraps lines at fill-column (or visual-fill-column-width, if set). That is, it turns the view on the left into the view on the right, without changing the contents of the file.
-#+end_quote
-
-#+begin_src emacs-lisp
-(use-package visual-fill-column
-  :ensure adaptive-wrap
-  :init (global-visual-line-mode)
-  :custom (visual-fill-column-center-text t)
-  (visual-fill-column-enable-sensible-window-split t)
-  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
-          )
-  )
-#+end_src
-Changing the symbol for truncation (…) and wrap (↩).
-
-
-
-* OLD :INACTIVE:noexport:
-
-** Stuff maybe not needed?
-*** String related
-
-A set of functions to join two strings such as to fit a given width. This will be used for displaying elfeed posts, privileging the right part (tag and feed).
-
-#+name: my-string-pad-right
-#+begin_src emacs-lisp
-
-(defun my-string-pad-right (len s)
-  "If S is shorter than LEN, pad it on the right,
-   if S is longer than LEN, truncate it on the right."
-
-  (if (> (length s) len)
-      (concat (substring s 0 (- len 1)) "…")
-    (concat s (make-string (max 0 (- len (length s))) ?\ ))))
 
 #+end_src
-
-#+name: my-string-pad-left
-#+begin_src emacs-lisp
-
-(defun my-string-pad-left (len s)
-  "If S is shorter than LEN, pad it on the left,
-   if S is longer than LEN, truncate it on the left."
-
-  (if (> (length s) len)
-      (concat  "…" (substring s (- (length s) len -1)))
-    (concat (make-string (max 0 (- len (length s))) ?\ ) s)))
-
-#+end_src
-
-#+name: my-string-join
-#+begin_src emacs-lisp
-
-(defun my-string-join (len left right &optional spacing)
-  "Join LEFT and RIGHT strings to fit LEN characters with at least SPACING characters
-between them. If len is negative, it is retrieved from current window width."
-
-  (let* ((spacing (or spacing 3))
-         (len (or len (window-body-width)))
-         (len (if (< len 0)
-                  (+ (window-body-width) len)
-                len)))
-    (cond ((> (length right) len)
-           (my-string-pad-left len right))
-
-          ((> (length right) (- len spacing))
-           (my-string-pad-left len (concat (make-string spacing ?\ )
-                                           right)))
-
-          ((> (length left) (- len spacing (length right)))
-           (concat (my-string-pad-right (- len spacing (length right)) left)
-                   (concat (make-string spacing ?\ )
-                           right)))
-          (t
-           (concat left
-                   (make-string (- len (length right) (length left)) ?\ )
-                   right)))))
-
-#+end_src
-
-Unwords seems to be undefined we remodel it here
+** Setup :PERSONAL:BINDING:INACTIVE:
 
 
 #+begin_src emacs-lisp
 
-(defun unwords (&rest words)        ;; unwords seems to be missing this function takes care of it.
-  (mapconcat #'identity words " ")) ;; it joins a list of strings with a blank space as seperator.
+(require 'mailcap)
+
+(push '((viewer . "open %s 2> /dev/null &")
+        (type   . "application/pdf")
+        (test   . window-system))
+      mailcap-user-mime-data)
+
+(when (fboundp 'imagemagick-register-types)
+  (imagemagick-register-types))
 
 #+end_src
 
-*** Date related
+** TODO Contacts :INACTIVE:
 
-A set of date related functions, mostly used for mail display.
+In the future we will use org-contacts and based on them individual greetings and signatures.
 
-#+name: my-date-day
 #+begin_src emacs-lisp
+(use-package org
+  :ensure org-contacts
+  :after org
+  :custom (org-contacts-files '("~/Documents/org-files/contacts.org")))
+#+end_src
+** Bookmarks :INACTIVE:
 
-(defun my-date-day (date)
-  "Return DATE day of month (1-31)."
+#+NAME: mu4e-bookmarks
+#+begin_src emacs-lisp :tangle no
 
-  (nth 3 (decode-time date)))
+(setq mu4e-bookmarks
+      '((:name "Unread"
+               :key ?u
+               :show-unread t
+               :query "flag:unread AND (m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox) AND NOT flag:trashed")
+
+        (:name "Inbox"
+               :key ?i
+               :show-unread t
+               :query "m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox")
+
+        (:name "Today"
+               :key ?t
+               :show-unread t
+               :query "date:today..now")
+
+        (:name "Last week"
+               :key ?w
+               :hide-unread t
+               :query "date:7d..now")
+
+        (:name "Sent"
+               :key ?s
+               :show-unread nil
+               :query "from:Sebastian.Halbig or from:halbigs or from: SebastianHalbig")
+
+        (:name "Drafts"
+               :key ?d
+               :hide-unread t
+               :query "flag:draft")
+
+        (:name "Next"
+               :key ?N
+               :show-unread t
+               :query "tags:NEXT")
+
+        (:name "Todo"
+               :key ?T
+               :show-unread t
+               :query "tags:TODO")
+
+        (:name "Done"
+               :key ?D
+               :show-unread t
+               :query "tags:DONE")
+        ))
+#+end_src
+** Tags
+
+This provides a tag action inside the mu4e headers view to quickly tag message. Tags are saved in the ~mu4e-tag-history~ variable that is also saved from one session to the other. We use the ~consult-completing-read-multiple~ function to read tags.
+
+
+#+NAME: mu4e-tags
+#+begin_src emacs-lisp :tangle no
+
+(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE")
+  "Mu4e tag history list.")
+
+(add-to-list 'savehist-additional-variables 'mu4e-tag-history)
+
+(put 'mu4e-tag-history 'history-length 5)
+
+(defun add-to-mu4e-tag-history (tag)
+  "Add the new tags to the history"
+  (add-to-list 'mu4e-tag-history tag))
 
 #+end_src
 
-#+name: my-date-month
+
+Here is the actual tag action
+
+#+NAME: mu4e-tag-read
+#+begin_src emacs-lisp :tangle no
+(defun mu4e-tag-read (target msg)
+  "Ask for tags to be added and/or removed."
+  (let* ((tags nil)
+         (old-tags (mu4e-message-field msg :tags))
+         (new-tags (completing-read-multiple
+                    "TAGS: "
+                    mu4e-tag-history
+                    nil
+                    nil
+                    (mapconcat #'identity old-tags ",")
+                    ;; 'mu4e-tag-history
+                    )))
+    (dolist (tag old-tags)
+      (let ((tag (string-trim tag)))
+        (if (and (> (length tag) 0)
+                 (not (member tag new-tags)))
+            (push (concat "-" tag) tags))))
+    (dolist (tag new-tags)
+      (let ((tag (string-trim tag)))
+        (if (and (> (length tag) 0)
+                 (not (member tag old-tags)))
+            (progn
+              (add-to-mu4e-tag-history tag)
+              (push (concat "+" tag) tags)))))
+    (mapconcat #'identity tags ",")))
+
+;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
+;; I Did not find a way to cancel the marks
+(add-to-list 'mu4e-marks
+             '(tag
+               :char       "g"
+               :prompt     "gtag"
+               :dyn-target mu4e-tag-read
+               :action      (lambda (docid msg target)
+                              (when (> (length target) 0)
+                                (mu4e-action-retag-message msg target)))))
+
+;; Tell mu4e about the new mark
+;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
+(mu4e~headers-defun-mark-for tag)
+
+#+end_src
+** Folding :INACTIVE:FACE:
+
+Some face specification for folding.
+
 #+begin_src emacs-lisp
 
-(defun my-date-month (date)
-  "Return DATE month number (1-12)."
+(require 'mu4e-folding)
 
-  (nth 4 (decode-time date)))
+(set-face-attribute 'mu4e-folding-root-folded-face nil
+                    :background (face-background 'default)
+                    :extend t)
+(set-face-attribute 'mu4e-folding-root-unfolded-face nil
+                    :background (face-background 'default)
+                    :extend t)
+(set-face-attribute 'mu4e-folding-child-folded-face nil
+                    :background (face-background 'default)
+                    :extend t)
+(set-face-attribute 'mu4e-folding-child-unfolded-face nil
+                    :background (face-background 'default)
+                    :extend t)
+
+#+end_src
+** Spam handling :INACTIVE:BINDING:
+
+We move messages automatically to the "correct" spam folder.
+
+#+begin_src emacs-lisp
+
+(add-to-list 'mu4e-marks
+             '(spam
+               :char       "k"
+               :prompt     "Spam"
+               :dyn-target (lambda (target msg) (my-mu4e-spam-folder msg))
+               ;; :show-target (lambda (target) "Spam")
+               :action      (lambda (docid msg target)
+                              ;; (message (symbol-value msg))
+                              (mu4e--server-move docid (my-mu4e-spam-folder msg) "+S-u-N")
+                              )))
+
+(mu4e~headers-defun-mark-for spam)
+
 
 #+end_src
 
-#+name: my-date-year
+We bind spam handling to the "k"-key.
+
 #+begin_src emacs-lisp
 
-(defun my-date-year (date)
-  "Return DATE year."
+(define-key mu4e-headers-mode-map (kbd "k") 'mu4e-headers-mark-for-spam)
 
-  (nth 5 (decode-time date)))
+#+end_src
+** Layout for mu4e :INACTIVE:HOOK:BINDING:
+*** Headers
+
+#+NAME: mu4e-headers
+#+begin_src emacs-lisp :noweb yes :tangle no
+<<my-mu4e-get-sender>>
+<<my-mu4e-get-mailbox>>
+<<my-mu4e-get-maildir>>
+<<my-mu4e-get-account>>
+<<my-mu4e-headers-colorise>>
+<<mu4e-my-date>>
+<<mu4e-my-from>>
+<<mu4e-my-flags>>
+<<mu4e-my-tags>>
+<<mu4e-my-subject>>
+
+(setq mu4e-headers-fields
+      '((:my-flags      . 2)
+        (:my-from       . 25)
+        (:my-subject    . 70)
+        (:my-tags       . 10)
+        (:human-date   . 14))) ;;TODO: my-date
+
+
+(setq mu4e-headers-thread-root-prefix          '(""   . "")
+      mu4e-headers-thread-first-child-prefix   '(""   . "")
+      mu4e-headers-thread-child-prefix         '(""   . "")
+      mu4e-headers-thread-last-child-prefix    '(""   . "")
+      mu4e-headers-thread-connection-prefix    '("| " . "| ")
+      mu4e-headers-thread-blank-prefix         '(""   . "")
+      mu4e-headers-thread-orphan-prefix        '(""   . "")
+      mu4e-headers-thread-single-orphan-prefix '(""   . "")
+      mu4e-headers-thread-duplicate-prefix     '("="  . "="))
+
+(plist-put (cdr (assq 'refile   mu4e-marks)) :char "")
+(plist-put (cdr (assq 'trash    mu4e-marks)) :char "")
+(plist-put (cdr (assq 'action   mu4e-marks)) :char "")
+(plist-put (cdr (assq 'untrash  mu4e-marks)) :char "")
+(plist-put (cdr (assq 'delete   mu4e-marks)) :char "×")
+(plist-put (cdr (assq 'flag     mu4e-marks)) :char "")
+(plist-put (cdr (assq 'unflag   mu4e-marks)) :char "類")
+(plist-put (cdr (assq 'move     mu4e-marks)) :char "")
+(plist-put (cdr (assq 'tag      mu4e-marks)) :char "")
+(plist-put (cdr (assq 'spam     mu4e-marks)) :char "")
+#+end_src
+
+**** TODO Colorisation of recent emails :INACTIVE:
+
+#+NAME: my-mu4e-headers-colorise
+#+begin_src emacs-lisp :tangle no
+
+(defun my-mu4e-headers-colorise (item msg)
+  "Colorise item depending on whe msg was received"
+
+  (let* ((recent (* 5 60)) ;; 5 minutes
+         (now (current-time))
+         (unread (mu4e-message-field msg :unread))
+         (date (mu4e-message-field msg :date))
+         (delta (float-time (time-subtract now date))))
+    (if (and (< delta recent) unread)
+        (propertize item 'face 'lambda-focus)
+      item)))
 
 #+end_src
 
-#+name: my-date-equal
-#+begin_src emacs-lisp
+**** Date (custom info)
 
-(defun my-date-equal (date1 date2)
-  "Check if DATE1 is equal to DATE2."
+#+NAME: mu4e-my-date
+#+begin_src emacs-lisp :tangle no
 
-  (and (eq (my-date-day date1)
-           (my-date-day date2))
-       (eq (my-date-month date1)
-           (my-date-month date2))
-       (eq (my-date-year date1)
-           (my-date-year date2))))
+(defun my-mu4e-headers-date (msg)
+  (let* ((date (mu4e-message-field msg :date)))
+    (my-mu4e-headers-colorise
+     (format "%12s" date) msg)))
+
+(add-to-list 'mu4e-header-info-custom
+             '(:my-date . (:name "my-date"
+                                 :shortname "D"
+                                 :function my-mu4e-headers-date)))
+#+end_src
+
+**** From (custom info)
+
+#+NAME: mu4e-my-from
+#+begin_src emacs-lisp :tangle no
+
+(defun my-mu4e-headers-from (msg)
+  (let* ((from        (my-mu4e-get-sender msg))
+         (meta        (when msg (mu4e-message-field msg :meta)))
+         (root        (when meta (plist-get meta :root)))
+         (orphan      (when meta (plist-get meta :orphan)))
+         (first-child (when meta (plist-get meta :first-child)))
+         (has-child   (when meta (plist-get meta :has-child)))
+         (root        (when meta (plist-get meta :root)))
+         (from        (cond ((and root has-child)       (concat " " from))
+                            ((and orphan first-child)   (concat " " from))
+                            ((and root (not has-child)) (concat "" from))
+                            (t                          (concat "│ " from)))))
+    (my-mu4e-headers-colorise from msg)))
+
+(add-to-list 'mu4e-header-info-custom
+             '(:my-from . (:name "my-from"
+                                 :shortname "F"
+                                 :function my-mu4e-headers-from)))
 
 #+end_src
 
-#+name: my-date-inc
-#+begin_src emacs-lisp
+**** Flags (custom info)
 
-(defun my-date-inc (date &optional days months years)
-  "Return DATE + DAYS day & MONTH months & YEARS years"
+#+NAME: mu4e-my-flags
+#+begin_src emacs-lisp :tangle no
 
-  (let ((days (or days 0))
-        (months (or months 0))
-        (years (or years 0))
-        (day (my-date-day date))
-        (month (my-date-month date))
-        (year (my-date-year date)))
-    (encode-time 0 0 0 (+ day days) (+ month months) (+ year years))))
+(defun my-mu4e-headers-flags (msg)
+  (let* ((size (mu4e-message-field msg :size))
+         (flags (cond ((memq 'flagged   (mu4e-message-field msg :flags)) "")
+                      ((and (> size 256000)
+                            (memq 'attach    (mu4e-message-field msg :flags))) "")
+                      ((memq 'replied   (mu4e-message-field msg :flags)) "")
+                      ((memq 'draft     (mu4e-message-field msg :flags)) "")
+                      ((memq 'trashed   (mu4e-message-field msg :flags)) "")
+                      ((memq 'encrypted (mu4e-message-field msg :flags)) "")
+                      (t ""))))
+    (my-mu4e-headers-colorise flags msg)))
 
-#+end_src
-
-#+name: my-date-dec
-#+begin_src emacs-lisp
-
-(defun my-date-dec (date &optional days months years)
-  "Return DATE - DAYS day & MONTH months & YEARS years"
-
-  (let ((days (or days 0))
-        (months (or months 0))
-        (years (or years 0)))
-    (my-date-inc date (- days) (- months) (- years))))
+(add-to-list 'mu4e-header-info-custom
+             '(:my-flags . (:name "my-flags"
+                                  :shortname "F"
+                                  :function my-mu4e-headers-flags)))
 
 #+end_src
 
-#+name: my-date-today
-#+begin_src emacs-lisp
+**** Tags (custom info)
 
-(defun my-date-today ()
-  "Return today date."
+We want pretty tags to get a good overview what an email is about.
+This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we replace tags by their symbols
 
-  (current-time))
+#+NAME: mu4e-my-tags
+#+begin_src emacs-lisp :tangle no
 
-#+end_src
+(defvar my-prettify-tag-alist
+  '(("RESEARCH"       . "")
+    ("PENDING"        . "")
+    ("INVOICE"        . "")
+    ("SAVE"           . "")
+    ("TEACHING"       . "")
+    ("INFO"           . "")
+    ("ORGANISATIONAL" . "")))
 
-#+name: my-date-is-today
-#+begin_src emacs-lisp
+(defun my-prettify-tag (tag)
+  "Replaces any given tag by the corresponding symbol as specified in my-prettify-tag-alist"
+  (let* ((local-tag tag)
+         (prettified-tag (car (split-string local-tag ","))))
+    (dolist (sym-pair my-prettify-tag-alist)
+      (when (string= prettified-tag (car sym-pair))
+        (setq prettified-tag (cdr sym-pair)))
+      )
+    prettified-tag
+    ))
 
-(defun my-date-is-today (date)
-  "Check if DATE is today."
 
-  (my-date-equal (current-time) date))
+(defface mu4e-tag-face
+  '((t :inherit (lambda-focus)))
+  "Face for message tags"
+  :group 'mu4e-faces)
 
-#+end_src
-
-#+name: my-date-is-yesterday
-#+begin_src emacs-lisp
-
-(defun my-date-is-yesterday (date)
-  "Check if DATE is yesterday."
-
-  (my-date-equal (my-date-dec (my-date-today) 1) date))
-
-#+end_src
-
-#+name: my-date-relative
-#+begin_src emacs-lisp
-
-(defun my-date-relative (date)
-  "Return a string with a relative date format."
-
-  (let* ((now (current-time))
-         (delta (float-time (time-subtract now date)))
-         (days (ceiling (/ (float-time (time-subtract now date)) (* 60 60 24)))))
-    (cond ((< delta (*       3 60))     "now")
-          ((< delta (*      60 60))     (format "%d minutes ago" (/ delta   60)))
-          ;;  ((< delta (*    6 60 60))     (format "%d hours ago"   (/ delta 3600)))
-          ((my-date-is-today date)      (format-time-string "%H:%M" date))
-          ((my-date-is-yesterday date)  (format "Yesterday"))
-          ((< delta (* 4 24 60 60))     (format "%d days ago" (+ days 1)))
-          (t                            (format-time-string "%d %b %Y" date)))))
+(defun my-mu4e-headers-tags (msg)
+  (let* ((tags (mu4e-message-field msg :tags)))
+    (if tags
+        (propertize (format "%s" (mapconcat #'my-prettify-tag tags " "))
+                    'face 'mu4e-tag-face)
+      "")))
+(add-to-list 'mu4e-header-info-custom
+             '(:my-tags . (:name "my-tags"
+                                 :shortname "T"
+                                 :function my-mu4e-headers-tags)))
 
 #+end_src
 
-*** Mini frame
+**** Thread count (custom info) :INACTIVE:
 
-A set of functions to create a mini-frame over the header line.
+This is an empty info field (4 non-breaking spaces) that will be overwritten by folding mode.
 
 #+begin_src emacs-lisp
 
-(defun my-mini-frame (&optional height foreground background border)
-  "Create a child frame positioned over the header line whose
-width corresponds to the width of the current selected window.
+(defun my-mu4e-headers-thread-counter (msg)
+  "    ") ;; NON-BREAKING spaces
+(add-to-list 'mu4e-header-info-custom
+             '(:my-counter . (:name "my-counter"
+                                    :shortname "#"
+                                    :function my-mu4e-headers-thread-counter)))
+#+end_src
 
-The HEIGHT in lines can be specified, as well as the BACKGROUND
-color of the frame. BORDER width (pixels) and color (FOREGROUND)
-can be also specified."
+**** Subject (custom info)
 
-  (interactive)
-  (let* ((foreground (or foreground
-                         (face-foreground 'font-lock-comment-face nil t)))
-         (background (or background (face-background 'highlight nil t)))
-         (border (or border 1))
-         (height (round (* (or height 8) (window-font-height))))
-         (edges (window-pixel-edges))
-         (body-edges (window-body-pixel-edges))
-         (top (nth 1 edges))
-         (bottom (nth 3 body-edges))
-         (left (- (nth 0 edges) (or left-fringe-width 0)))
-         (right (+ (nth 2 edges) (or right-fringe-width 0)))
-         (width (- right left))
+#+NAME: mu4e-my-subject
+#+begin_src emacs-lisp :tangle no
 
-         ;; Window divider mode
-         (width (- width (if (and (bound-and-true-p window-divider-mode)
-                                  (or (eq window-divider-default-places 'right-only)
-                                      (eq window-divider-default-places t))
-                                  (window-in-direction 'right (selected-window)))
-                             window-divider-default-right-width
-                           0)))
-         (y (- top border))
-         (child-frame-border (face-attribute 'child-frame-border :background)))
-    (set-face-attribute 'child-frame-border t :background foreground)
-    (let ((frame (make-frame
-                  `((parent-frame . ,(window-frame))
-                    (delete-before . ,(window-frame))
-                    (minibuffer . nil)
-                    (modeline . nil)
-                    (left . ,(- left border))
-                    (top . ,y)
-                    (width . (text-pixels . ,width))
-                    (height . (text-pixels . ,height))
-                    ;; (height . ,height)
-                    (child-frame-border-width . ,border)
-                    (internal-border-width . ,border)
-                    (background-color . ,background)
-                    (horizontal-scroll-bars . nil)
-                    (menu-bar-lines . 0)
-                    (tool-bar-lines . 0)
-                    (desktop-dont-save . t)
-                    (unsplittable . nil)
-                    (no-other-frame . t)
-                    (undecorated . t)
-                    (pixelwise . t)
-                    (visibility . t)))))
-      (set-face-attribute 'child-frame-border t :background child-frame-border)
-      frame)))
+(defun my-mu4e-headers-subject (msg)
+  (let* ((thread (mu4e-message-field msg :meta))
+         (prefix (mu4e~headers-thread-prefix thread))
+         (subject (mu4e-message-field msg :subject))
+         ;; (subject (concat prefix subject " " (my-mu4e-headers-tags msg)))
+         )
+    (my-mu4e-headers-colorise subject msg)))
+
+(add-to-list 'mu4e-header-info-custom
+             '(:my-subject . (:name "my-subject"
+                                    :shortname "S"
+                                    :function my-mu4e-headers-subject)))
 
 #+end_src
 
-#+begin_src emacs-lisp
+**** Helpers
 
-(defun my-mini-frame-reset (frame)
-  "Reset FRAME size and position.
-
-  Move frame at the top of parent frame and resize it
-  horizontally to fit the width of current selected window."
-
-  (interactive)
-  (let* ((border (frame-parameter frame 'internal-border-width))
-         (height (frame-parameter frame 'height)))
-    (with-selected-frame (frame-parent frame)
-      (let* ((edges (window-pixel-edges))
-             (body-edges (window-body-pixel-edges))
-             (top (nth 1 edges))
-             (bottom (nth 3 body-edges))
-             (left (- (nth 0 edges) (or left-fringe-width 0)))
-             (right (+ (nth 2 edges) (or right-fringe-width 0)))
-             (width (- right left))
-             (y (- top border)))
-        (set-frame-width frame width nil t)
-        (set-frame-height frame height)
-        (set-frame-position frame (- left border) y)))))
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-(defun my-mini-frame-shrink (frame &optional delta)
-  "Make the FRAME DELTA lines smaller.
-
-  If no argument is given, make the frame one line smaller. If
-  DELTA is negative, enlarge frame by -DELTA lines."
-
-  (interactive)
-  (let ((delta (or delta -1)))
-    (when (and (framep frame)
-               (frame-live-p frame)
-               (frame-visible-p frame))
-      (set-frame-parameter frame 'height
-                           (+ (frame-parameter frame 'height) delta)))))
-
-#+end_src
-
-*** Mu4e related
-
-A set of mail (mu4e) related functions.
-
-#+name: my-mu4e-get-account
-#+begin_src emacs-lisp
+#+NAME: my-mu4e-get-account
+#+begin_src emacs-lisp :tangle no
 
 (defun my-mu4e-get-account (msg)
   "Get MSG related account."
