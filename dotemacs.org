@@ -51,7 +51,7 @@ The documentation of each package-based (sub-)section is build like follows:
 + Optionally some explanations why (but not how) things are done in a certain way.
 
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
-** [1/13] Open Tasks
+** [1/15] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
@@ -62,6 +62,8 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] Create/use a template system for latex-based projects.
 - [X] Move the early-loading of org to a later stage.
 - [ ] Org agenda align tags.
+- [ ] BUGFIX: Only in some situations does org-gtd expand "inbox" to "inbox.org". this is weird.
+- [ ] Org caldav integration
 - [ ] Modify org-timeblock colours.
 - [ ] BUGFIX: org-timeblock columns has a wrong width.(See the subsection)
 - [ ] BUGFIX: org-timeblock-quit close all agenda buffers.
@@ -1943,6 +1945,10 @@ To get an overview of open action items, or of events that are important for a p
 #+begin_src emacs-lisp :tangle no
 (setq org-agenda-files '("~/Documents/org-files/agenda")
       org-inbox (concat (file-name-as-directory (car org-agenda-files)) "inbox.org")
+      org-archive-location (concat
+                            (file-name-as-directory (car org-agenda-files))
+                            "archive.org::datetree/")
+      org-calendar (concat (file-name-as-directory (car org-agenda-files)) "calendar.org")
       org-agenda-include-diary nil        ; We do not use the diary
       org-agenda-skip-scheduled-if-done t ; Don't show scheduled meetings that are done
       org-agenda-skip-deadline-if-done t  ; Don't show deadlines when the item is done
@@ -1960,7 +1966,8 @@ To get an overview of open action items, or of events that are important for a p
       org-agenda-start-with-log-mode t    ; Activate log mode
       org-log-done 'time                  ; Log the time a task is marked as done
       org-log-into-drawer t               ; Insert time stamps into a drawer.
-      org-read-date-prefer-future 'time)  ; We schedule tasks in the future.
+      org-read-date-prefer-future 'time   ; We schedule tasks in the future.
+      org-agenda-remove-tags t)           ;TODO: We remove tags in the agenda (for now)
 
 #+end_src
 
@@ -1977,11 +1984,11 @@ To get an overview of open action items, or of events that are important for a p
       '((1.0 . org-warning)              ; due yesterday or before
         (0.0 . org-upcoming-deadline)))  ; due today or later
 
-(setq org-agenda-current-time-string " ┈┈ now"
+(setq org-agenda-current-time-string "󰁔 now"
       org-agenda-time-grid
       '((daily today require-timed)
         ()
-        "┄┄┄" "┄┄┄")
+        "──" "──")
       org-agenda-prefix-format
       '((agenda . "%i %?-12t%s")
         (todo .   "%i")
@@ -1991,12 +1998,12 @@ To get an overview of open action items, or of events that are important for a p
 (setq org-agenda-format-date (lambda (date) (org-agenda-format-date-aligned date)))
 (setq org-cycle-separator-lines 2) ;Number of empty lines needed to keep an empty line between collapsed trees.
 
-(setq org-agenda-current-time-string "   now")
+(setq org-agenda-current-time-string "─now─")
 (setq org-agenda-tags-column 'auto)
 
 (defun my-org-agenda-mode-hook ()
   (hl-line-mode t)
-  (face-remap-add-relative 'hl-line :inherit 'nano-subtle)
+  ;;(face-remap-add-relative 'hl-line :inherit 'nano-subtle)
   (set-window-fringes nil 0 1) ; One pixel right fringe to avoid ellipsis
   (setq cursor-type nil))
 #+end_src
@@ -2078,42 +2085,46 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
   :init
   (setq org-gtd-update-ack "3.0.0")
   :custom
-  (setq org-gtd-directory (car org-agenda-files))
   (org-edna-use-inheritance t)
   (org-gtd-organize-hooks '(org-gtd-set-area-of-focus org-set-tags-command))
   :config
+  (setq org-gtd-directory (car org-agenda-files))
   (setq org-gtd-canceled "CANCELED")
   (setq org-gtd-inbox (concat (file-name-as-directory org-gtd-directory) "inbox"))
   (setq org-gtd-archive-location '(lambda() (concat
                                              (file-name-as-directory org-gtd-directory)
-                                             "archive.org")))
+                                             "archive.org::datetree/")))
   <<org-gtd-capture-templates>>
   (org-edna-mode)
   (org-gtd-mode 1)
   :bind
-  (("C-c c"   . org-gtd-capture)
+  (("C-c c"   . org-capture)
    ("C-c d e" . org-gtd-engage)
    ("C-c d p" . org-gtd-process-inbox)
    :map org-gtd-clarify-map
-   ("C-c C-w" . org-gtd-organize)))
+   ("C-c C-w" . org-gtd-organize))
+  :custom-face
+  (org-agenda-done ((t :strike-through nil)))
+  (org-done  ((t :strike-through nil)))
+  )
 #+end_src
 
 #+NAME: org-gtd-capture-templates
 #+begin_src emacs-lisp :tangle no
 (setq org-capture-templates
-      `(("i" "Inbox" entry  (file+headline ,org-gtd-inbox "Miscellaneous")
+      `(("i" "Inbox" entry  (file+headline ,org-inbox "Miscellaneous")
          ,(concat "* %?\n"
                   "/Entered on/ %U"))
-        ("m" "Meeting" entry  (file+datetree ,org-gtd-inbox)
+        ("m" "Meeting" entry  (file+datetree ,org-inbox)
          ,(concat "* Metting with %?\n at <%<%Y-%m-%d %a %^{Time}>>\n"
                   "/Entered on/ %U")
          :time-prompt t)
-        ("l" "Inbox with link" entry (file+headline ,org-gtd-inbox "Miscellaneous")
+        ("l" "Inbox with link" entry (file+headline ,org-inbox "Miscellaneous")
          ,(concat "* %?\n %a"
                   "/Entered on/ %U"
                   "%i")
                   :kill-buffer t)
-        ("@" "Inbox [mu4e]" entry (file+headline ,org-gtd-inbox "Mails")
+        ("@" "Inbox [mu4e]" entry (file+headline ,org-calendar "Mails")
          ,(concat "*  Reply to \"%a\" %?\n"
                   "/Entered on/ %U"))))
 (setq org-gtd-capture-templates org-capture-templates)
@@ -2572,6 +2583,10 @@ Setting up mail composition with org mode.
 
 #+begin_src emacs-lisp
 (use-package org-msg
+  :elpaca (:type git
+           :host github
+           :repo "jeremy-compostella/org-msg"
+           :branch "mu-1.12-support-with-backward-compatibility")
   :preface
   (defun org-msg-no-temp-buffer (orig-fun &rest args)
     "Advice to set `org-export-show-temporary-export-buffer' to `nil'."
