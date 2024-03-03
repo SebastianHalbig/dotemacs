@@ -2183,84 +2183,125 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 #+end_src
 * Mu4e
  We use [[https://www.djcbsoftware.nl/code/mu/][mu4e]] for dealing with emails.
+ #+begin_quote
+ With the enormous amounts of e-mail many people gather and the importance of e-mail message in our work-flows, it’s essential to quickly deal with all that mail - in particular, to instantly find that one important e-mail you need right now, and quickly file away message for later use.
+
+ mu is a tool for dealing with e-mail messages stored in the Maildir-format. mu’s purpose in life is to help you to quickly find the messages you need; in addition, it allows you to view messages, extract attachments, create new maildirs, and so on.
+
+ After indexing your messages into a Xapian-database, you can search them using a custom query language. You can use various message fields or words in the body text to find the right messages.
+ #+end_quote
+
+ Since our variant of mu4e is heavily modified we will start slow.
+
+ Remark: Using mu is like a deal with the devil. It has amazing features at the price of changing its internals constantly. As our customisations rely on the internals, the following will be in the eternal "work in progress"-stage. By the way, as a feature, they sometimes kill variables without mentioning that in the news file, e.g. ~mu4e-view-html-plaintext-ratio-heuristic~.
 
  #+begin_src emacs-lisp :noweb yes
- (use-package mu4e
-   :elpaca `(mu4e :host github :files ("mu4e/*.el"
-                                       "build/mu4e/mu4e-meta.el"
-                                       "build/mu4e/mu4e-config.el"
-                                       "build/mu4e/mu4e.info")
-                  :repo "djcb/mu"
-                  :main "mu4e/mu4e.el"
-                  :pre-build (("./autogen.sh")
-                              ("ninja" "-C" "build")
-                              (make-symbolic-link (expand-file-name "./build/mu/mu")
-                                                  (expand-file-name "/bin/mu")
-                                                  t)
-                              )
-                  :build (:not elpaca--compile-info)
-                  :post-build (("mu" "init" "--quiet" "--maildir" ,
-                                (concat (file-name-as-directory (getenv "HOME"))
-                                        "Documents/.mails")
-                                "--my-address=" ,"SebastianHalbig@gmx.de"
-                                "--my-address=" ,"Sebastian.Halbig@uni-marburg.de"
-                                "--my-address=" ,"halbigs@mathematik.uni-marburg.de"
-                                "--my-address=" ,"xolotl.spam@web.de")
-                               ("mu" "--quiet" "index")))
-   :commands (mu4e mu4e-update-index)
-   :bind (:map ergoemacs-override-keymap ("C-c m" . mu4e))
-   (:map mu4e-headers-mode-map ("g" . mu4e-headers-mark-for-tag ))
-   :custom
-   <<mu4e-custom>>
-   :config
-   <<mu4e-config>>
-   )
+  (use-package mu4e
+    :elpaca `(mu4e :host github :files ("mu4e/*.el"
+                                        "build/mu4e/mu4e-meta.el"
+                                        "build/mu4e/mu4e-config.el"
+                                        "build/mu4e/mu4e.info")
+                   :repo "djcb/mu"
+                   :main "mu4e/mu4e.el"
+                   :pre-build (("./autogen.sh")
+                               ("ninja" "-C" "build")
+                               (make-symbolic-link (expand-file-name "./build/mu/mu")
+                                                   (expand-file-name "/bin/mu")
+                                                   t)
+                               )
+                   :build (:not elpaca--compile-info)
+                   :post-build (("mu" "init" "--quiet" "--maildir" ,
+                                 (concat (file-name-as-directory (getenv "HOME"))
+                                         "Documents/.mails")
+                                 "--my-address=" ,"SebastianHalbig@gmx.de"
+                                 "--my-address=" ,"Sebastian.Halbig@uni-marburg.de"
+                                 "--my-address=" ,"halbigs@mathematik.uni-marburg.de"
+                                 "--my-address=" ,"xolotl.spam@web.de")
+                                ("mu" "--quiet" "index")))
+    :after relative-date
+    :commands (mu4e mu4e-update-index)
+    :bind (:map ergoemacs-override-keymap
+                ("C-c m" . mu4e)
+           :map mu4e-main-mode-map
+                ("z" . (lambda ()
+                         (interactive)
+                         (let ((current-prefix-arg 1))
+                           (call-interactively #'mu4e-quit))))
+          :map mu4e-headers-mode-map
+                ("g"       . mu4e-headers-mark-for-tag)
+                ("<right>" . mu4e-headers-next-unread)
+                ("<left>"  . mu4e-headers-prev-unread)
+                ("x" . (lambda ()
+                         (interactive)
+                         (let ((current-prefix-arg 1))
+                           (call-interactively #'mu4e-mark-execute-all)))))
+    :custom
+    <<mu4e-custom>>
+    :config
+    ;;General configs
+    <<mu4e-config>>
+    ;;Composition settings
+    <<mu4e-composition-settings>>
+    ;; Bookmarks (shortkeys for the dashboard)
+    <<mu4e-bookmarks>>
+    ;;Mail contexts
+    <<mu4e-web-de>>
+    <<mu4e-dresden>>
+    <<mu4e-gmx>>
+    <<mu4e-marburg-internal>>
+    <<mu4e-marburg>>
+    ;;The headers view
+    <<mu4e-headers>>
+    ;;
+    <<mu4e-tags>>
+    <<mu4e-tag-read>>
+    ;; Some helpers for better refiling and spam handling
+    <<mu4e-refile>>
+    <<my-mu4e-spam-folder>>
+    )
  #+end_src
-** variable customisations
+** The :custom settings
+
 
 #+NAME: mu4e-custom
 #+begin_src emacs-lisp :tangle no
-(mu4e-update-interval 300          "Update every five minutes")
-;; (mail-user-agent 'mu4e-user-agent  "Use mu4e as default email program")
-(mu4e-org-support t                "org support in mu4e")
-(mu4e-maildir (expand-file-name    "~/Documents/.mails/"))
-(mu4e-contexts nil)
-(mu4e-drafts-folder nil)
-(mu4e-compose-reply-to-address nil)
-(mu4e-sent-folder nil)
-(mu4e-trash-folder nil)
-(mu4e-attachment-dir               "~/Downloads")
-(mu4e-completing-read-function 'completing-read)
-(mu4e-use-fancy-chars t             "allow fancy icons for mail threads")
-(mu4e-sent-messages-behavior 'sent)
+(mu4e-update-interval 300             "Update every five minutes")
 (mu4e-get-mail-command "/usr/bin/offlineimap")
-(mu4e-confirm-quit nil)
-(mu4e-html2text-command  'mu4e-shr2text)
+(mail-user-agent 'mu4e-user-agent     "Use mu4e as default email program")
+(mu4e-maildir (expand-file-name       "~/Documents/.mails/"))
+(mu4e-confirm-quit nil               "No confirmation needed to shutdown mu")
+
+(mu4e-contexts nil)                   ; We set up the contexts later
 (mu4e-context-policy 'pick-first)
-(mu4e-compose-context-policy nil)
-(mu4e-index-cleanup t               "Cleanup after indexing")
-(mu4e-index-update-error-warning t  "Warnings during update")
-(mu4e-hide-index-messages t         "Hide indexing messages")
-(mu4e-index-update-in-background t  "Background update")
-(mu4e-index-lazy-check nil          "Don't be lazy, index everything")
-(mu4e-headers-auto-update t         "avoid to type `g' to update")
-(mu4e-headers-date-format           "%d-%m")
-(mu4e-headers-time-format           "%H:%M")
-(mu4e-headers-from-or-to-prefix '("" . "To "))
-(mu4e-search-include-related t)
-(mu4e-search-skip-duplicates t)
-(message-signature (concat
-                      "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
-                      "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
-                      "Hans-Meerwein-Straße 6 Room 04C35, 35043 Marburg\n"
-                      "BBB home room: https://webconf.hrz.uni-marburg.de/d/seb-omn-wqu-r6k"))
-;;(mu4e-view-show-addresses t)
-;;(mu4e-show-images t)
-(mu4e-view-html-plaintext-ratio-heuristic  most-positive-fixnum)
-(shr-use-fonts nil)   ; Simple HTML Renderer / no font
-(shr-use-colors nil) ; Simple HTML Renderer / no color
+(mu4e-drafts-folder nil)              ; The draft folders depend on the contexts, see there
+(mu4e-sent-folder nil)                ; The draft folders depend on the contexts, see there
+(mu4e-trash-folder nil)               ; The draft folders depend on the contexts, see there
+(mu4e-attachment-dir                  "~/Downloads")
+(message-signature nil)              ; The mail signature depends on the context.
+
+(mu4e-sent-messages-behavior 'sent)
+(mu4e-compose-context-policy 'ask-if-none "ask if there is no context, otherwise do nothing")
+
+(mu4e-search-include-related t       "Also return messages related to search")
+(mu4e-search-skip-duplicates t       "Don't show duplicates")
+
+(mu4e-index-cleanup t                "Cleanup after indexing")
+(mu4e-index-update-error-warning t   "Warnings during update")
+(mu4e-hide-index-messages t          "Hide indexing messages")
+(mu4e-index-update-in-background t   "Background update")
+(mu4e-index-lazy-check nil           "Don't be lazy, index everything")
+
+(mu4e-headers-auto-update t          "avoid to type `g' to update")
+(mu4e-headers-date-format            "%d-%m") ; Fall-back option. See later configs.
+(mu4e-headers-time-format            "%H:%M") ; Fall-back option. See later configs.
+(mu4e-headers-from-or-to-prefix      '("" . "To "))
+
+(mu4e-org-support t                   "org support in mu4e")
+(mu4e-completing-read-function 'completing-read "We use the standard completing read")
+(mu4e-use-fancy-chars t              "allow fancy icons for mail threads")
+
 #+end_src
-** configurations
+** Early :config settings
 
 #+NAME: mu4e-config
 #+begin_src emacs-lisp :noweb yes :tangle no
@@ -2270,85 +2311,16 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 ;; Main user mail address
 (setq user-mail-address "SebastianHalbig@gmx.de")
 
-(setq personal-mail-signature (concat
+(setq professional-mail-signature (concat
                       "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
                       "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
                       "Hans-Meerwein-Straße 6 Room 04C35, 35043 Marburg\n"
                       "BBB home room: https://webconf.hrz.uni-marburg.de/d/seb-omn-wqu-r6k"))
 
-;; Better refiling and spam handling
-<<mu4e-refile>>
-<<my-mu4e-spam-folder>>
-
-;;Mail contexts
-<<mu4e-web-de>>
-<<mu4e-dresden>>
-<<mu4e-gmx>>
-<<mu4e-marburg-internal>>
-<<mu4e-marburg>>
-<<mu4e-write-settings>>
-<<mu4e-tags>>
-<<mu4e-tag-read>>
-<<mu4e-bookmarks>>
-<<mu4e-headers>>
 #+end_src
 
-Refile/archive depending on the context (via maildir).
-
-#+NAME: mu4e-refile
-#+begin_src emacs-lisp :tangle no
-
-(defun my-mu4e-refile-folder (msg)
-  "Contextual refile"
-
-  (let (
-        (maildir (mu4e-message-field msg :maildir))
-        (tags (mu4e-message-field msg :tags))
-        (subfolder "saved")
-        )
-    (cond
-     ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
-     ((member "INFO" tags) (setq subfolder "info"))
-     ((member "TEACHING" tags) (setq subfolder "teaching"))
-     ((member "RESEARCH" tags) (setq subfolder "research"))
-     ((member "INVOICE" tags) (setq subfolder "invoice"))
-     )
-    (concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
-    ))
-
-(setq mu4e-refile-folder 'my-mu4e-refile-folder)
-
-(add-to-list 'mu4e-marks
-             '(archive
-               :char       "r"
-               :prompt     "Archive"
-               :dyn-target (lambda (target msg) (my-mu4e-refile-folder msg))
-               :action      (lambda (docid msg target)
-                              (mu4e--server-move docid (my-mu4e-refile-folder msg) "+S-u-N")
-                              )))
-
-
-(mu4e~headers-defun-mark-for archive)
-(define-key mu4e-headers-mode-map (kbd "r") 'mu4e-headers-mark-for-archive)
-
-#+end_src
-
-Move emails to the relative spam folder.
-
-#+NAME: my-mu4e-spam-folder
-#+begin_src emacs-lisp :tangle no
-
-(defun my-mu4e-spam-folder (msg)
-  "Contextual spam handling"
-
-  (let ((maildir (mu4e-message-field msg :maildir)))
-    (concat "/" (nth 1 (split-string maildir "/")) "/spam")))
-
-(setq mu4e-spam-folder 'my-mu4e-spam-folder)
-
-#+end_src
-
-
+** Contexts
+We define the various mail contexts.
 *** Web
 #+NAME: mu4e-web-de
 #+begin_src emacs-lisp :tangle no
@@ -2373,14 +2345,11 @@ Move emails to the relative spam folder.
                       (smtpmail-smtp-server . "smtp.staff.uni-marburg.de")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
-
-message-signature
 #+end_src
 
 *** Dresden(deprecated)
 #+NAME: mu4e-dresden
 #+begin_src emacs-lisp :tangle no
-
 (add-to-list 'mu4e-contexts
              (make-mu4e-context
               :name "TUDresden"
@@ -2402,14 +2371,12 @@ message-signature
                       (smtpmail-smtp-server . "smtp.uni-marburg.de")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
-
 #+end_src
 
 *** Gmx
 
 #+NAME: mu4e-gmx
 #+begin_src emacs-lisp :tangle no
-
 (add-to-list 'mu4e-contexts
              (make-mu4e-context
               :name "GMX"
@@ -2430,7 +2397,6 @@ message-signature
                       (smtpmail-smtp-server . "mail.gmx.net")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
-
 #+end_src
 *** TODO Marburg-Internal
 Currently we reroute the mail to the main account to avoid a bug of the mail server.
@@ -2447,7 +2413,7 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
                                        msg :to "halbigs@mathematik.uni-marburg.de")))
               :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de") ;;"halbigs@mathematik.uni-marburg.de"
                       (user-full-name . "Sebastian Halbig")
-                      (message-signature . ,personal-mail-signature)
+                      (message-signature . ,professional-mail-signature)
                       (mu4e-sent-folder . "/MarburgInternal/sent")
                       (mu4e-trash-folder . "/MarburgInternal/trash")
                       (mu4e-drafts-folder . "/MarburgInternal/drafts")
@@ -2457,13 +2423,11 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
                       (smtpmail-smtp-server . "smtp.uni-marburg.de") ;; "smtp.mathematik.uni-marburg.de"
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
-
 #+end_src
 *** Marburg
 
 #+NAME: mu4e-marburg
 #+begin_src emacs-lisp :tangle no
-
 (add-to-list 'mu4e-contexts
              (make-mu4e-context
               :name "Marburg"
@@ -2474,7 +2438,7 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
                                        msg :to "Sebastian.Halbig@uni-marburg.de")))
               :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de")
                       (user-full-name . "Sebastian Halbig")
-                      (message-signature . ,personal-mail-signature)
+                      (message-signature . ,professional-mail-signature)
                       (mu4e-sent-folder . "/Marburg/sent")
                       (mu4e-trash-folder . "/Marburg/trash")
                       (mu4e-drafts-folder . "/Marburg/drafts")
@@ -2484,9 +2448,8 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
                       (smtpmail-smtp-server . "smtp.uni-marburg.de")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
-
 #+end_src
-** TODO Encryption
+** Encryption
 
 See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
 
@@ -2501,87 +2464,50 @@ See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
         mml2015-encrypt-to-self t             ; Add our own key ID to recipient list
         mml2015-sign-with-sender t)           ; Use message sender to find a key to sign with.
 
-  ;;(setq epa-file-cache-passphrase-for-symmetric-encryption nil)
   (require 'epa-file)
   (epa-file-enable)
   (setq epa-file-select-keys nil)
   (setq epa-pinentry-mode 'loopback)
-  ;;(pinentry-start)
   )
 #+end_src
-** TODO Read :INACTIVE:BINDING:FACE:
-
-Various settings
-
-
-n/p for nevigating unread mails
-
-#+begin_src emacs-lisp
-
-(bind-key "n" #'mu4e-headers-next-unread mu4e-headers-mode-map)
-(bind-key "p" #'mu4e-headers-prev-unread mu4e-headers-mode-map)
-
-#+end_src
-
-Custom faces
-
-#+begin_src emacs-lisp
-
-(set-face-attribute 'mu4e-system-face nil :inherit 'nano-critical)
-(set-face-attribute 'mu4e-header-marks-face nil :inherit 'nano-critical)
-(set-face-attribute 'mu4e-header-highlight-face nil :inherit 'nano-salien-i)
-
-#+end_src
-** TODO Write
+** Message composition
 
 See www.gnu.org/software/emacs/manual/html_node/message/Insertion-Variables.html
 We try to sign all mails. Encryption should also be managed automatically
 
-#+NAME: mu4e-write-settings
+#+NAME: mu4e-composition-settings
 #+begin_src emacs-lisp :tangle no
 
-(setq message-send-mail-function 'smtpmail-send-it
-      smtpmail-servers-requiring-authorization '".*"
+(setq message-send-mail-function 'smtpmail-send-it    ; We use smptmail
+      smtpmail-servers-requiring-authorization '".*"  ; All servers require authorisation
       message-cite-reply-position 'below
-      message-citation-line-format "%N [%Y-%m-%d at %R] wrote:"
+      message-citation-line-format "%N [%Y-%m-%d at %R] wrote:" ;
       message-citation-line-function 'message-insert-formatted-citation-line
-      message-yank-prefix       "> "
-      message-yank-cited-prefix "> "
-      message-yank-empty-prefix "> "
+      message-yank-prefix       "> " ; Mails are quoted by preprending a ">" character
+      message-yank-cited-prefix "> " ; Mails are quoted by preprending a ">" character
+      message-yank-empty-prefix "> " ; Mails are quoted by preprending a ">" character
       message-indentation-spaces 1
-      message-kill-buffer-on-exit t
+      message-kill-buffer-on-exit t  ; We kill the message buffer after sending.
 
-      mu4e-compose-format-flowed t
-      mu4e-compose-complete-only-personal t
+      mu4e-compose-format-flowed t   ; Sent messages as format=flowed.
+      mu4e-compose-complete-only-personal t  ; Less autocompletion see description.
       ;; mu4e-compose-complete-only-after "2021-01-01" ; Limit address auto-completion
-      mu4e-compose-dont-reply-to-self t
-      mu4e-compose-crypto-reply-policy 'sign-and-encrypt)
 
-(add-hook 'message-send-hook 'mml-secure-message-sign-pgpmime)
-
-#+end_src
-
-Setting up mail composition with org mode.
-
-#+name: my-mu4e-compose-hook
-#+begin_src emacs-lisp
+      mu4e-compose-crypto-policy '(encrypt-encrypted-replies sign-all-messages))
+     ;; We only encrypt messages replies to encrypted messages but sign all messages.
 
 (defun my-mu4e-compose-hook ()
   "Settings for message composition."
-
   (auto-save-mode -1)
-  (set-fill-column 80)
-  (delete-other-windows)
-  ;;(auto-fill-mode)
-  (setq flyspell-generic-check-word-predicate
-        'mail-mode-flyspell-verify))
+  (delete-other-windows))
 
 (add-hook 'mu4e-compose-mode-hook #'my-mu4e-compose-hook)
 
 #+end_src
 
-
-#+begin_src emacs-lisp
+** Org-msg integration :INACTIVE:
+FOR NOW NO ORG-MSG
+#+begin_src emacs-lisp :tangle no
 (use-package org-msg
   :elpaca (:type git
            :host github
@@ -2616,38 +2542,18 @@ Setting up mail composition with org mode.
 
 
 #+end_src
-** Setup :PERSONAL:BINDING:INACTIVE:
+** TODO Mailcap
 
+[[https://www.gnu.org/software/emacs/manual/html_node/emacs-mime/mailcap.html][Mailcap.el]] is a part of emacs amd responsible for mime handling.
+#+begin_quote
+Provides configuration of MIME media types from directly from Lisp and via the usual mailcap mechanism (RFC 1524). Deals with mime.types similarly.
+#+end_quote
+See also the [[https://www.gnu.org/software/emacs/manual/html_node/emacs-mime/index.html][Emacs MIME wiki.]]
 
-#+begin_src emacs-lisp
-
-(require 'mailcap)
-
-(push '((viewer . "open %s 2> /dev/null &")
-        (type   . "application/pdf")
-        (test   . window-system))
-      mailcap-user-mime-data)
-
-(when (fboundp 'imagemagick-register-types)
-  (imagemagick-register-types))
-
-#+end_src
-
-** TODO Contacts :INACTIVE:
-
-In the future we will use org-contacts and based on them individual greetings and signatures.
-
-#+begin_src emacs-lisp
-(use-package org
-  :ensure org-contacts
-  :after org
-  :custom (org-contacts-files '("~/Documents/org-files/contacts.org")))
-#+end_src
-** Bookmarks :INACTIVE:
-
+** Bookmarks
+These are the standard mu4e-header-view targets.
 #+NAME: mu4e-bookmarks
 #+begin_src emacs-lisp :tangle no
-
 (setq mu4e-bookmarks
       '((:name "Unread"
                :key ?u
@@ -2659,16 +2565,6 @@ In the future we will use org-contacts and based on them individual greetings an
                :show-unread t
                :query "m:/GMX/inbox or m:/TUD/inbox or m:/Marburg/inbox or m:/MarburgInternal/inbox or m:/Web/inbox")
 
-        (:name "Today"
-               :key ?t
-               :show-unread t
-               :query "date:today..now")
-
-        (:name "Last week"
-               :key ?w
-               :hide-unread t
-               :query "date:7d..now")
-
         (:name "Sent"
                :key ?s
                :show-unread nil
@@ -2678,152 +2574,20 @@ In the future we will use org-contacts and based on them individual greetings an
                :key ?d
                :hide-unread t
                :query "flag:draft")
-
-        (:name "Next"
-               :key ?N
-               :show-unread t
-               :query "tags:NEXT")
-
-        (:name "Todo"
-               :key ?T
-               :show-unread t
-               :query "tags:TODO")
-
-        (:name "Done"
-               :key ?D
-               :show-unread t
-               :query "tags:DONE")
         ))
 #+end_src
-** Tags
-
-This provides a tag action inside the mu4e headers view to quickly tag message. Tags are saved in the ~mu4e-tag-history~ variable that is also saved from one session to the other. We use the ~consult-completing-read-multiple~ function to read tags.
-
-
-#+NAME: mu4e-tags
-#+begin_src emacs-lisp :tangle no
-
-(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE")
-  "Mu4e tag history list.")
-
-(add-to-list 'savehist-additional-variables 'mu4e-tag-history)
-
-(put 'mu4e-tag-history 'history-length 5)
-
-(defun add-to-mu4e-tag-history (tag)
-  "Add the new tags to the history"
-  (add-to-list 'mu4e-tag-history tag))
-
-#+end_src
-
-
-Here is the actual tag action
-
-#+NAME: mu4e-tag-read
-#+begin_src emacs-lisp :tangle no
-(defun mu4e-tag-read (target msg)
-  "Ask for tags to be added and/or removed."
-  (let* ((tags nil)
-         (old-tags (mu4e-message-field msg :tags))
-         (new-tags (completing-read-multiple
-                    "TAGS: "
-                    mu4e-tag-history
-                    nil
-                    nil
-                    (mapconcat #'identity old-tags ",")
-                    ;; 'mu4e-tag-history
-                    )))
-    (dolist (tag old-tags)
-      (let ((tag (string-trim tag)))
-        (if (and (> (length tag) 0)
-                 (not (member tag new-tags)))
-            (push (concat "-" tag) tags))))
-    (dolist (tag new-tags)
-      (let ((tag (string-trim tag)))
-        (if (and (> (length tag) 0)
-                 (not (member tag old-tags)))
-            (progn
-              (add-to-mu4e-tag-history tag)
-              (push (concat "+" tag) tags)))))
-    (mapconcat #'identity tags ",")))
-
-;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
-;; I Did not find a way to cancel the marks
-(add-to-list 'mu4e-marks
-             '(tag
-               :char       "g"
-               :prompt     "gtag"
-               :dyn-target mu4e-tag-read
-               :action      (lambda (docid msg target)
-                              (when (> (length target) 0)
-                                (mu4e-action-retag-message msg target)))))
-
-;; Tell mu4e about the new mark
-;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
-(mu4e~headers-defun-mark-for tag)
-
-#+end_src
-** Folding :INACTIVE:FACE:
-
-Some face specification for folding.
-
-#+begin_src emacs-lisp
-
-(require 'mu4e-folding)
-
-(set-face-attribute 'mu4e-folding-root-folded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-(set-face-attribute 'mu4e-folding-root-unfolded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-(set-face-attribute 'mu4e-folding-child-folded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-(set-face-attribute 'mu4e-folding-child-unfolded-face nil
-                    :background (face-background 'default)
-                    :extend t)
-
-#+end_src
-** Spam handling :INACTIVE:BINDING:
-
-We move messages automatically to the "correct" spam folder.
-
-#+begin_src emacs-lisp
-
-(add-to-list 'mu4e-marks
-             '(spam
-               :char       "k"
-               :prompt     "Spam"
-               :dyn-target (lambda (target msg) (my-mu4e-spam-folder msg))
-               ;; :show-target (lambda (target) "Spam")
-               :action      (lambda (docid msg target)
-                              ;; (message (symbol-value msg))
-                              (mu4e--server-move docid (my-mu4e-spam-folder msg) "+S-u-N")
-                              )))
-
-(mu4e~headers-defun-mark-for spam)
-
-
-#+end_src
-
-We bind spam handling to the "k"-key.
-
-#+begin_src emacs-lisp
-
-(define-key mu4e-headers-mode-map (kbd "k") 'mu4e-headers-mark-for-spam)
-
-#+end_src
-** Layout for mu4e :INACTIVE:HOOK:BINDING:
+** Layout for mu4e
 *** Headers
 
 #+NAME: mu4e-headers
 #+begin_src emacs-lisp :noweb yes :tangle no
+;; Helper functions for our customisation of the header fields
 <<my-mu4e-get-sender>>
 <<my-mu4e-get-mailbox>>
 <<my-mu4e-get-maildir>>
 <<my-mu4e-get-account>>
 <<my-mu4e-headers-colorise>>
+
 <<mu4e-my-date>>
 <<mu4e-my-from>>
 <<mu4e-my-flags>>
@@ -2835,59 +2599,43 @@ We bind spam handling to the "k"-key.
         (:my-from       . 25)
         (:my-subject    . 70)
         (:my-tags       . 10)
-        (:human-date   . 14))) ;;TODO: my-date
+        (:my-date       . nil)))
 
-
-(setq mu4e-headers-thread-root-prefix          '(""   . "")
-      mu4e-headers-thread-first-child-prefix   '(""   . "")
-      mu4e-headers-thread-child-prefix         '(""   . "")
-      mu4e-headers-thread-last-child-prefix    '(""   . "")
-      mu4e-headers-thread-connection-prefix    '("| " . "| ")
-      mu4e-headers-thread-blank-prefix         '(""   . "")
-      mu4e-headers-thread-orphan-prefix        '(""   . "")
-      mu4e-headers-thread-single-orphan-prefix '(""   . "")
-      mu4e-headers-thread-duplicate-prefix     '("="  . "="))
-
-(plist-put (cdr (assq 'refile   mu4e-marks)) :char "")
-(plist-put (cdr (assq 'trash    mu4e-marks)) :char "")
-(plist-put (cdr (assq 'action   mu4e-marks)) :char "")
-(plist-put (cdr (assq 'untrash  mu4e-marks)) :char "")
-(plist-put (cdr (assq 'delete   mu4e-marks)) :char "×")
-(plist-put (cdr (assq 'flag     mu4e-marks)) :char "")
-(plist-put (cdr (assq 'unflag   mu4e-marks)) :char "類")
-(plist-put (cdr (assq 'move     mu4e-marks)) :char "")
-(plist-put (cdr (assq 'tag      mu4e-marks)) :char "")
-(plist-put (cdr (assq 'spam     mu4e-marks)) :char "")
+(plist-put (cdr (assq 'tag      mu4e-marks)) :char "󰓼")
+(plist-put (cdr (assq 'archive  mu4e-marks)) :char "󱈎")
+(plist-put (cdr (assq 'refile   mu4e-marks)) :char "󱈎")
+(plist-put (cdr (assq 'delete   mu4e-marks)) :char "󰮉")
+(plist-put (cdr (assq 'flag     mu4e-marks)) :char "󰓒")
+(plist-put (cdr (assq 'move     mu4e-marks)) :char "󰧂")
+(plist-put (cdr (assq 'read     mu4e-marks)) :char "󰴃")
+(plist-put (cdr (assq 'trash    mu4e-marks)) :char "󰧧")
+(plist-put (cdr (assq 'unflag   mu4e-marks)) :char "󱣯")
+(plist-put (cdr (assq 'untrash  mu4e-marks)) :char "󰜉")
+(plist-put (cdr (assq 'unread   mu4e-marks)) :char "󰮒")
+(plist-put (cdr (assq 'unmark   mu4e-marks)) :char "󱣯")
+(plist-put (cdr (assq 'action   mu4e-marks)) :char "󰢻")
 #+end_src
 
-**** TODO Colorisation of recent emails :INACTIVE:
+***** Date (custom info)
 
-#+NAME: my-mu4e-headers-colorise
-#+begin_src emacs-lisp :tangle no
+We use the [[https://github.com/rougier/relative-date][relative-date]] package for displaying when we got an email.
+#+begin_quote
+This package allows to format the difference between two dates according to the value of their difference (expressed in seconds) or a symbolic relationship between the two dates (e.g. ‘today). The main entry points for the library are the relative-date function and the relative-date-formats variable.
+#+end_quote
 
-(defun my-mu4e-headers-colorise (item msg)
-  "Colorise item depending on whe msg was received"
-
-  (let* ((recent (* 5 60)) ;; 5 minutes
-         (now (current-time))
-         (unread (mu4e-message-field msg :unread))
-         (date (mu4e-message-field msg :date))
-         (delta (float-time (time-subtract now date))))
-    (if (and (< delta recent) unread)
-        (propertize item 'face 'lambda-focus)
-      item)))
-
+#+begin_src emacs-lisp
+(use-package relative-date
+  :elpaca (:type git :host github :repo "rougier/relative-date")
+  :demand t)
 #+end_src
-
-**** Date (custom info)
-
 #+NAME: mu4e-my-date
 #+begin_src emacs-lisp :tangle no
+(require 'relative-date)
 
 (defun my-mu4e-headers-date (msg)
   (let* ((date (mu4e-message-field msg :date)))
     (my-mu4e-headers-colorise
-     (format "%12s" date) msg)))
+     (format "%12s" (relative-date date)) msg)))
 
 (add-to-list 'mu4e-header-info-custom
              '(:my-date . (:name "my-date"
@@ -2895,7 +2643,7 @@ We bind spam handling to the "k"-key.
                                  :function my-mu4e-headers-date)))
 #+end_src
 
-**** From (custom info)
+***** From (custom info)
 
 #+NAME: mu4e-my-from
 #+begin_src emacs-lisp :tangle no
@@ -2907,7 +2655,6 @@ We bind spam handling to the "k"-key.
          (orphan      (when meta (plist-get meta :orphan)))
          (first-child (when meta (plist-get meta :first-child)))
          (has-child   (when meta (plist-get meta :has-child)))
-         (root        (when meta (plist-get meta :root)))
          (from        (cond ((and root has-child)       (concat " " from))
                             ((and orphan first-child)   (concat " " from))
                             ((and root (not has-child)) (concat "" from))
@@ -2921,20 +2668,20 @@ We bind spam handling to the "k"-key.
 
 #+end_src
 
-**** Flags (custom info)
+***** Flags (custom info)
 
 #+NAME: mu4e-my-flags
 #+begin_src emacs-lisp :tangle no
 
 (defun my-mu4e-headers-flags (msg)
   (let* ((size (mu4e-message-field msg :size))
-         (flags (cond ((memq 'flagged   (mu4e-message-field msg :flags)) "")
-                      ((and (> size 256000)
-                            (memq 'attach    (mu4e-message-field msg :flags))) "")
-                      ((memq 'replied   (mu4e-message-field msg :flags)) "")
-                      ((memq 'draft     (mu4e-message-field msg :flags)) "")
-                      ((memq 'trashed   (mu4e-message-field msg :flags)) "")
-                      ((memq 'encrypted (mu4e-message-field msg :flags)) "")
+         (flags (cond ((memq 'flagged   (mu4e-message-field msg :flags)) "󰓒")
+                      ((and (> size 256000) (memq 'attach (mu4e-message-field msg :flags))) "󰁦")
+                      ((memq 'replied   (mu4e-message-field msg :flags)) "󰼠")
+                      ((memq 'draft     (mu4e-message-field msg :flags)) "󰣕")
+                      ((memq 'trashed   (mu4e-message-field msg :flags)) "󰩺")
+                      ((memq 'encrypted (mu4e-message-field msg :flags)) "󰍁")
+                      ((memq 'signed    (mu4e-message-field msg :flags)) "󱝀")
                       (t ""))))
     (my-mu4e-headers-colorise flags msg)))
 
@@ -2945,7 +2692,7 @@ We bind spam handling to the "k"-key.
 
 #+end_src
 
-**** Tags (custom info)
+***** Tags (custom info)
 
 We want pretty tags to get a good overview what an email is about.
 This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we replace tags by their symbols
@@ -2992,7 +2739,7 @@ This is managed by the ~my-prettify-tag-alist~. Using ~my-prettify-tag~, we repl
 
 #+end_src
 
-**** Thread count (custom info) :INACTIVE:
+***** Thread count (custom info) :INACTIVE:
 
 This is an empty info field (4 non-breaking spaces) that will be overwritten by folding mode.
 
@@ -3006,7 +2753,7 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
                                     :function my-mu4e-headers-thread-counter)))
 #+end_src
 
-**** Subject (custom info)
+***** Subject (custom info)
 
 #+NAME: mu4e-my-subject
 #+begin_src emacs-lisp :tangle no
@@ -3025,6 +2772,24 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
                                     :function my-mu4e-headers-subject)))
 
 #+end_src
+
+***** TODO Colorisation of recent emails
+#+NAME: my-mu4e-headers-colorise
+#+begin_src emacs-lisp :tangle no
+(defun my-mu4e-headers-colorise (item msg)
+  "Colorise item depending on whe msg was received"
+  (let* (;; Time information
+         (recent (* 10 60)) ;; 5 minutes
+         (now (current-time))
+         (unread (mu4e-message-field msg :unread))
+         (date (mu4e-message-field msg :date))
+         (delta (float-time (time-subtract now date))))
+    (if (and (< delta recent) unread)
+        (propertize item 'face 'lambda-focus)
+      item)))
+
+#+end_src
+
 
 **** Helpers
 
@@ -3176,65 +2941,159 @@ This is an empty info field (4 non-breaking spaces) that will be overwritten by 
 
 #+end_src
 
-** Dashboard :INACTIVE:
+** mu4e helpers
+*** Tags
 
-Provide a [[help:mu4e-dashboard][mu4e-dashboard]] command that opens the mu4e dashboard on the left side.
+This provides a tag action inside the mu4e headers view to quickly tag message. Tags are saved in the ~mu4e-tag-history~ variable that is also saved from one session to the other. We use the ~consult-completing-read-multiple~ function to read tags.
 
-#+name: mu4e-dashboard
-#+begin_src emacs-lisp
+#+NAME: mu4e-tags
+#+begin_src emacs-lisp :tangle no
 
-(require 'mu4e-dashboard)
-(require 'svg-lib)
+(defvar mu4e-tag-history '("RESEARCH" "TEACHING" "ORGANISATIONAL" "INFO" "INVOICE")
+  "Mu4e tag history list.")
 
-(setq mu4e-dashboard-propagate-keymap nil)
-(setq mu4e-dashboard-buffer-name nil)
+(add-to-list 'savehist-additional-variables 'mu4e-tag-history)
 
-(defun mu4e-dashboard ()
-  "Open the mu4e dashboard on the left side."
+(put 'mu4e-tag-history 'history-length 5)
 
-  (interactive)
-  (with-selected-window
-      (split-window (selected-window) -34 'left)
-
-    (find-file (expand-file-name "mu4e-dashboard.org" user-emacs-directory))
-    (mu4e-dashboard-mode)
-    (hl-line-mode)
-    (set-window-dedicated-p nil t)
-    (setq mu4e-dashboard-buffer-name '"mu4e-dashboard.org")
-    ;; (defvar svg-font-lock-keywords
-    ;;   `(("\\!\\([\\ 0-9]+\\)\\!"
-    ;;      (0 (list 'face nil 'display (svg-font-lock-tag (match-string 1)))))))
-    ;; (defun svg-font-lock-tag (label)
-    ;;   (svg-lib-tag label nil
-    ;;                :stroke 0 :margin 1 :font-weight 'bold
-    ;;                :padding (max 0 (- 3 (length label)))
-    ;;                :foreground (face-foreground 'nano-popout-i)
-    ;;                :background (face-background 'nano-popout-i)))
-    ;; (push 'display font-lock-extra-managed-props)
-    ;; (font-lock-add-keywords nil svg-font-lock-keywords)
-    ;; (font-lock-flush (point-min) (point-max))
-    ))
+(defun add-to-mu4e-tag-history (tag)
+  "Add the new tags to the history"
+  (add-to-list 'mu4e-tag-history tag))
 
 #+end_src
 
-We activate the dashboard in the headers view.
+Here is the actual tag action
 
-#+begin_src emacs-lisp
+#+NAME: mu4e-tag-read
+#+begin_src emacs-lisp :tangle no
+(defun mu4e-tag-read (target msg)
+  "Ask for tags to be added and/or removed."
+  (let* ((tags nil)
+         (old-tags (mu4e-message-field msg :tags))
+         (new-tags (completing-read
+                    "TAGS: "
+                    mu4e-tag-history
+                    nil
+                    t
+                    (mapconcat #'identity old-tags ",")
+                    ;; 'mu4e-tag-history
+                    )))
+    (dolist (tag old-tags)
+      (let ((tag (string-trim tag)))
+        (if (and (> (length tag) 0)
+                 (not (member tag new-tags)))
+            (push (concat "-" tag) tags))))
+    (dolist (tag new-tags)
+      (let ((tag (string-trim tag)))
+        (if (and (> (length tag) 0)
+                 (not (member tag old-tags)))
+            (progn
+              (add-to-mu4e-tag-history tag)
+              (push (concat "+" tag) tags)))))
+    (mapconcat #'identity tags ",")))
 
-(add-hook 'mu4e-headers-mode-hook #'(lambda()(unless mu4e-dashboard-buffer-name (mu4e-dashboard))))
-(advice-add 'mu4e~headers-quit-buffer :after #'(lambda()(when mu4e-dashboard-buffer-name (mu4e-dashboard-quit))))
+;; Add the mark to mu4e. If the action does nothing, the header is marked anyway.
+;; I Did not find a way to cancel the marks
+(add-to-list 'mu4e-marks
+             '(tag
+               :char       "g"
+               :prompt     "gtag"
+               :dyn-target mu4e-tag-read
+               :action      (lambda (docid msg target)
+                              (when (> (length target) 0)
+                                (mu4e-action-retag-message msg target)))))
+
+;; Tell mu4e about the new mark
+;; See https://www.djcbsoftware.nl/code/mu/mu4e/Adding-a-new-kind-of-mark.html
+(mu4e~headers-defun-mark-for tag)
+
 #+end_src
 
+*** Context dependent refile
+
+Refile/archive depending on the context (via maildir).
+
+#+NAME: mu4e-refile
+#+begin_src emacs-lisp :tangle no
+
+(defun my-mu4e-refile-folder (msg)
+  "Contextual refile"
+
+  (let (
+        (maildir (mu4e-message-field msg :maildir))
+        (tags (mu4e-message-field msg :tags))
+        (subfolder "saved")
+        )
+    (cond
+     ((member "ORGANISATIONAL" tags) (setq subfolder "organisational"))
+     ((member "INFO" tags) (setq subfolder "info"))
+     ((member "TEACHING" tags) (setq subfolder "teaching"))
+     ((member "RESEARCH" tags) (setq subfolder "research"))
+     ((member "INVOICE" tags) (setq subfolder "invoice"))
+     )
+    (concat "/" (nth 1 (split-string maildir "/")) "/archive/" subfolder)
+    ))
+
+(setq mu4e-refile-folder 'my-mu4e-refile-folder)
+
+(add-to-list 'mu4e-marks
+             '(archive
+               :char       "r"
+               :prompt     "Archive"
+               :dyn-target (lambda (target msg) (my-mu4e-refile-folder msg))
+               :action      (lambda (docid msg target)
+                              (mu4e--server-move docid (my-mu4e-refile-folder msg) "+S-u-N")
+                              )))
+
+
+(mu4e~headers-defun-mark-for archive)
+(define-key mu4e-headers-mode-map (kbd "r") 'mu4e-headers-mark-for-archive)
+
+#+end_src
+
+*** Context dependent spam handling
+Move emails to the relative spam folder.
+
+#+NAME: my-mu4e-spam-folder
+#+begin_src emacs-lisp :tangle no
+
+(defun my-mu4e-spam-folder (msg)
+  "Contextual spam handling"
+
+  (let ((maildir (mu4e-message-field msg :maildir)))
+    (concat "/" (nth 1 (split-string maildir "/")) "/spam")))
+
+(setq mu4e-spam-folder 'my-mu4e-spam-folder)
+
+#+end_src
+
+*** Spam handling :INACTIVE:BINDING:
+
+We move messages automatically to the "correct" spam folder.
+
 #+begin_src emacs-lisp
 
-(defun mu4e-dashboard-quit ()
-  "Close the currently open dashboard"
+(add-to-list 'mu4e-marks
+             '(spam
+               :char       "k"
+               :prompt     "Spam"
+               :dyn-target (lambda (target msg) (my-mu4e-spam-folder msg))
+               ;; :show-target (lambda (target) "Spam")
+               :action      (lambda (docid msg target)
+                              ;; (message (symbol-value msg))
+                              (mu4e--server-move docid (my-mu4e-spam-folder msg) "+S-u-N")
+                              )))
 
-  (interactive)
-  (when mu4e-dashboard-buffer-name
-    (kill-buffer mu4e-dashboard-buffer-name)
-    (setq mu4e-dashboard-buffer-name nil)
-    ))
+(mu4e~headers-defun-mark-for spam)
+
+
+#+end_src
+
+We bind spam handling to the "k"-key.
+
+#+begin_src emacs-lisp
+
+(define-key mu4e-headers-mode-map (kbd "k") 'mu4e-headers-mark-for-spam)
 
 #+end_src
 
