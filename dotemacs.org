@@ -68,6 +68,7 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] BUGFIX: org-timeblock columns has a wrong width.(See the subsection)
 - [ ] BUGFIX: org-timeblock-quit close all agenda buffers.
 - [ ] BUGFIX: mu4e execute "make-symbolic-link" in pre-build as sudo
+- [ ] Switch from lsp to eglot for texlab and ltex.
 - [ ] Mu4e: Do not hardcode the tags for refiling:
   - [ ] my-prettify-tag-alist -> plist whose entries are ("tag-as-string" "tag-refile-folder" "tag-as-unicode-symbol")
   - [ ] Remove mu4e-tagging-tags
@@ -1497,7 +1498,7 @@ A completion style is a back-end for completion and is used from a front-end tha
   (completion-category-overrides '((file (styles . (partial-completion)))))
   )
 #+end_src
-** LSP-Mode :BIND:HOOK:
+** LSP-Mode :BIND:HOOK:INACTIVE:
 
 A few more niceties for our completion setup are provided by using the [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].The following config is derived from Tony Zorman's settings.
