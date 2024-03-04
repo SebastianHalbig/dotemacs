@@ -2159,7 +2159,7 @@ The column width is computed wrongly. Currently, we have a hard-coded solution t
 *** TODO nano-calendar :INACTIVE:
 
 At a later stage, we should incorporate[[https://github.com/rougier/nano-calendar][ nano-calendar]]. Since the package is dependent on nano-theme various strong modifications are required.
-#+begin_src
+#+begin_src emacs-lisp
 (use-package nano-calendar
   :elpaca (:type git :host github :repo "rougier/nano-calendar")
   :bind (:map ergoemacs-override-keymap ("C-c d" . nano-calendar)))
