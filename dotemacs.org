@@ -1498,6 +1498,19 @@ A completion style is a back-end for completion and is used from a front-end tha
   (completion-category-overrides '((file (styles . (partial-completion)))))
   )
 #+end_src
+** Eglot :INACTIVE:
+
+#+begin_src emacs-lisp
+(use-package eglot-ltex
+  :elpaca (:type git :host github :repo "emacs-languagetool/eglot-ltex")
+  :defer t
+  :hook (text-mode . (lambda ()
+                       (require 'eglot-ltex)
+                       (eglot-ensure)))
+  :init
+  (setq eglot-ltex-server-path "/usr/share/ltex-ls/"
+        eglot-ltex-communication-channel 'tcp))
+#+end_src
 ** LSP-Mode :BIND:HOOK:INACTIVE:
 
 A few more niceties for our completion setup are provided by using the [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
@@ -2927,19 +2940,14 @@ Message will be move to MAILDIR/archive/tag-dependent-folder.
 
 #+end_src
 
-* Math-mode :INACTIVE:DEFER:MODE:BINDING:
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(setq my-section-start-time (current-time))
-
-#+end_src
-
+* Math-mode
 Writing long LaTeX documents is painful. In the following, we make set up some functionalities to make our life easier.
 We begin with some basic latex default settings.
 
 #+begin_src emacs-lisp
-(use-package latex
+(use-package tex
+  :defer t
+  :elpaca nil
   :ensure auctex
   :config
   (setq TeX-auto-save t                      ; We automatically save style information when saving the buffer.
@@ -2988,7 +2996,7 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
     (TeX-command "LatexMk" 'TeX-master-file)
     )
   :hook
-  (LaTeX-mode . auctex-latexmk-setup)
+  ((latex-mode  LaTeX-mode) . auctex-latexmk-setup)
   (TeX-after-TeX-LaTeX-command-finished-hook . TeX-view)
   (TeX-after-compilation-finished-functions . TeX-view)
   (TeX-after-compilation-finished-functions . TeX-revert-document-buffer) ; refreshes the pdf output if PDF Tools is used
@@ -3001,6 +3009,7 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
 
 #+end_src
 
+* Remaining latex :INACTIVE:DEFER:MODE:BINDING:
 ** Bibliography
 We use reftex for handling the bibliography.
 Our setup follows Tony Zorman.
@@ -3972,13 +3981,19 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
 #+end_quote
 
 #+begin_src emacs-lisp
+(use-package adaptive-wrap
+  :elpaca ( :repo "git://git.sv.gnu.org/emacs/elpa" :local-repo "adaptive-wrap" :branch "externals/adaptive-wrap" :files ("*" (:exclude ".git")))
+  :hook  ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode))
+#+end_src
+
+#+begin_src emacs-lisp
 (use-package visual-fill-column
-  :ensure adaptive-wrap
+  :after adaptive-wrap
   :init (global-visual-line-mode)
   :custom (visual-fill-column-center-text t)
   (visual-fill-column-enable-sensible-window-split t)
-  :hook  (((LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((LaTeX-mode) . adaptive-wrap-prefix-mode)
+  :hook  ((( latex-mode LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode)
           )
   )
 #+end_src
