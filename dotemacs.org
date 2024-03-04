@@ -51,7 +51,7 @@ The documentation of each package-based (sub-)section is build like follows:
 + Optionally some explanations why (but not how) things are done in a certain way.
 
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
-** [1/15] Open Tasks
+** [1/18] Open Tasks
 - [ ] Write a transient for elpaca.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
@@ -1814,7 +1814,7 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 #+end_src
 *** Org appear mode
 
-We use [[https://github.com/awth13/org-appear][org-appear]] in order to dynamically dispaly certain symbols, such as emphasis-markers, depending on the position of the coursor.
+We use [[https://github.com/awth13/org-appear][org-appear]] in order to dynamically display certain symbols, such as emphasis-markers, depending on the position of the coursor.
 #+begin_quote
 Org mode provides a way to toggle visibility of hidden elements such as emphasis markers, links, etc. by customising specific variables, e.g., org-hide-emphasis-markers. However, it is currently not possible to do this interactively and on an element-by-element basis. This package, inspired by org-fragtog, enables automatic visibility toggling depending on cursor position. Hidden element parts appear when the cursor enters an element and disappear when it leaves.
 #+end_quote
