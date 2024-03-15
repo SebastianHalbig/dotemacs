@@ -3891,6 +3891,88 @@ An autoload function for my-config (that will load org mode).
 #+end_src
 
 
+* Various helpers
+** Jinx spell checker
+[[https://github.com/minad/jinx][Jinx]] is a wonderful spell checker.
+#+begin_quote
+Jinx is a fast just-in-time spell-checker for Emacs. Jinx highlights misspelled words in the text of the visible portion of the buffer. For efficiency, Jinx highlights misspellings lazily, recognizes window boundaries and text folding, if any. For example, when unfolding or scrolling, only the newly visible part of the text is checked if it has not been checked before. Each misspelling can be corrected from a list of dictionary words presented as a completion menu.
+#+end_quote
+#+begin_src emacs-lisp
+(use-package jinx
+  :elpaca (:type git :host github :repo "minad/jinx")
+  :after vertico
+  :init
+  (setq ispell-alternate-dictionary "/usr/share/dict/en_GB.txt")
+  :hook (emacs-startup . global-jinx-mode)
+  :bind (:map ergoemacs-override-keymap
+              ("C-t"   . jinx-correct)
+              ("C-M-t" . jinx-languages)
+              ("C-x t" . string-rectangle))
+  :custom (jinx-languages "en_GB de_DE")
+  :config
+  (add-to-list 'vertico-multiform-categories
+               '(jinx grid (vertico-grid-annotate . 20)))
+  (vertico-multiform-mode 1)
+  )
+#+end_src
+** Visuals
+*** TODO Nerd icons
+
+[[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
+
+#+begin_quote
+Nerd-icons.el is a library for easily using Nerd Font icons inside Emacs, an alternative to all-the-icons.
+
+It works on both GUI and terminal! You only need a Nerd Font installed on your system.
+
+It is inspired by all-the-icons, icons-in-terminal, vim-devicons, and nvim-web-devicons.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package nerd-icons
+  :custom
+  (nerd-icons-font-family "Roboto Mono Nerd Font")
+  )
+#+end_src
+
+There is an integration into the completion framework, called [[https://github.com/rainstormstudio/nerd-icons-completion][nerd icons completion]].
+
+#+begin_src emacs-lisp
+(use-package nerd-icons-completion
+  :elpaca (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
+  :after marginalia
+  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
+  :config
+  (nerd-icons-completion-mode))
+#+end_src
+*** Visual fill column and visual line mode
+
+We activate [[help:visual-line-mode][visual-line-mode]] globally.
+Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
+
+#+begin_quote
+visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fill-column in visual-line-mode. Instead of wrapping lines at the window edge, which is the standard behaviour of visual-line-mode, it wraps lines at fill-column (or visual-fill-column-width, if set). That is, it turns the view on the left into the view on the right, without changing the contents of the file.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package adaptive-wrap
+  :elpaca ( :repo "git://git.sv.gnu.org/emacs/elpa" :local-repo "adaptive-wrap" :branch "externals/adaptive-wrap" :files ("*" (:exclude ".git")))
+  :hook  ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package visual-fill-column
+  :after adaptive-wrap
+  :init (global-visual-line-mode)
+  :custom (visual-fill-column-center-text t)
+  (visual-fill-column-enable-sensible-window-split t)
+  :hook  ((( latex-mode LaTeX-mode org-mode) . visual-fill-column-mode)
+          ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode)
+          )
+  )
+#+end_src
+Changing the symbol for truncation (…) and wrap (↩).
+
 
 * Version control
 
