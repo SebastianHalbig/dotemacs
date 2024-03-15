@@ -996,7 +996,7 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 #+begin_src emacs-lisp :tangle no
 
 (set-face-attribute 'default nil
-                    :family "Roboto Mono "
+                    :family "Roboto Mono"
                     :weight 'light
                     :height 140)
 
@@ -1029,6 +1029,8 @@ To get a list of all character sets type "M-x list-character-sets"
 
 #+NAME: nerd-font-settings
 #+begin_src emacs-lisp :tangle no
+(set-face-font 'default "Roboto Mono 14")
+
 (--map (set-fontset-font t (-first-item it) (-second-item it))
   '((unicode "Roboto Mono Nerd Font")
     (symbol  "Roboto Mono Nerd Font")
@@ -3725,7 +3727,6 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
 (my-report-time "LaTeX")
 
 #+end_src
-
 
 
 
