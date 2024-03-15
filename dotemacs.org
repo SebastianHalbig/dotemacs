@@ -1490,7 +1490,30 @@ A completion style is a back-end for completion and is used from a front-end tha
   (completion-category-overrides '((file (styles . (partial-completion)))))
   )
 #+end_src
-** Eglot :INACTIVE:
+** Eglot
+*** Digestiv
+
+#+begin_src emacs-lisp
+(use-package eglot
+  :elpaca nil
+  :hook (python-mode . eglot-ensure)
+        (LaTeX-mode-hook. eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs '(python-mode . ("pyls")))
+  (add-to-list 'eglot-server-programs '(latex-mode . ("digestif")))
+  (add-hook 'python-mode-hook 'eglot-ensure)
+  (add-hook 'LaTeX-mode-hook 'eglot-ensure))
+#+end_src
+*** LTeX language server :INACTIVE:
+
+[[https://valentjn.github.io/ltex/][LTeX]] might be the new kid on the block
+#+begin_quote
+LTEX provides offline grammar checking of various markup languages using LanguageTool (LT). LTEX can be used standalone as a command-line tool, as a language server using the Language Server Protocol (LSP), or directly in various editors using extensions.
+
+LTEX currently supports BibTEX, ConTEXt, LATEX, Markdown, Org, reStructuredText, R Sweave, and XHTML documents.
+#+end_quote
+However we have not configured it properly so far.
+This is a project for another day.
 
 #+begin_src emacs-lisp
 (use-package eglot-ltex
@@ -1501,73 +1524,23 @@ A completion style is a back-end for completion and is used from a front-end tha
                        (eglot-ensure)))
   :init
   (setq eglot-ltex-server-path "/usr/share/ltex-ls/"
-        eglot-ltex-communication-channel 'tcp))
-#+end_src
-** LSP-Mode :BIND:HOOK:INACTIVE:
-
-A few more niceties for our completion setup are provided by using the [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
-It has a nice and quite useful [[https://emacs-lsp.github.io/lsp-mode/][wiki]].The following config is derived from Tony Zorman's settings.
-
-#+begin_src emacs-lisp
-(use-package lsp-mode
-  :elpaca(:type git :host github :repo "emacs-lsp/lsp-mode")
-  :preface
-  (defun my-lsp-shutdown-last-workspaces ()
-    "Shut down the `lsp--last-active-workspaces'."
-    (interactive)
-    (mapc (lambda (ws)
-            (lsp--warn "Stopping %s" (lsp--workspace-print ws))
-            (with-lsp-workspace ws (lsp--shutdown-workspace)))
-          lsp--last-active-workspaces))
-  :hook
-  ((latex-mode LaTeX-mode) . lsp-deferred)
-  (lsp-mode . (lambda ()
-                (setq-local read-process-output-max (* 1024 1024))))
-  (lsp-completion-mode ; for corfu compatibility
-   . (lambda ()
-       (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-             '(flex))))
-  :commands (lsp-deferred lsp)
-  :bind (:map lsp-mode-map
-              ("C-c l i" . lsp-ui-imenu)
-              ("C-c C-r" . lsp-execute-code-action)
-              ("C-c C-d" . lsp-ui-doc-show)
-              ("C-c l s" . (lambda ()
-                             (interactive)
-                             (lsp-ui-sideline-enable (not lsp-ui-sideline-mode))))
-              ("C-c h"   . (lambda ()
-                             (interactive)
-                             (when lsp-lens-mode
-                               (lsp-lens-mode -1))
-                             (lsp-lens-hide)))
-              ("C-c d"   . (lambda ()
-                             (interactive)
-                             (when (not lsp-lens-mode)
-                               (lsp-lens-mode 1))
-                             (lsp-lens-show))))
-  :custom
-  (lsp-use-plists t)
-  (lsp-completion-provider :none)       ; Corfu
-  (lsp-keymap-prefix "C-c l")
-  (lsp-idle-delay 0.6)
-  ;; Disable things I don't care about
-  (lsp-headerline-breadcrumb-enable nil)
-  (lsp-modeline-code-actions-enable nil)
-  (lsp-modeline-diagnostics-enable nil)
-  (lsp-enable-symbol-highlighting nil)
+        eglot-ltex-communication-channel 'tcp)
+  :config
+  (setq-default eglot-workspace-configuration
+                '(:ltex (:language  "en-GB"
+                           :completionEnabled 1)))
   )
 #+end_src
 
+%ltex language en_GB or de_DE
+%ltex.dictionary user-dicts
+%ltex.completionEnabled
+*** Consult interface
+In order to integrate EGLOT even better into our completion framework, we use [[https://github.com/mohkale/consult-eglot/][consult-eglot]]
+
 #+begin_src emacs-lisp
-(use-package lsp-ui
-  :after lsp-mode
-  :commands lsp-ui-mode
-  :custom
-  (lsp-ui-doc-show-with-mouse nil)
-  (lsp-ui-sideline-enable nil)
-  (lsp-ui-peek-always-show t)
-  (lsp-ui-sideline-show-hover t)
-  )
+(use-package consult-eglot
+  :elpaca (:type git :host github :repo "mohkale/consult-eglot/"))
 #+end_src
 ** Vertico :BIND:HOOK:FACE:
 
@@ -1676,6 +1649,7 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
   :elpaca (:type git :host github :repo "oaotavora/yasnippet")
   :config (yas-global-mode)
   :custom
+  (yas-snippet-dirs '("/home/adjoint_equivalence/.emacs.d/etc/yasnippet/snippets/"))
   (yas-inhibit-overlay-modification-protection nil))
 
 #+end_src
@@ -2936,33 +2910,52 @@ Message will be move to MAILDIR/archive/tag-dependent-folder.
 Writing long LaTeX documents is painful. In the following, we make set up some functionalities to make our life easier.
 We begin with some basic latex default settings.
 
+** Auctex
+
+The bedrock of editing LaTeX in emacs is [[https://www.gnu.org/software/auctex/manual/auctex.html][auctex]].
+
+#+begin_quote
+AUCTeX is a comprehensive customizable integrated environment for writing input files for TeX, LaTeX, ConTeXt, Texinfo, and docTeX using Emacs.
+
+It supports you in the insertion of macros, environments, and sectioning commands by providing completion alternatives and prompting for parameters. It automatically indents your text as you type it and lets you format a whole file at once. The outlining and folding facilities provide you with a focused and clean view of your text.
+
+AUCTeX lets you process your source files by running TeX and related tools (such as output filters, post processors for generating indices and bibliographies, and viewers) from inside Emacs. AUCTeX lets you browse through the errors TeX reported, while it moves the cursor directly to the reported error, and displays some documentation for that particular error. This will even work when the document is spread over several files.
+
+One component of AUCTeX that LaTeX users will find attractive is preview-latex, a combination of folding and in-source previewing that provides true “What You See Is What You Get” experience in your sourcebuffer, while letting you retain full control.
+#+end_quote
+
+Since auctex is old. It is quite cumbersome to get elpaca to play nicely with it.
+
+-LaTeX-label-alist
+-LaTeX-default-environment
+-
+
 #+begin_src emacs-lisp
-(use-package tex
-  :defer t
-  :elpaca nil
-  :ensure auctex
+(use-package auctex
+  :elpaca  (auctex :pre-build (("./autogen.sh")
+                               ("./configure"
+                                "--without-texmf-dir"
+                                "--with-packagelispdir=./"
+                                "--with-packagedatadir=./")
+                               ("make"))
+                   :build (:not elpaca--compile-info) ;; Make will take care of this step
+                   :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
+                   :version (lambda (_) (require 'tex-site) AUCTeX-version)
+                   )
+  :custom
+  (LaTeX-item-indent 0)                    ; Indent enumerations
+  (TeX-auto-save t)                        ; We automatically save style information when saving the buffer.
+  (TeX-parse-self t)                       ; Parse the file after loading it if no style hook is found.
+  (TeX-source-correlate-mode t)            ; Correlate (La-)TeX files with their PDF output.
+  (TeX-source-correlate-start-server nil)  ; We do start a server for correlation.
+  (font-latex-fontify-sectioning 1.0)      ; We set section hights to 1.
   :config
-  (setq TeX-auto-save t                      ; We automatically save style information when saving the buffer.
-        TeX-parse-self t                       ; Parse the file after loading it if no style hook is found.
-        ;; TeX-PDF-mode t                      ; We use PDFTeX mode
-        TeX-source-correlate-mode t            ; Correlate (La-)TeX files with their PDF output.
-        TeX-source-correlate-start-server nil) ; We do start a server for correlation.
-  (setq-default TeX-master nil)              ; We do not specify the master files globally.
-
-  (setq ispell-dictionary "british")         ; The default language is British English.
-
-  (visual-line-mode)                         ; Only visual line wrapping.
-
-  (setq TeX-open-quote "`")                  ; We use single quotation marks.
-  (setq TeX-close-quote "'")                 ; We use single quotation marks.
-  (setq font-latex-fontify-sectioning 1.0)   ; We set section hights to 1.
-
+  (setq-default TeX-master nil)            ; We do not specify the master files globally.
   (advice-add
    'TeX-source-correlate-sync-source
    :after
    (lambda (&rest r) (recenter)))
   )
-
 #+end_src
 
 ** Compilation and PDF output
@@ -2972,8 +2965,9 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
 #+begin_src emacs-lisp
 
 (use-package auctex-latexmk
-  :ensure auctex
-  :init
+  :elpaca (:type git :host github :repo "feng-li/auctex-latexmk")
+  :after auctex
+  :config
   (add-to-list 'TeX-command-list '("LatexMk"
                                    "latexmk %(-PDF)%S%(mode) -pv -view=pdf  -interaction=nonstopmode -synctex=1 %(file-line-error) %(extraopts) %t"
                                    TeX-run-latexmk
@@ -3001,6 +2995,99 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
 
 #+end_src
 
+** Cdlatex
+#+begin_src emacs-lisp :noweb yes
+(use-package cdlatex
+  :hook
+  (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
+  (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
+  :bind (:map LaTeX-mode-map ("\"" . my-toggle-tex-quote-region ))
+  :custom
+  (cdlatex-paired-parens nil) ; We will use aas to pair parentheses.
+  ;; Custom bindings for the math modify list, accessed with '
+  (cdlatex-math-modify-alist
+   '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
+     (?b "\\mathbb"   "\\textbf" t   nil   nil)
+     (?f "\\mathbf"   "\\textsf" t   nil   nil)
+     (?i "\\mathit"   "\\textit" t   nil   nil)
+     (?k "\\mathfrak" nil        t   nil   nil)
+     (?r "\\mathrm"   "\\textrm" t   nil   nil)
+     (?s nil          "\\textsc" t   nil   nil)
+     (?t "\\text"     nil        t   nil   nil)
+     (?u "\\lld"      ""         t   nil   nil)
+     ))
+  ;; Custom bindings for the symbol list, accessed with `.  You may add
+  ;; additional layers here.  Also, some of these are user-defined
+  ;; commands.
+  (cdlatex-math-symbol-alist
+   '(;;    LAYER 1        LAYER 2      LAYER 3
+     (?c  ("\\circ"           ""           "\\cos"   ))
+     (?C  ("\\coprod"     ""           "\\arccos"))
+     (?e  ("\\varepsilon"           "\\epsilon"         "\\exp"   ))
+     (?f  ("\\varphi"          "\\phi"          ""        ))
+     (?F  ("\\Phi"           ""           ""        ))
+     (?R  ("\\real"          "\\Re"        ""        ))
+     (?N  ("\\nat"       "\\nabla"          "\\exp"   ))
+     (?Z  ("\\integer"    ""           ""        ))
+     (?Q  ("\\rat"        "\\Theta"         ""        ))
+     (?0  ("\\varnothing" ""           ""        ))
+     (?{  ("\\subseteq"   "\\subset"         ""        ))
+     (?}  ("\\supseteq"   "\\supset"         ""        ))
+     (?.  ("\\cdot"           "\\dots"          ""        ))
+     (?^  ("\\otimes"          ""            ""        ))
+     (?ö  ("\\odot"           ""            ""        ))
+     ))
+  :config
+  (setq cdlatex-tab-hook '(yas-expand indent-for-tab-command))
+  <<my-toggle-tex-quote-region>>
+  )
+
+#+end_src
+** Helpers
+*** TODO Toggle quotation marks
+
+We want to be able to toggle quotation marks quickly.
+Expected behaviour (assuming ``text'' as quotation marks in this example):
+(i)   * some text -> ``* some text
+(ii) ``quoted text* -> ``quoted text''
+(iii) /marked text* -> ``marked text''
+(iv) ``/quoted and marked text*'' -> quoted and marked text
+
+TODO: Since there are various different quotation signs (of different length) the function could need some hardening!
+#+NAME: my-toggle-tex-quote-region
+#+begin_src emacs-lisp :tangle no
+(defun my-toggle-tex-quote-region ()
+  (interactive)
+  (if (use-region-p)
+      (save-excursion
+        (let* ((beg-pos (mark))
+               (end-pos (point))
+               (start-quoted nil)
+               (end-quoted nil))
+          (if (> beg-pos 1)
+              (progn
+                (goto-char (- beg-pos 1))
+                (setq start-quoted (looking-at-p "`\\|\""))
+                (unless (or (< beg-pos 2) start-quoted) (goto-char (- beg-pos 2))
+                        (setq start-quoted (looking-at-p "``\\|\\|<<"))))
+            (setq start-quoted nil))
+          (goto-char end-pos)
+          (setq end-quoted (looking-at-p "''\\|'\\|\"\\|>>"))
+          (if (and start-quoted end-quoted)
+              (progn
+                (goto-char end-pos)
+                (delete-char(length TeX-close-quote))
+                (goto-char beg-pos)
+                (delete-char(- 0(length TeX-close-quote)))
+                )
+            (goto-char end-pos)
+            (TeX-insert-quote nil)
+            (goto-char beg-pos)
+            (TeX-insert-quote nil)
+            )))
+            (TeX-insert-quote nil)
+    ))
+#+end_src
 * Remaining latex :INACTIVE:DEFER:MODE:BINDING:
 ** Bibliography
 We use reftex for handling the bibliography.
@@ -3034,7 +3121,6 @@ We initialise it here and sprinkle it with a few of our own features.
 
 
 #+begin_src emacs-lisp
-
 (use-package cdlatex
   :hook
   (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
