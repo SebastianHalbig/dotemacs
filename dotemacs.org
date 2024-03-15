@@ -2302,7 +2302,8 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
                       "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
                       "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
                       "Hans-Meerwein-Straße 6 Room 04C35, 35043 Marburg\n"
-                      "BBB home room: https://webconf.hrz.uni-marburg.de/d/seb-omn-wqu-r6k"))
+                      "BBB home room:"
+                      "https://webconf.hrz.uni-marburg.de/n/rooms/qyd-8ge-d1k-vuk/join"))
 
 #+end_src
 
