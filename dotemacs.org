@@ -1811,6 +1811,7 @@ Org mode provides a way to toggle visibility of hidden elements such as emphasis
   (org-appear-inside-latex t)  ;
   )
 #+end_src
+
 ** TODO HTML-Export
 
 We treat ~code~ and =verbatim= faces differently among export.
@@ -4102,66 +4103,24 @@ First we define a consisted set of faces for todo keywords. This is incorporated
   (global-hl-todo-mode 1)
   )
 #+end_src
-* Other visuals
-** TODO Nerd icons
 
-[[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
+** Blamer
 
+The brilliant [[https://github.com/Artawower/blamer.el?tab=readme-ov-file][blamer]] package allows us to integrate git blame seamlessly.
 #+begin_quote
-Nerd-icons.el is a library for easily using Nerd Font icons inside Emacs, an alternative to all-the-icons.
-
-It works on both GUI and terminal! You only need a Nerd Font installed on your system.
-
-It is inspired by all-the-icons, icons-in-terminal, vim-devicons, and nvim-web-devicons.
+A git blame plugin for emacs inspired by VS Code’s GitLens plugin and Vim plugin
 #+end_quote
-
 #+begin_src emacs-lisp
-(use-package nerd-icons
+(use-package blamer
+  :elpaca (:host github :repo "artawower/blamer.el")
   :custom
-  (nerd-icons-font-family "Roboto Mono Nerd Font")
-  )
+  (blamer-idle-time 0.3)
+  (blamer-min-offset 20)
+  :custom-face
+  (blamer-face ((t :foreground "#7a88cf"
+                    :background nil
+                    :italic t))))
 #+end_src
-
-There is an integration into the completion framework, called [[https://github.com/rainstormstudio/nerd-icons-completion][nerd icons completion]].
-
-#+begin_src emacs-lisp
-(use-package nerd-icons-completion
-  :elpaca (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
-  :after marginalia
-  :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
-  :config
-  (nerd-icons-completion-mode))
-#+end_src
-** Visual fill column and visual line mode
-
-We activate [[help:visual-line-mode][visual-line-mode]] globally.
-Additionally, we use the package "[[https://codeberg.org/joostkremers/visual-fill-column][visual fill column]]" to vastly increase readability in /org/ and /LaTeX/ buffers.
-
-#+begin_quote
-visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fill-column in visual-line-mode. Instead of wrapping lines at the window edge, which is the standard behaviour of visual-line-mode, it wraps lines at fill-column (or visual-fill-column-width, if set). That is, it turns the view on the left into the view on the right, without changing the contents of the file.
-#+end_quote
-
-#+begin_src emacs-lisp
-(use-package adaptive-wrap
-  :elpaca ( :repo "git://git.sv.gnu.org/emacs/elpa" :local-repo "adaptive-wrap" :branch "externals/adaptive-wrap" :files ("*" (:exclude ".git")))
-  :hook  ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode))
-#+end_src
-
-#+begin_src emacs-lisp
-(use-package visual-fill-column
-  :after adaptive-wrap
-  :init (global-visual-line-mode)
-  :custom (visual-fill-column-center-text t)
-  (visual-fill-column-enable-sensible-window-split t)
-  :hook  ((( latex-mode LaTeX-mode org-mode) . visual-fill-column-mode)
-          ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode)
-          )
-  )
-#+end_src
-Changing the symbol for truncation (…) and wrap (↩).
-
-
-
 * OLD :INACTIVE:noexport:
 
 ** Stuff maybe not needed?
