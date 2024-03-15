@@ -53,6 +53,7 @@ The documentation of each package-based (sub-)section is build like follows:
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
 ** [1/18] Open Tasks
 - [ ] Write a transient for elpaca.
+- [ ] Figure out why <<nerd-font-settings>> are not applied by emacsclient.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
 - [ ] Use Werner's nomenclature in colour-coding instead of the hex values.
@@ -549,7 +550,7 @@ We want to use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Recur
 #+end_src
 ** Server
 
-We run emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Emacs-Server.html][server]].
+We run Emacs as a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Emacs-Server.html][server]].
 
 #+NAME: server
 #+begin_src emacs-lisp :tangle no
@@ -1001,16 +1002,7 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 
 (set-face-attribute 'bold nil
                     :family "Roboto Mono"
-                    :weight 'regular)
-
-(set-face-attribute 'default nil
-                    :family "Roboto Mono"
-                    :weight 'light
-                    :height 140)
-
-(set-face-attribute 'bold nil
-                    :family "Roboto Mono"
-                    :weight 'regular)
+                    :weight 'medium)
 
 (set-face-attribute 'italic nil
                     :family "Victor Mono"
@@ -2133,8 +2125,8 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
       `(("i" "Inbox" entry  (file+headline ,org-inbox "Miscellaneous")
          ,(concat "* %?\n"
                   "/Entered on/ %U"))
-        ("m" "Meeting" entry  (file+datetree ,org-inbox)
-         ,(concat "* Metting with %?\n at <%<%Y-%m-%d %a %^{Time}>>\n"
+        ("m" "Meeting" entry  (file+datetree ,org-calendar)
+         ,(concat "* Meeting with %?\n at <%<%Y-%m-%d %a %^{Time}>>\n"
                   "/Entered on/ %U")
          :time-prompt t)
         ("l" "Inbox with link" entry (file+headline ,org-inbox "Miscellaneous")
@@ -2142,7 +2134,7 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
                   "/Entered on/ %U"
                   "%i")
                   :kill-buffer t)
-        ("@" "Inbox [mu4e]" entry (file+headline ,org-calendar "Mails")
+        ("@" "Inbox [mu4e]" entry (file+headline ,org-inbox "Mails")
          ,(concat "*  Reply to \"%a\" %?\n"
                   "/Entered on/ %U"))))
 (setq org-gtd-capture-templates org-capture-templates)
