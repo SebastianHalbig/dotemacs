@@ -2956,11 +2956,6 @@ It should be fixed at some point in the future.
   :elpaca nil
   :ensure auctex
   :bind (:map LaTeX-mode-map
-              ;; ("$"       . slot/insert-toggle-math)
-              ;; ("<SPC>"   . slot/LaTeX-space)
-              ;; (","       . slot/LaTeX-self-insert)
-              ;; ("."       . slot/LaTeX-self-insert)
-              ;; ("-"       . slot/LaTeX-self-insert)
               ("C-v"         . TeX-view)
               ("\""          . my-toggle-tex-quote-region)
               ("C-M-<right>" . LaTeX-find-matching-end)
@@ -2968,6 +2963,9 @@ It should be fixed at some point in the future.
   :hook
   (LaTeX-mode . TeX-source-correlate-mode) ; jump between editor and pdf viewer
   (LaTeX-mode . TeX-fold-mode)
+  (LaTeX-mode . (lambda () (setq-local prettify-symbols-unprettify-at-point 'right-edge)
+                  (prettify-symbols-mode)))
+  (LaTeX-mode . latex-symbols-prettify)
   :custom
   (LaTeX-item-indent 0)                    ; Indent enumerations
   (LaTeX-babel-hyphen nil)                 ; Disable language-specific hyphen insertion.
@@ -2983,525 +2981,42 @@ It should be fixed at some point in the future.
   (setq-default TeX-master nil)            ; We do not specify the master files globally.
 
    <<my-toggle-tex-quote-region>>
-
+   <<latex-symbols-prettify>>
+   <<latex-code-folding>>
    (advice-add
    'TeX-source-correlate-sync-source
    :after
    (lambda (&rest r) (recenter)))
+   :custom-face
+   (font-latex-bold-face ((t :weight unspecified :foreground unspecified :inherit bold)))
+   (font-latex-italic-face ((t :foreground unspecified :underline nil :inherit (lambda-strong italic))))
 )
 
 #+end_src
 
-*** Prettify symbols
+*** TODO Prettify symbols
 We will now set up some magit to transform math expressions into something more readable.
-** Compilation and PDF output
 
-We compile LaTeX files using latexmk and view the resulting pdf in evince.
-
-#+begin_src emacs-lisp
-
-(use-package auctex-latexmk
-  :elpaca (:type git :host github :repo "feng-li/auctex-latexmk")
-  :after auctex
-  :config
-  (add-to-list 'TeX-command-list '("LatexMk"
-                                   "latexmk %(-PDF)%S%(mode) -pv -view=pdf  -interaction=nonstopmode -synctex=1 %(file-line-error) %(extraopts) %t"
-                                   TeX-run-latexmk
-                                   nil
-                                   (plain-tex-mode latex-mode doctex-mode)
-                                   :help "Run LatexMk")) ; We compile latex documents with latexmk
-  :preface
-  (defun my-latex-compile ()
-    "Compile latex files with latexmk"
-    (interactive)
-    (save-buffer)
-    (TeX-command "LatexMk" 'TeX-master-file)
-    )
-  :hook
-  ((latex-mode  LaTeX-mode) . auctex-latexmk-setup)
-  (TeX-after-TeX-LaTeX-command-finished-hook . TeX-view)
-  (TeX-after-compilation-finished-functions . TeX-view)
-  (TeX-after-compilation-finished-functions . TeX-revert-document-buffer) ; refreshes the pdf output if PDF Tools is used
-  :config
-  (setq TeX-view-program-selection '((output-pdf "Evince"))) ; We use Evince as standard pdf-viewer. An alternative is PDF Tools.
-  :bind (:map LaTeX-mode-map
-              ("C-c" . my-latex-compile))
-  ;; :hook (TeX-after-compilation-finished-functions . TeX-revert-document-buffer) ; refreshes the pdf output if PDF Tools is used
-  )
-
-#+end_src
-
-** Cdlatex
-#+begin_src emacs-lisp :noweb yes
-(use-package cdlatex
-  :hook
-  (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
-  (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
-  :bind(:map cdlatex-mode-map
-             ("RET" . my-smart-return))
-  :custom
-  (cdlatex-paired-parens nil) ; We will use aas to pair parentheses.
-  ;; special maths environments
-  (cdlatex-env-alist-default
- '(
-    ( "enumerate"
-      "\\begin{enumerate}\n\\item ?\n\\end{enumerate}"
-      "\\item ?"
-      )
-    ;;------------------------------------
-    ( "itemize"
-      "\\begin{itemize}\n\\item ?\n\\end{itemize}"
-      "\\item ?"
-      )
-    ;;------------------------------------
-    ( "description"
-      "\\begin{description}\n\\item ?\n\\end{description}"
-      "\\item ?"
-      )
-    ;;------------------------------------
-    ( "thmlist"
-      "\\begin{thmlist}\n\\item ?\n\\end{thmlist}"
-      "\\item ?"
-      )
-    ;;------------------------------------
-    ( "thmlist*"
-      "\\begin{thmlist*}\n\\item ?\n\\end{thmlist*}"
-      "\\item ?"
-      )))
-  ;; Custom bindings for the math modify list, accessed with '
-  (cdlatex-math-modify-alist
-   '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
-     (?b "\\mathbb"   "\\textbf" t   nil   nil)
-     (?f "\\mathbf"   "\\textsf" t   nil   nil)
-     (?i "\\mathit"   "\\textit" t   nil   nil)
-     (?k "\\mathfrak" nil        t   nil   nil)
-     (?r "\\mathrm"   "\\textrm" t   nil   nil)
-     (?s nil          "\\textsc" t   nil   nil)
-     (?t "\\text"     nil        t   nil   nil)
-     (?u "\\lld"      ""         t   nil   nil)
-     ))
-  ;; Custom bindings for the symbol list, accessed with `.  You may add
-  ;; additional layers here.  Also, some of these are user-defined
-  ;; commands.
-  (cdlatex-math-symbol-alist
-   '(;;    LAYER 1        LAYER 2      LAYER 3
-     (?c  ("\\circ"           ""           "\\cos"   ))
-     (?C  ("\\coprod"     ""           "\\arccos"))
-     (?e  ("\\varepsilon"           "\\epsilon"         "\\exp"   ))
-     (?f  ("\\varphi"          "\\phi"          ""        ))
-     (?F  ("\\Phi"           ""           ""        ))
-     (?R  ("\\real"          "\\Re"        ""        ))
-     (?N  ("\\nat"       "\\nabla"          "\\exp"   ))
-     (?Z  ("\\integer"    ""           ""        ))
-     (?Q  ("\\rat"        "\\Theta"         ""        ))
-     (?0  ("\\varnothing" ""           ""        ))
-     (?{  ("\\subseteq"   "\\subset"         ""        ))
-     (?}  ("\\supseteq"   "\\supset"         ""        ))
-     (?.  ("\\cdot"           "\\dots"          ""        ))
-     (?^  ("\\otimes"          ""            ""        ))
-     (?ö  ("\\odot"           ""            ""        ))
-     ))
-  :config
-  (setq cdlatex-tab-hook '(yas-expand indent-for-tab-command))
-
-  <<current-line-empty-p>>
-  <<my-smart-return>>
-  )
-
-#+end_src
-
-We write a few helpers for smarter key insertions.
-
-#+NAME: current-line-empty-p
-#+begin_src emacs-lisp
-(defun current-line-empty-p ()
-  (string-match-p "\\`\\s-*$" (thing-at-point 'line)))
-
-#+end_src
-
-#+NAME: my-smart-return
-#+begin_src emacs-lisp
-(defun my-smart-return()
-  "This function helps us to deal with the behaviour of <return> in various latex environments. \n
-If the current line is not empty, it inserts a new line. If the current line is empty it tries \n
-to insert a <generalized item> as specified by cdlatex. In case this fails, a new line is inserted."
-  (interactive)
-  (if (current-line-empty-p)
-      (condition-case-unless-debug nil (cdlatex-item) (error (TeX-newline)))
-    (TeX-newline)
-   ))
-
-  (if (current-line-empty)
-    (if (texmathp) ;; Automatically adds "\\" in math environements.
-        (save-excursion
-          (previous-line)
-          (end-of-line)
-          (insert " ")
-          (just-one-space)
-          (insert "\\\\"))
-      (if (member (LaTeX-current-environment) latex-list-environements) ;; Automatically adds "\item"
-          (progn
-            (LaTeX-indent-line)
-            (insert "\\item ")
-            )
-        (TeX-newline)))
-    (TeX-newline)))
-
-#+end_src
-
-** Helpers
-*** TODO Toggle quotation marks
-
-We want to be able to toggle quotation marks quickly.
-Expected behaviour (assuming ``text'' as quotation marks in this example):
-(i)   * some text -> ``* some text
-(ii) ``quoted text* -> ``quoted text''
-(iii) /marked text* -> ``marked text''
-(iv) ``/quoted and marked text*'' -> quoted and marked text
-
-TODO: Since there are various different quotation signs (of different length) the function could need some hardening!
-#+NAME: my-toggle-tex-quote-region
+#+NAME: latex-symbols-prettify
 #+begin_src emacs-lisp :tangle no
-(defun my-toggle-tex-quote-region ()
-  (interactive)
-  (if (use-region-p)
-      (save-excursion
-        (let* ((beg-pos (mark))
-               (end-pos (point))
-               (start-quoted nil)
-               (end-quoted nil))
-          (if (> beg-pos 1)
-              (progn
-                (goto-char (- beg-pos 1))
-                (setq start-quoted (looking-at-p "`\\|\""))
-                (unless (or (< beg-pos 2) start-quoted) (goto-char (- beg-pos 2))
-                        (setq start-quoted (looking-at-p "``\\|\\|<<"))))
-            (setq start-quoted nil))
-          (goto-char end-pos)
-          (setq end-quoted (looking-at-p "''\\|'\\|\"\\|>>"))
-          (if (and start-quoted end-quoted)
-              (progn
-                (goto-char end-pos)
-                (delete-char(length TeX-close-quote))
-                (goto-char beg-pos)
-                (delete-char(- 0(length TeX-close-quote)))
-                )
-            (goto-char end-pos)
-            (TeX-insert-quote nil)
-            (goto-char beg-pos)
-            (TeX-insert-quote nil)
-            )))
-            (TeX-insert-quote nil)
-    ))
-#+end_src
-* Remaining latex :INACTIVE:DEFER:MODE:BINDING:
-** Bibliography
-We use reftex for handling the bibliography.
-Our setup follows Tony Zorman.
-
-#+begin_src emacs-lisp
-
-(use-package reftex
-  :hook (LaTeX-mode . turn-on-reftex)
-  :config (reftex-set-cite-format "\\cite[][]{%l}")
-  :custom
-  (reftex-plug-into-AUCTeX t)               ; Integrate reftex into auctex.
-  (reftex-toc-split-windows-horizontally t) ; Show reftex TOC on the left.
-  (reftex-ref-macro-prompt nil)             ; No unnecessary prompts
-  (reftex-label-alist              ; Tell reftex about some environments.
-   '(("section"     ?s "sec:"  "~\\ref{%s}" t (regexp "[Ss]ection\\(s\\)?"       ))
-     ("definition"  ?d "def:"  "~\\ref{%s}" t (regexp "[Dd]efinition\\(s\\)?"    ))
-     ("example"     ?x "ex:"   "~\\ref{%s}" t (regexp "[Ee]xample\\(s\\)?"       ))
-     ("lemma"       ?l "lem:"  "~\\ref{%s}" t (regexp "[Ll]emma\\(s\\|ta\\)?"    ))
-     ("proposition" ?p "prop:" "~\\ref{%s}" t (regexp "[Pp]roposition\\(s\\)?"   ))
-     ("theorem"     ?h "thm:"  "~\\ref{%s}" t (regexp "[Tt]heorem\\(s\\)?"       ))
-     ("remark"      ?r "rem:"  "~\\ref{%s}" t (regexp "[Rr]emark\\(s\\)?"        ))
-     ("corollary"   ?c "cor:"  "~\\ref{%s}" t (regexp "[Cc]orollar\\(y\\|ies\\)?")))))
-
-#+end_src
-
-** Editing and Autocompletion
-
-CdLaTeX makes a lot of editing work easier.
-We initialise it here and sprinkle it with a few of our own features.
-
-
-#+begin_src emacs-lisp
-(use-package cdlatex
-  :hook
-  (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
-  (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
-  :custom
-  (cdlatex-paired-parens nil) ; We will use aas to pair parentheses.
-  ;; Custom bindings for the math modify list, accessed with '
-  (cdlatex-math-modify-alist
-   '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
-     (?b "\\mathbb"   "\\textbf" t   nil   nil)
-     (?f "\\mathbf"   "\\textsf" t   nil   nil)
-     (?l "\\ld"       "\\textsl" t   nil   nil)
-     (?k "\\mathfrak" nil        t   nil   nil)
-     (?t "\\text"     nil        t   nil   nil)
-     (?u "\\lld"      ""         t   nil   nil)
-     ))
-  ;; Custom bindings for the symbol list, accessed with `.  You may add
-  ;; additional layers here.  Also, some of these are user-defined
-  ;; commands.
-  (cdlatex-math-symbol-alist
-   '(;;    LAYER 1        LAYER 2      LAYER 3
-     (?c  ("\\circ"           ""           "\\cos"   ))
-     (?C  ("\\coprod"     ""           "\\arccos"))
-     (?e  ("\\varepsilon"           "\\epsilon"         "\\exp"   ))
-     (?f  ("\\varphi"          "\\phi"          ""        ))
-     (?F  ("\\Phi"           ""           ""        ))
-     (?R  ("\\real"          "\\Re"        ""        ))
-     (?N  ("\\nat"       "\\nabla"          "\\exp"   ))
-     (?Z  ("\\integer"    ""           ""        ))
-     (?Q  ("\\rat"        "\\Theta"         ""        ))
-     (?0  ("\\varnothing" ""           ""        ))
-     (?{  ("\\subseteq"   "\\subset"         ""        ))
-     (?}  ("\\supseteq"   "\\supset"         ""        ))
-     (?.  ("\\cdot"           "\\dots"          ""        ))
-     (?^  ("\\otimes"          ""            ""        ))
-     (?ö  ("\\odot"           ""            ""        ))
-     ))
-  :config
-  (setq cdlatex-tab-hook '(yas-expand indent-for-tab-command)))
-
-#+end_src
-
-We set try to be clever about our uses of <return> and <$>.
-
-#+begin_src emacs-lisp
-(use-package smart-keys-for-latex
-  :ensure reftex
-  :after cdlatex
-  :config (setup-smart-keys)
-  :bind (:map cdlatex-mode-map
-              ("$" . cycle-texmath)
-              :map TeX-mode-map
-              ("RET" . smart-return)
-              )
-  )
-#+end_src
-
-Some latex-commands that are auto-expanded by aas.
-
-#+begin_src emacs-lisp
-(use-package aas
-  :after dash
-  :init
-  (yas-minor-mode 1)
-  (laas-mode 1)
-  :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
-  :config
-  (--each '(latex-mode) ;; TODO integrate qorg-mode
-    (aas-set-snippets it
-                      :cond #'(lambda()(and (texmathp) (car texmathp-why)))
-                      " :"      "\\from "
-                      " **"     "\\star"
-                      " mm"     "\\mid "
-                      " ->"     "\\to "
-                      " mt"     "\\mapsto "
-                      " =>"     "\\implies "
-                      " in"     "\\in"
-                      " ..."    "\\dots"
-                      " blank"  "\\blank"
-                      " def"    "\\defeq"
-                      " ~"      "\\sim"
-                      " =="     "\\cong"
-                      " ot"     "\\otimes"
-                      " bn"     "\\mathbb{N}"
-                      " bz"     "\\mathbb{Z}"
-                      " bq"     "\\mathbb{Q}"
-                      " br"     "\\mathbb{R}"
-                      " bc"     "\\mathbb{C}"
-                      " bf"     "\\mathbb{F}"
-                      " bp"     "\\mathbb{P}"
-                      " fg"     "\\mathfrak{g}"
-                      " fh"     "\\mathfrak{h}"
-                      " cc"     "\\cat{C}"
-                      " cd"     "\\cat{D}"
-                      " cm"     "\\cat{M}"
-                      " zc"     "\\ZCat{C}"
-                      " subset" "\\subset"
-                      " supset" "\\supset"
-                      " angled"    (lambda () (interactive)
-                                     (yas-expand-snippet "\\langle $0 \\rangle"))
-                      " adj"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
-                      " hom"  (lambda () (interactive)
-                                (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
-                      " coend" (lambda () (interactive)
-                                 (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
-                      " end"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
-                      " set"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\\\{$0\\\\}"))
-                      " sum"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
-                      ;;" gl"    (lambda () (interactive)
-                      ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
-                      ;;" //"    (lambda () (interactive)
-                      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
-                      " cat"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\cat{$1}$0")))))
-
-#+end_src
-
-** TODO Visuals
-
-It just makes more fun to write latex if it already looks nice while writing.
-As a preventive measure to eye-cancer we change most of the auctex defaults to something humans can bare.
-
-#+begin_src emacs-lisp
-(defun my-LaTeX-better-fonts()
-  (set-face-attribute 'font-latex-bold-face nil
-                      :foreground 'unspecified
-                      :weight 'bold
-                      :inherit 'unspecified)
-
-  (set-face-attribute 'font-latex-italic-face nil
-                      :family "Victor Mono"
-                      :foreground 'unspecified
-                      :slant 'oblique
-                      :inherit 'unspecified)
-
-  (set-face-attribute 'font-latex-math-face nil
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :weight 'semilight
-                      :inherit 'nano-strong)
-
-  (set-face-attribute 'font-latex-script-char-face nil
-                      :foreground 'unspecified)
-
-  (set-face-attribute 'font-latex-warning-face nil
-                      :foreground 'unspecified
-                      :inherit 'nano-faded)
-
-  (set-face-attribute 'font-latex-sectioning-0-face nil
-                      :height 'unspecified
-                      :weight 'bold
-                      :foreground 'unspecified
-                      :underline t
-                      :inherit 'nano-salient)
-
-  (set-face-attribute 'font-latex-sectioning-1-face nil
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :inherit 'font-latex-sectioning-0-face)
-
-  (set-face-attribute 'font-latex-sectioning-2-face nil
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :inherit 'font-latex-sectioning-1-face)
-
-  (set-face-attribute 'font-latex-sectioning-3-face nil
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :inherit 'font-latex-sectioning-2-face)
-
-  (set-face-attribute 'font-latex-sectioning-4-face nil
-                      :weight 'normal
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :underline nil
-                      :inherit 'font-latex-sectioning-3-face)
-
-  (set-face-attribute 'font-latex-sectioning-5-face nil
-                      :weight 'normal
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :inherit 'font-latex-sectioning-4-face)
-
-  (set-face-attribute 'font-latex-slide-title-face nil
-                      :height 'unspecified
-                      :inherit 'font-latex-sectioning-0-face)
-
-  (set-face-attribute 'font-latex-underline-face nil
-                      :height 'unspecified
-                      :foreground 'unspecified
-                      :underline t)
-
-  (set-face-attribute 'font-lock-keyword-face nil
-                      :inherit 'nano-faded)
-
-  (set-face-attribute 'font-lock-constant-face nil
-                      :inherit 'nano-faded)
-
-  (set-face-attribute 'font-lock-comment-face nil
-                      :inherit 'nano-subtle)
-  )
-
-(use-package font-latex
-  :hook (LaTeX-mode . my-LaTeX-better-fonts)
-  :config
-  )
-
-#+end_src
-First, we fold away annoying parts like comments or commuting diagrams.
-The code for this function is due to Tony Zorman.
-
-#+begin_src emacs-lisp
-
-(defun my-LaTeX-fold-annoyances ()
-  "Fold annoyances.
-Everything that makes the LaTeX file worse to look at—things like
-commutative diagrams, as well as comments."
-  (interactive)
-  (TeX-fold-mode)
-  (TeX-fold-region-comment (point-min) (point-max))
-  (setq-local TeX-fold-env-spec-list-internal
-              '(("≪commutative diagram≫" ("tikzcd"))
-                ("≪tikz picture≫" ("tikzpicture"))))
-  (TeX-fold-region-macro-or-env (point-min) (point-max) 'env))
-
-#+end_src
-
-Some symbols we want to display differently. Font-locking allows us to do so.
-
-#+begin_src emacs-lisp
-(defun latex-regexp-prettify ()
-  "We use an unobtrusive font for certain latex-internal formating rules such as `{...}'"
-  (highlight-regexp "{" 'custom-comment)
-  (highlight-regexp "}" 'custom-comment)
-  (highlight-regexp "[[:space:]]*\\\\quad[[:space:]]*" 'custom-comment)
-  (highlight-regexp "[[:space:]]*\\\\qquad[[:space:]]*" 'custom-comment)
-  (highlight-regexp "[[:space:]]*\\\\,[[:space:]]*" 'custom-comment)
-  (highlight-regexp "[[:space:]]*\\\\;[[:space:]]*" 'custom-comment)
-  (highlight-regexp "[[:space:]]*\\\\enspace[[:space:]]*" 'custom-comment)
-  (highlight-regexp "[[:space:]]*\\\\emspace[[:space:]]*" 'custom-comment)
-  )
-
-(add-hook 'LaTeX-mode-hook 'latex-regexp-prettify)
-#+end_src
-
-In order to prettify symbols, we use fira code and a long list of symbols which are replaced.
-
-#+begin_src emacs-lisp
-(defun my-LaTeX-fira-pitch ()
-  (set-face-attribute 'font-latex-math-face nil
-                      :family "Fira Code"
-                      :weight 'semilight
-                      :height 140)
-  )
 
 (defun latex-symbols-prettify ()
   "A long list of symbols to display nicely in latex-mode"
   (mapc (lambda (pair) (add-to-list 'prettify-symbols-alist pair))
         ;; ARROWS
-        '(("\\to"                  32 (Br . Bl) 32 (Br . Br) 57620)
-          ("\\rightarrow"          32 (Br . Bl) 32 (Br . Br) 57620)
-          ("\\mapsto"              8870 (cr  cl 16 0) 57620)
-          ("\\longmapsto"          32 (Br . Bl)  8866 (cr . cl) 32 (Br . Bl)  32 (Br . Br)  57619)
-          ("\\inj"                 5308 (tl  tl 20 0) 32 (tr  tl 0 -5) 57620)
-          ("\\emb"                 5308 (tl  tl 20 0) 32 (tr  tl 0 5) 57620)
-          ("\\hookrightarrow"      5354 (tl . tl) 32 (tr . tl) 57620)
-          ("\\surj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
-          ("\\proj"                32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
-          ("\\twoheadrightarrow"   32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57621)
-          ("\\twoheadleftarrow"    32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57693)
-          ("\\longrightarrow"      32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57619)
+        '(("\\to"                 ? (Bl Bl 0 -15) ?⎻  (Br Bc 30 -15) ?⎻ (Br  Bl -62 -19) ?˃ )
+          ("\\rightarrow"         ? (Bl Bl 0 -15) ?⎻  (Br Bc 30 -15) ?⎻ (Br  Bl -62 -19) ?˃ )
+          ("\\mapsto"             ? (Bl Bl 10 72) ?ࢎ (Bc Bl 0 -15) ?⎻  (Br Bc -25 -15) ?⎻ (Br  Bl -62 -19) ?˃)
+          ("\\longmapsto"          ? (Bl Bl 10 72) ?ࢎ (Bc Bl 0 -15) ?⎻  (Br Bc -25 -15) ?⎻ (Br  Bl -62 -19) ?˃)
+          ("\\inj"                ? (Bl Bl 10 0) ?ᒼ (Bc Bl -20 -15) ?⎻  (Br Bc 0 -15) ?⎻ (Br  Bl -62 -19) ?˃ )
+          ("\\emb"                ? (Bl Bl 10 0) ?ᒼ (Bc Bl -20 -15) ?⎻  (Br Bc 0 -15) ?⎻ (Br  Bl -62 -19) ?˃ )
+          ("\\hookrightarrow"     ? (Bl Bl 0 -15) ?⎻ (Br Bl -82 -15) ?⎻ (Br  Bl -62 -19) ?˃ (Br  Bl -20 -19) ?˃)
+          ("\\surj"               ? (Bl Bl 0 -15) ?⎻ (Br Bl -82 -15) ?⎻ (Br  Bl -62 -19) ?˃ (Br  Bl -20 -19) ?˃)
+          ("\\proj"               ? (Bl Bl 0 -15) ?⎻ (Br Bl -82 -15) ?⎻ (Br  Bl -62 -19) ?˃ (Br  Bl -20 -19) ?˃)
+          ("\\twoheadrightarrow"  ? (Bl Bl 0 -15) ?⎻ (Br Bl -82 -15) ?⎻ (Br  Bl -62 -19) ?˃ (Br  Bl -20 -19) ?˃)
+          ("\\twoheadleftarrow"    ? (Bl Bl 0 -20) ?˂ (Br Bl -60 -20) ?˂ (Br Bc -5 -15) ?⎻ (Br Bc -27 -15) ?⎻ )
+          ;; Up until here
+          ("\\longrightarrow"      ? (Bl Bl 0 -15) ?⎻ (Br Bl 0 -15) ?⎻ (Br Bl -20 -15) ?⎻ (Br  Bl -62 -19) ?˃)
           ("\\rightsquigarrow"     32 (Br . Bl) 32 (Br . Br) 57703)
           ("\\leftarrow"           32 (Br . Bl) 32 (Br . Br) 57682)
           ("\\longleftarrow"       32 (Br . Bl) 32 (Br . Bl) 32 (Br . Br) 57683)
@@ -3547,18 +3062,18 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
           ;; SETS
           ("\\mathbb{N}"           ?\u2115)
           ("\\mathbb{R}"           ?\u211D)
-          ("\\mathbb{C}"           8450)
-          ("\\mathbb{P}"           8473)
-          ("\\mathcal{C}"          120018)
-          ("\\cat{C}"              120018)
-          ("\\mathcal{D}"          120019)
-          ("\\cat{D}"              120019)
-          ("\\cat{E}"              120020)
-          ("\\cat{M}"              120028)
-          ("\\cat{N}"              120029)
-          ("\\mathfrak{C}"         120174)
-          ("\\mathfrak{D}"         120175)
-          ("\\ZCat"                120041)
+          ;; ("\\mathbb{C}"           8450)
+          ;; ("\\mathbb{P}"           8473)
+          ;; ("\\mathcal{C}"          120018)
+          ;; ("\\cat{C}"              120018)
+          ;; ("\\mathcal{D}"          120019)
+          ;; ("\\cat{D}"              120019)
+          ;; ("\\cat{E}"              120020)
+          ;; ("\\cat{M}"              120028)
+          ;; ("\\cat{N}"              120029)
+          ;; ("\\mathfrak{C}"         120174)
+          ;; ("\\mathfrak{D}"         120175)
+          ;; ("\\ZCat"                120041)
           ;; OPERATORS
           ("\\defeq"               32 (Br . Bl) 32 (Br . Br) 57612)
           ("\\eq"                  ?=)
@@ -3676,15 +3191,8 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
           ("\\TeX"                 ?T (cr cl -20 -45) ?E (cr cl -20 24) ?X)
           ("\\LaTeX"               ?L (cr cl -60 35) ?A (cr cl -18 -20) ?T (cr cl -18 -60) ?E (cr cl -20 5) ?X)
           ;; PARENTHESES
-          ("{"                     ?⎨)
-          ("}"                     ?⎬)
-          ("\\{"                   ?{)
-          ("\\}"                   ?})
-          ("\\lbrace"              ?{)
-          ("\\rbrace"              ?})
-          ("\\{"                   ?{)
-          ("\\}"                   ?})
           ("\\|"                   ?║)
+          ("\\mid"                 ?│)
           ;; Misc
           ("\\dots"                ?…)
           ("\\blank"       . ?—)
@@ -3705,52 +3213,456 @@ In order to prettify symbols, we use fira code and a long list of symbols which 
           ("\\rVert"               ?ǁ)
           )))
 
-(use-package fira-code-mode
-  :custom (fira-code-mode-disabled-ligatures '("[]" "#{" "#(" "#_" "#_(" "x" "{-" "-}" )) ;; List of ligatures to turn off
-  :hook
-  (LaTeX-mode . my-LaTeX-fira-pitch)
-  (LaTeX-mode . fira-code-mode)
-  :config
-  (latex-symbols-prettify)
-  )
-
-(use-package emacs
-  :custom (prettify-symbols-unprettify-at-point 'right-edge)
-  )
-
 #+end_src
 
-** Benchmark
+See tony and tecosaur.
+#+NAME: latex-code-folding
+#+begin_src emacs-lisp :tangle no
+(defconst my-string-offset-exceptions
+  '(;; lowercase serif
+    (119892 . ?ℎ)
+    ;; lowercase caligraphic
+    (119994 . ?ℯ)
+    (119996 . ?ℊ)
+    (120004 . ?ℴ)
+    ;; caligraphic
+    (119965 . ?ℬ)
+    (119968 . ?ℰ)
+    (119969 . ?ℱ)
+    (119971 . ?ℋ)
+    (119972 . ?ℐ)
+    (119975 . ?ℒ)
+    (119976 . ?ℳ)
+    (119981 . ?ℛ)
+    ;; fraktur
+    (120070 . ?ℭ)
+    (120075 . ?ℌ)
+    (120076 . ?ℑ)
+    (120085 . ?ℜ)
+    (120092 . ?ℨ)
+    ;; blackboard
+    (120122 . ?ℂ)
+    (120127 . ?ℍ)
+    (120133 . ?ℕ)
+    (120135 . ?ℙ)
+    (120136 . ?ℚ)
+    (120137 . ?ℝ)
+    (120145 . ?ℤ))
+  "An alist of deceptive codepoints, and where the glyph
+actually resides.")
 
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
+(defun my-shift-string (offset word)
+  "Shift the codepoint of each character in WORD by OFFSET.
+Add an extra -6 shift if the letter is lowercase."
+  (apply #'string
+         (--map (let ((char (+ (if (>= it ?a) (- it 6) it) offset)))
+                  (or (cdr (assoc char my-string-offset-exceptions))
+                      char))
+                word)))
 
-(my-report-time "LaTeX")
+(defun my-TeX-word? (teststring)
+  "Return t if TESTSTRING is a single token, nil otherwise."
+  (if (string-match-p "^\\\\?\\w+$" teststring) t nil))
 
+
+(cl-flet ((start-at (pt)
+            (- pt ?A)))
+  (setq TeX-fold-math-spec-list
+        `((,(lambda (num den)
+              (if (and (my-TeX-word? num) (my-TeX-word? den))
+                  (concat num "／" den)
+                (concat "❪" num "／" den "❫")))
+           ("frac"))
+          ("‘{1}’" ("text"))
+          (,(lambda (word) (concat word "ᵛ")) ("rd"))
+          (,(lambda (word) (concat word "ᵛᵛ")) ("rrd"))
+          (,(lambda (word) (concat "ᵛ" word)) ("ld"))
+          (,(lambda (word) (concat "ᵛᵛ" word)) ("lld"))
+          (,(lambda (word) (my-shift-string (start-at ?𝐀) word)) ("mathbf"))
+          (,(lambda (word) (my-shift-string (start-at ?𝖠) word)) ("mathsf"))
+          (,(lambda (word) (my-shift-string (start-at ?𝖠) word)) ("mathrm"))
+          (,(lambda (word) (my-shift-string (start-at ?𝙰) word)) ("mathtt"))
+          (,(lambda (word) (my-shift-string (start-at ?𝔄) word)) ("mathfrak"))
+          (,(lambda (word) (my-shift-string (start-at ?𝔸) word)) ("mathbb"))
+          (,(lambda (word) (my-shift-string (start-at ?𝓐) word)) ("mathcal"))
+          (,(lambda (word) (my-shift-string (start-at ?𝓐) word)) ("cat")))))
+
+(setq LaTeX-fold-math-spec-list TeX-fold-math-spec-list)
+
+(setopt TeX-fold-macro-spec-list
+        '(;; tweaked defaults
+          ("[1]:||►" ("item"))
+          ("❡❡ {1}" ("part" "part*"))
+          ("❡ {1}" ("chapter" "chapter*"))
+          ("§ {1}" ("section" "section*"))
+          ("§§ {1}" ("subsection" "subsection*"))
+          ("§§§ {1}" ("subsubsection" "subsubsection*"))
+          ("¶ {1}" ("paragraph" "paragraph*"))
+          ("¶¶ {1}" ("subparagraph" "subparagraph*"))
+          ;; extra
+          ("{1}" ("emph"))))
 #+end_src
+** Compilation and PDF output
 
-
-
-** TODO Python :DEFER:MODE:
-
-This is only a rough setup to be able to write python code in emacs.
+We compile LaTeX files using latexmk and view the resulting pdf in evince.
 
 #+begin_src emacs-lisp
 
-(use-package elpy
-  :defer t
-  :init
-  (advice-add 'python-mode :before 'elpy-enable))
+(use-package auctex-latexmk
+  :elpaca (:type git :host github :repo "feng-li/auctex-latexmk")
+  :after auctex
+  :config
+  (add-to-list 'TeX-command-list '("LatexMk"
+                                   "latexmk %(-PDF)%S%(mode) -pv -view=pdf  -interaction=nonstopmode -synctex=1 %(file-line-error) %(extraopts) %t"
+                                   TeX-run-latexmk
+                                   nil
+                                   (plain-tex-mode latex-mode doctex-mode)
+                                   :help "Run LatexMk")) ; We compile latex documents with latexmk
+  :preface
+  (defun my-latex-compile ()
+    "Compile latex files with latexmk"
+    (interactive)
+    (save-buffer)
+    (TeX-command "LatexMk" 'TeX-master-file)
+    )
+  :hook
+  ((latex-mode  LaTeX-mode) . auctex-latexmk-setup)
+  (TeX-after-TeX-LaTeX-command-finished-hook . TeX-view)
+  (TeX-after-compilation-finished-functions . TeX-view)
+  (TeX-after-compilation-finished-functions . TeX-revert-document-buffer) ; refreshes the pdf output if PDF Tools is used
+  :config
+  (setq TeX-view-program-selection '((output-pdf "Evince"))) ; We use Evince as standard pdf-viewer. An alternative is PDF Tools.
+  :bind (:map LaTeX-mode-map
+              ("C-c C-c" . my-latex-compile))
+  ;; :hook (TeX-after-compilation-finished-functions . TeX-revert-document-buffer) ; refreshes the pdf output if PDF Tools is used
+  )
 
 #+end_src
 
-#+RESULTS:
+** Cdlatex
+#+begin_src emacs-lisp :noweb yes
+(use-package cdlatex
+  :hook
+  (LaTeX-mode . turn-on-cdlatex    ) ; with AUCTeX LaTeX mode
+  (org-mode   . turn-on-org-cdlatex) ; Use subset of cdlatex for org mode
+  :bind(:map cdlatex-mode-map
+             ("RET" . my-smart-return)
+             ("<SPC>" . my-smart-space)
+             ("C-c e" . cdlatex-environment)
+             ("$" . nil))
+  :custom
+  (cdlatex-paired-parens nil) ; We will use aas to pair parentheses.
+  ;; special maths environments
+  (cdlatex-env-alist
+ '(
+    ( "enumerate"
+      "\\begin{enumerate}\n\\item ?\n\\end{enumerate}"
+      "\\item ?"
+      )
+    ;;------------------------------------
+    ( "itemize"
+      "\\begin{itemize}\n\\item ?\n\\end{itemize}"
+      "\\item ?"
+      )
+    ;;------------------------------------
+    ( "description"
+      "\\begin{description}\n\\item ?\n\\end{description}"
+      "\\item ?"
+      )
+    ;;------------------------------------
+    ( "thmlist"
+      "\\begin{thmlist}\n\\item ?\n\\end{thmlist}"
+      "\\item ?"
+      )
+    ;;------------------------------------
+    ( "thmlist*"
+      "\\begin{thmlist*}\n\\item ?\n\\end{thmlist*}"
+      "\\item ?"
+      )))
+  ;; Custom bindings for the math modify list, accessed with '
+  (cdlatex-math-modify-alist
+   '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
+     (?b "\\mathbb"   "\\textbf" t   nil   nil)
+     (?f "\\mathbf"   "\\textsf" t   nil   nil)
+     (?i "\\mathit"   "\\textit" t   nil   nil)
+     (?k "\\mathfrak" nil        t   nil   nil)
+     (?r "\\mathrm"   "\\textrm" t   nil   nil)
+     (?s nil          "\\textsc" t   nil   nil)
+     (?t "\\text"     nil        t   nil   nil)
+     (?u "\\lld"      ""         t   nil   nil)
+     ))
+  ;; Custom bindings for the symbol list, accessed with `.  You may add
+  ;; additional layers here.  Also, some of these are user-defined
+  ;; commands.
+  (cdlatex-math-symbol-alist
+   '(;;    LAYER 1        LAYER 2      LAYER 3
+     (?c  ("\\circ"           ""           "\\cos"   ))
+     (?C  ("\\coprod"     ""           "\\arccos"))
+     (?e  ("\\varepsilon"           "\\epsilon"         "\\exp"   ))
+     (?f  ("\\varphi"          "\\phi"          ""        ))
+     (?F  ("\\Phi"           ""           ""        ))
+     (?R  ("\\real"          "\\Re"        ""        ))
+     (?N  ("\\nat"       "\\nabla"          "\\exp"   ))
+     (?Z  ("\\integer"    ""           ""        ))
+     (?Q  ("\\rat"        "\\Theta"         ""        ))
+     (?0  ("\\varnothing" ""           ""        ))
+     (?{  ("\\subseteq"   "\\subset"         ""        ))
+     (?}  ("\\supseteq"   "\\supset"         ""        ))
+     (?.  ("\\cdot"           "\\dots"          ""        ))
+     (?^  ("\\otimes"          ""            ""        ))
+     (?ö  ("\\odot"           ""            ""        ))
+     ))
+  :config
+  (setq cdlatex-tab-hook '(yas-expand indent-for-tab-command))
 
-** TODO Bibliography
-** Titlecase
+  <<current-line-empty-p>>
+  <<my-smart-return>>
+  <<my-smart-space>>
+  )
+
+#+end_src
+
+We write a few helpers for smarter key insertions.
+
+#+NAME: current-line-empty-p
+#+begin_src emacs-lisp :tangle no
+(defun current-line-empty-p ()
+  "This function returns t if a line consists purely of white spaces and nil otherwise."
+  (string-match-p "\\`\\s-*$" (thing-at-point 'line)))
+#+end_src
+
+#+NAME: my-smart-return
+#+begin_src emacs-lisp :tangle no
+(defun my-smart-return()
+  "This function helps us to deal with the behaviour of <return> in various latex environments.
+If the current line is not empty, it inserts a new line. If the current line is empty it tries
+to insert a <generalized item> as specified by cdlatex. In case this fails, a new line is inserted."
+  (interactive)
+  (if (current-line-empty-p)
+      (condition-case-unless-debug nil (cdlatex-item) (error (TeX-newline)))
+    (TeX-newline)
+   ))
+#+end_src
+
+#+NAME: my-smart-space
+#+begin_src emacs-lisp
+(defun my-smart-space()
+  "This function helps us to deal with the behaviour of <space> in various latex environments.
+If one is in a maths context and the previous character was a space, it inserts `\\blank'. If the previous word matches the regexp `\\[q]+uad ' it either changes `\\quad ' to `\\qquad ' or, if it was `\\qquad ', it changes `\\qquad ' to `\\qquad\\quad '."
+  (interactive)
+  (if (and (= (char-before) ? ) (texmathp))
+      (let ((cur-word (save-excursion (backward-word)
+                                      (thing-at-point 'word t))))
+        (cond
+         ((string= cur-word "quad")
+          (backward-word)
+          (insert "q")
+          (forward-word))
+         ((string= cur-word "qquad")
+          (backward-char)
+          (insert "\\quad"))
+         ((save-excursion (backward-char 2) (looking-at-p "\\\\ "))
+          (backward-char)
+          (insert "quad"))
+         (t
+          (insert "\\blank")))
+        (if (= (char-after) ? )
+          (forward-char)
+          (insert " ")))
+    (insert " ")))
+#+end_src
+
+** Helpers
+*** TODO Toggle quotation marks
+
+We want to be able to toggle quotation marks quickly.
+Expected behaviour (assuming ``text'' as quotation marks in this example):
+(i)   * some text -> ``* some text
+(ii) ``quoted text* -> ``quoted text''
+(iii) /marked text* -> ``marked text''
+(iv) ``/quoted and marked text*'' -> quoted and marked text
+
+TODO: Since there are various different quotation signs (of different length) the function could need some hardening!
+#+NAME: my-toggle-tex-quote-region
+#+begin_src emacs-lisp :tangle no
+(defun my-toggle-tex-quote-region ()
+  (interactive)
+  (if (use-region-p)
+      (save-excursion
+        (let* ((beg-pos (mark))
+               (end-pos (point))
+               (start-quoted nil)
+               (end-quoted nil))
+          (if (> beg-pos 1)
+              (progn
+                (goto-char (- beg-pos 1))
+                (setq start-quoted (looking-at-p "`\\|\""))
+                (unless (or (< beg-pos 2) start-quoted) (goto-char (- beg-pos 2))
+                        (setq start-quoted (looking-at-p "``\\|\\|<<"))))
+            (setq start-quoted nil))
+          (goto-char end-pos)
+          (setq end-quoted (looking-at-p "''\\|'\\|\"\\|>>"))
+          (if (and start-quoted end-quoted)
+              (progn
+                (goto-char end-pos)
+                (delete-char(length TeX-close-quote))
+                (goto-char beg-pos)
+                (delete-char(- 0(length TeX-close-quote)))
+                )
+            (goto-char end-pos)
+            (TeX-insert-quote nil)
+            (goto-char beg-pos)
+            (TeX-insert-quote nil)
+            )))
+            (TeX-insert-quote nil)
+    ))
+#+end_src
+
+*** Environment toggling
+
+To unify inline and displaymath delimiters and toggle between these, we use [[https://github.com/oantolin/math-delimiters][math-delimiters]].
+However, since we do not believe in math environments inside math environments, we change the source code slightly.
+
+#+begin_src emacs-lisp
+(use-package math-delimiters
+  :elpaca (:url "https://github.com/oantolin/math-delimiters")
+  :ensure auctex
+  :commands math-delimiters-insert
+  :custom
+  (math-delimiters-display  '("\\begin{equation*}" . "\\end{equation*}"))
+  (math-delimiters-compressed-display-math nil))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package latex-change-env
+  :elpaca (:type git :host github :repo "slotThe/change-env")
+  :ensure auctex
+  :demand t
+  :init
+  :bind (:map LaTeX-mode-map
+              ("$"       . my-insert-toggle-math)
+              ("C-c r"   . latex-change-env))
+  :custom
+  (latex-change-env-math-display '("equation*" . "equation*"))
+  (latex-change-env-math-inline  '("\\(" . "\\)"))
+  (latex-change-env-edit-labels-in-project t)
+  (latex-change-env-labels
+  '(("remark"      . "rem:" )
+    ("definition"  . "def:" )
+    ("lemma"       . "lem:" )
+    ("theorem"     . "thm:" )
+    ("equation"    . "eq:"  )
+    ("align"       . "eq:"  )
+    ("gather"      . "eq:"  )
+    ("corollary"   . "cor:" )
+    ("example"     . "ex:"  )
+    ("proposition" . "prop:")))
+  :config
+  (defun my-insert-toggle-math ()
+    (interactive)
+    (latex-change-env-cycle '(equation* align* gather* equation align gather)))
+)
+#+end_src
+
+** TO BE MODIFIED
+*** Bibliography :INACTIVE:
+We use reftex for handling the bibliography.
+Our setup follows Tony Zorman.
+
+#+begin_src emacs-lisp
+
+(use-package reftex
+  :hook (LaTeX-mode . turn-on-reftex)
+  :config (reftex-set-cite-format "\\cite[][]{%l}")
+  :custom
+  (reftex-plug-into-AUCTeX t)               ; Integrate reftex into auctex.
+  (reftex-toc-split-windows-horizontally t) ; Show reftex TOC on the left.
+  (reftex-ref-macro-prompt nil)             ; No unnecessary prompts
+  (reftex-label-alist              ; Tell reftex about some environments.
+   '(("section"     ?s "sec:"  "~\\ref{%s}" t (regexp "[Ss]ection\\(s\\)?"       ))
+     ("definition"  ?d "def:"  "~\\ref{%s}" t (regexp "[Dd]efinition\\(s\\)?"    ))
+     ("example"     ?x "ex:"   "~\\ref{%s}" t (regexp "[Ee]xample\\(s\\)?"       ))
+     ("lemma"       ?l "lem:"  "~\\ref{%s}" t (regexp "[Ll]emma\\(s\\|ta\\)?"    ))
+     ("proposition" ?p "prop:" "~\\ref{%s}" t (regexp "[Pp]roposition\\(s\\)?"   ))
+     ("theorem"     ?h "thm:"  "~\\ref{%s}" t (regexp "[Tt]heorem\\(s\\)?"       ))
+     ("remark"      ?r "rem:"  "~\\ref{%s}" t (regexp "[Rr]emark\\(s\\)?"        ))
+     ("corollary"   ?c "cor:"  "~\\ref{%s}" t (regexp "[Cc]orollar\\(y\\|ies\\)?")))))
+
+#+end_src
+
+*** Editing and Autocompletion :INACTIVE:
+
+
+Some latex-commands that are auto-expanded by aas.
+
+#+begin_src emacs-lisp
+(use-package aas
+  :after dash
+  :init
+  (yas-minor-mode 1)
+  (laas-mode 1)
+  :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
+  :config
+  (--each '(latex-mode) ;; TODO integrate qorg-mode
+    (aas-set-snippets it
+                      :cond #'(lambda()(and (texmathp) (car texmathp-why)))
+                      " :"      "\\from "
+                      " **"     "\\star"
+                      " mm"     "\\mid "
+                      " ->"     "\\to "
+                      " mt"     "\\mapsto "
+                      " =>"     "\\implies "
+                      " in"     "\\in"
+                      " ..."    "\\dots"
+                      " blank"  "\\blank"
+                      " def"    "\\defeq"
+                      " ~"      "\\sim"
+                      " =="     "\\cong"
+                      " ot"     "\\otimes"
+                      " bn"     "\\mathbb{N}"
+                      " bz"     "\\mathbb{Z}"
+                      " bq"     "\\mathbb{Q}"
+                      " br"     "\\mathbb{R}"
+                      " bc"     "\\mathbb{C}"
+                      " bf"     "\\mathbb{F}"
+                      " bp"     "\\mathbb{P}"
+                      " fg"     "\\mathfrak{g}"
+                      " fh"     "\\mathfrak{h}"
+                      " cc"     "\\cat{C}"
+                      " cd"     "\\cat{D}"
+                      " cm"     "\\cat{M}"
+                      " zc"     "\\ZCat{C}"
+                      " subset" "\\subset"
+                      " supset" "\\supset"
+                      " angled"    (lambda () (interactive)
+                                     (yas-expand-snippet "\\langle $0 \\rangle"))
+                      " adj"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
+                      " hom"  (lambda () (interactive)
+                                (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
+                      " coend" (lambda () (interactive)
+                                 (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
+                      " end"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
+                      " set"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\\\{$0\\\\}"))
+                      " sum"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
+                      ;;" gl"    (lambda () (interactive)
+                      ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
+                      ;;" //"    (lambda () (interactive)
+                      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
+                      " cat"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\cat{$1}$0")))))
+
+#+end_src
+
+*** TODO Bibli/ography
+**** Titlecase
 
 #+begin_src emacs-lisp
 (use-package titlecase
-  :straight (titlecase
+  :elpaca (titlecase
              :host codeberg
              :repo "acdw/titlecase.el")
   :after embark
@@ -3758,7 +3670,7 @@ This is only a rough setup to be able to write python code in emacs.
               ("T" . titlecase-dwim)))
 
 #+end_src
-** Biblio
+**** Biblio
 
 We will use biblio for handling/downloading papers.
 
@@ -3772,11 +3684,10 @@ We will use biblio for handling/downloading papers.
 
 #+begin_src emacs-lisp
 (use-package biblio-zbmath
-  :straight (biblio-zbmath :local-repo "biblio-zbmath")
-  :load-path "~/.emacs.d/straight/repos/biblio-zbmath"
+  :elpaca (biblio-zbmath :repo "~/.emacs.d/straight/repos/biblio-zbmath")
   )
 #+end_src
-** Zotra
+**** Zotra
 
 
 #+begin_src emacs-lisp
@@ -3817,7 +3728,7 @@ We will use biblio for handling/downloading papers.
 
 
 (use-package zotra
-  :straight (zotra
+  :elpaca (zotra
              :host github
              :repo "mpedramfar/zotra")
   :demand t
@@ -3835,7 +3746,7 @@ We will use biblio for handling/downloading papers.
   )
 
 #+end_src
-** Ebib
+**** Ebib
 
 #+begin_src emacs-lisp
 (defun regularlise-file-name (name)
@@ -3853,7 +3764,7 @@ We will use biblio for handling/downloading papers.
     (downcase str)))
 
 (use-package ebib
-  :straight (ebib
+  :elpaca (ebib
              :host github
              :repo "joostkremers/ebib")
   :demand t
@@ -3881,7 +3792,7 @@ We will use biblio for handling/downloading papers.
 
 #+end_src
 
-** Citar
+**** Citar
 
 #+begin_src emacs-lisp
 (use-package citar
@@ -3916,7 +3827,7 @@ We will use biblio for handling/downloading papers.
   :no-require
   :config (citar-embark-mode))
 #+end_src
-
+* Remaining latex :INACTIVE:DEFER:MODE:BINDING:
 ** Bibtex :INACTIVE:
 
 Settings for bibtex
@@ -3995,6 +3906,20 @@ An autoload function for my-config (that will load org mode).
 
 #+end_src
 
+** TODO Python :DEFER:MODE:
+
+This is only a rough setup to be able to write python code in emacs.
+
+#+begin_src emacs-lisp
+
+(use-package elpy
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable))
+
+#+end_src
+
+#+RESULTS:
 
 * Various helpers
 ** Jinx spell checker
@@ -4067,8 +3992,9 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
 
 #+begin_src emacs-lisp
 (use-package visual-fill-column
-  :after adaptive-wrap
+  ;;:after adaptive-wrap
   :init (global-visual-line-mode)
+  :demand t
   :custom (visual-fill-column-center-text t)
   (visual-fill-column-enable-sensible-window-split t)
   :hook  ((( latex-mode LaTeX-mode org-mode) . visual-fill-column-mode)
@@ -4076,7 +4002,6 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
           )
   )
 #+end_src
-Changing the symbol for truncation (…) and wrap (↩).
 
 
 * Version control
@@ -6593,7 +6518,7 @@ For all the small additional goodies that make life a bit easier.
 Emacs-dashboard is used as the splash screen to show current tasks and projects
 #+begin_src emacs-lisp
 (use-package dashboard
-  :straight (:type git :host github :repo "emacs-dashboard/emacs-dashboard")
+  :elpaca (:type git :host github :repo "emacs-dashboard/emacs-dashboard")
   :ensure t
   :config
   (dashboard-setup-startup-hook)
@@ -6657,7 +6582,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 
 #+begin_src emacs-lisp
 (use-package maxima
-  :straight (maxima :type git :flavor melpa :files ("maxima.el" "maxima-font-lock.el" ("keywords" "keywords/*") "maxima-pkg.el") :host gitlab :repo   "sasanidas/maxima")
+  :elpaca (maxima :type git :flavor melpa :files ("maxima.el" "maxima-font-lock.el" ("keywords" "keywords/*") "maxima-pkg.el") :host gitlab :repo   "sasanidas/maxima")
   :bind (:map maxima-inferior-mode-map ("TAB" . maxima-complete))
   (:map maxima-mode-map          ("TAB" . maxima-complete))
   :init
@@ -6672,7 +6597,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 
 #+begin_src emacs-lisp
 (use-package visual-regexp
-  :straight (:host github :repo "benma/visual-regexp.el")
+  :elpaca (:host github :repo "benma/visual-regexp.el")
   :bind (:map ergoemacs-override-keymap
               ("M-5" . vr/query-replace)
               ("M-%" . vr/query-replace)))
@@ -6682,7 +6607,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 ;; CHATGPT
 
 (use-package gptel
-  :straight (:host github :repo "karthink/gptel"))
+  :elpaca (:host github :repo "karthink/gptel"))
 
 ;; (use-package emacs
 ;;   :init (column-number-mode)
@@ -6720,7 +6645,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 
 #+begin_src emacs-lisp
 (use-package org-timeblock
-  :straight (org-timeblock :type git
+  :elpaca (org-timeblock :type git
                            :host github
                            :repo "ichernyshovvv/org-timeblock")
   :bind (:map ergoemacs-override-keymap ("M-n" . org-timeblock))
