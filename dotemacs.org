@@ -2115,19 +2115,19 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
 #+NAME: org-gtd-capture-templates
 #+begin_src emacs-lisp :tangle no
 (setq org-capture-templates
-      `(("i" "Inbox" entry  (file+headline ,org-inbox "Miscellaneous")
+      `(("i" "Inbox" entry  (file ,org-inbox)
          ,(concat "* %?\n"
                   "/Entered on/ %U"))
         ("m" "Meeting" entry  (file+datetree ,org-calendar)
-         ,(concat "* Meeting with %?\n at <%<%Y-%m-%d %a %^{Time}>>\n"
+         ,(concat "* %?\n at <%<%Y-%m-%d %a %^{Time}>>\n"
                   "/Entered on/ %U")
          :time-prompt t)
-        ("l" "Inbox with link" entry (file+headline ,org-inbox "Miscellaneous")
-         ,(concat "* %?\n %a"
-                  "/Entered on/ %U"
+        ("l" "Inbox with link" entry (file ,org-inbox)
+         ,(concat "* %?\n %a \n"
+                  "/Entered on/ %U \n"
                   "%i")
                   :kill-buffer t)
-        ("@" "Inbox [mu4e]" entry (file+headline ,org-inbox "Mails")
+        ("@" "Inbox [mu4e]" entry (file ,org-inbox)
          ,(concat "*  Reply to \"%a\" %?\n"
                   "/Entered on/ %U"))))
 (setq org-gtd-capture-templates org-capture-templates)
