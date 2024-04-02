@@ -51,9 +51,9 @@ The documentation of each package-based (sub-)section is build like follows:
 + Optionally some explanations why (but not how) things are done in a certain way.
 
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
-** [1/18] Open Tasks
+** [2/19] Open Tasks
 - [ ] Write a transient for elpaca.
-- [ ] Figure out why <<nerd-font-settings>> are not applied by emacsclient.
+- [X] Figure out why <<nerd-font-settings>> are not applied by emacsclient.
 - [ ] Modify elpacs keybindings.
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
 - [ ] Use Werner's nomenclature in colour-coding instead of the hex values.
@@ -959,8 +959,8 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
                               (right-fringe . 0)))
   (setq initial-frame-alist default-frame-alist)
   ;; Some font specifications
-  <<font-stack>>
   <<nerd-font-settings>>
+  <<font-stack>>
   :custom-face
   (outline-1 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
   (outline-2 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
@@ -991,6 +991,31 @@ chosen to really *stand out* from the default font (Roboto Mono).
 Roboto Mono Nerd                           Roboto Mono
 
 Note that the Victor Mono needs to be hacked such as to have the same line height as Roboto Mono. To do that, you can use the [[https://github.com/source-foundry/font-line][font-line]] utility (github.com/source-foundry/font-line): copy all the italic faces from the Victor Mono ttf file into a directoy and type: =font-line percent 10 *.ttf=. This will create a new set of files that you can use to replace the Victor Mono italic faces on your system.
+
+Using nerd fonts for certain font-sets requires us to ensure a frame is loaded.
+If one evokes "emacs" this is automatically the case; for "emacsclient" some care is necessary, see [[https://emacs.stackexchange.com/questions/59791/font-and-frame-configuration-in-daemon-mode][here]].
+
+#+NAME: nerd-font-settings
+#+begin_src emacs-lisp :tangle no
+(defun my-nerd-font-settings ()
+  "Sets all relevant fontsets to Roboto Mono Nerd Font."
+  (set-fontset-font t 'unicode "Roboto Mono Nerd Font")
+  (set-fontset-font t 'symbol  "Roboto Mono Nerd Font")
+  (set-fontset-font t 'emoji   "Roboto Mono Nerd Font")
+)
+
+(defun my-nerd-font-configure ()
+  "Configure nerd font settings in a way that is compatible with emacsclient."
+  (my-nerd-font-settings)
+  (if (daemonp)
+      (remove-hook 'after-make-frame-functions #'my-nerd-font-configure)
+    (remove-hook 'window-setup-hook #'my-nerd-font-configure)
+    ))
+
+(if (daemonp)
+    (add-hook 'after-make-frame-functions #'my-nerd-font-configure)
+  (add-hook 'window-setup-hook #'my-nerd-font-configure))
+#+end_src
 
 #+NAME: font-stack
 #+begin_src emacs-lisp :tangle no
@@ -1027,15 +1052,6 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 We additionally define some fonts for common character sets.
 To get a list of all character sets type "M-x list-character-sets"
 
-#+NAME: nerd-font-settings
-#+begin_src emacs-lisp :tangle no
-(set-face-font 'default "Roboto Mono 14")
-
-(--map (set-fontset-font t (-first-item it) (-second-item it))
-  '((unicode "Roboto Mono Nerd Font")
-    (symbol  "Roboto Mono Nerd Font")
-    (emoji   "Roboto Mono Nerd Font")))
-#+end_src
 ** Lambda modeline
 
 The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
