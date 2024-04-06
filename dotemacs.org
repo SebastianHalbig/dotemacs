@@ -3004,6 +3004,7 @@ It should be fixed at some point in the future.
    :after
    (lambda (&rest r) (recenter)))
    :custom-face
+   (font-latex-math-face ((t :family "Julia mono" :weight light :foreground unspecified )))
    (font-latex-bold-face ((t :weight unspecified :foreground unspecified :inherit bold)))
    (font-latex-italic-face ((t :foreground unspecified :underline nil :inherit (lambda-strong italic))))
 )
@@ -3462,14 +3463,43 @@ to insert a <generalized item> as specified by cdlatex. In case this fails, a ne
 
 #+NAME: my-smart-space
 #+begin_src emacs-lisp
-(defun my-smart-space()
+(defun my-smart-space ()
   "This function helps us to deal with the behaviour of <space> in various latex environments.
-If one is in a maths context and the previous character was a space, it inserts `\\blank'. If the previous word matches the regexp `\\[q]+uad ' it either changes `\\quad ' to `\\qquad ' or, if it was `\\qquad ', it changes `\\qquad ' to `\\qquad\\quad '."
+   To evoke its special behaviour one needs
+   a) to be in math mode,
+   b) the the preceeding character to be a blank space,
+   c) its predecessor NOT to be a blank space,
+   d) the region not to be active, and
+   e) the function not be called with a universal argument.
+
+   epending on the context it does the following `completions':
+   a) `\\\\ ' is changed to `\\quad '
+   b) `\\quad ' is changed to `\\qquad '
+   c) `\\qquad 'is changed to `\\qquad\\quad '
+   d) `\\cdot ' is changed to `\\cdot \\dots \\cdot '
+   e) `+ ' is changed to `+ \\cdot + '
+   f) in all other cases  `foo ' is changed to `foo \\blank '.
+
+   o force whitespace insertion, one may call the function with
+   a universal argument."
   (interactive)
-  (if (and (= (char-before) ? ) (texmathp))
+  (if (and (equal current-prefix-arg nil)
+           (= (char-before) ? )
+           (not(= (char-before (- (point) 1)) ? ))
+           (not (region-active-p))
+           (texmathp))
       (let ((cur-word (save-excursion (backward-word)
-                                      (thing-at-point 'word t))))
+                                      (when (>= (point) (cdr texmathp-why))
+                                          (thing-at-point 'word t)
+                                          )))
+            (cur-char (char-before (-(point) 1))))
+        ;; The case-dependent insertions are handled here.
         (cond
+         ((equal cur-char ?+) (insert "\\dots +"))
+         ((equal cur-char ?,) (insert "\\dots ,"))
+         ((equal cur-char ?\\)
+                 (backward-char)
+                 (insert "quad"))
          ((string= cur-word "quad")
           (backward-word)
           (insert "q")
@@ -3477,15 +3507,18 @@ If one is in a maths context and the previous character was a space, it inserts 
          ((string= cur-word "qquad")
           (backward-char)
           (insert "\\quad"))
-         ((save-excursion (backward-char 2) (looking-at-p "\\\\ "))
-          (backward-char)
-          (insert "quad"))
+         ((string=  cur-word "cdot") (insert "\\dots \\cdot"))
          (t
           (insert "\\blank")))
+        ;; We either move a blank space forward or insert one
         (if (= (char-after) ? )
-          (forward-char)
-          (insert " ")))
-    (insert " ")))
+            (forward-char)
+          (self-insert-command 1)))
+    ;; We delete the active region if delete selection mode is active
+    (when (and delete-selection-mode (region-active-p))
+      (delete-region (region-beginning) (region-end)))
+    ;; insert according to the universal argument
+    (self-insert-command (if (numberp current-prefix-arg) current-prefix-arg 1))))
 #+end_src
 
 ** Helpers
