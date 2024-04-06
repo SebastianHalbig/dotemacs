@@ -3998,6 +3998,7 @@ Jinx is a fast just-in-time spell-checker for Emacs. Jinx highlights misspelled 
 *** TODO Nerd icons
 
 [[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
+We use the "fake" proportional variant, see this [[https://github.com/ryanoasis/nerd-fonts/discussions/1103][discussion]].
 
 #+begin_quote
 Nerd-icons.el is a library for easily using Nerd Font icons inside Emacs, an alternative to all-the-icons.
