@@ -242,9 +242,9 @@ The elpaca-documentation suggests the following piece of code for the integratio
 #+NAME: elpaca-use-package-integration
 #+begin_src emacs-lisp :tangle no
 (elpaca elpaca-use-package
-  ;; Enable :elpaca use-package keyword.
+  ;; Integrate elpaca into the "ensure" use-package keyword.
   (elpaca-use-package-mode)
-  ;; Assume :elpaca t unless otherwise specified.
+  ;; Assume :ensure t unless otherwise specified.
   (setq elpaca-use-package-by-default t))
 #+end_src
 * Early-loading of org
@@ -316,7 +316,7 @@ We can now configure recentf.
 
 #+begin_src emacs-lisp :noweb yes
 (use-package recentf
-  :elpaca nil
+  :ensure nil
   :config
   <<my-recentf-rename-notify>>
   <<my-recentf-rename-file>>
@@ -339,7 +339,7 @@ We can now configure recentf.
 
 #+begin_src emacs-lisp
 (use-package no-littering
-  :elpaca (:type git :host github :repo "emacscollective/no-littering")
+  :ensure (:type git :host github :repo "emacscollective/no-littering")
   :after recentf
   :demand t
   :init
@@ -512,7 +512,7 @@ A buffer can get out of sync with respect to its visited file on disk if that fi
 #+begin_src emacs-lisp
 
 (use-package autorevert
-  :elpaca nil
+  :ensure nil
   :config
   (setq auto-revert-verbose t) ; Generates a message whenever a buffer is reverted
   (global-auto-revert-mode))   ; Start global-auto-revert-mode
@@ -534,7 +534,7 @@ Record cursor position using [[https://github.com/emacs-mirror/emacs/blob/master
 #+begin_src emacs-lisp
 
 (use-package saveplace
-  :elpaca nil
+  :ensure nil
   :config
   (setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
                                               ; Location of the saveplace file
@@ -934,7 +934,7 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
 
 #+begin_src emacs-lisp :noweb yes
 (use-package lambda-themes
-  :elpaca (:type git :host github :repo "lambda-emacs/lambda-themes")
+  :ensure (:type git :host github :repo "lambda-emacs/lambda-themes")
   :after dash
   :init
   <<werner-colours>>
@@ -1092,7 +1092,7 @@ We will have a status line at the top of the frames and therefore disable the mo
 *** The modeline itself
 #+begin_src emacs-lisp :noweb yes
 (use-package lambda-line
-  :elpaca (:type git :host github :repo "lambda-emacs/lambda-line")
+  :ensure (:type git :host github :repo "lambda-emacs/lambda-line")
   :after lambda-themes
   :init
   <<my-thin-modeline>>
@@ -1155,7 +1155,7 @@ You can register the cape-* functions in the completion-at-point-functions list.
 
 #+begin_src emacs-lisp
 (use-package cape
-  :elpaca (:type git :host github :repo "minad/cape")
+  :ensure (:type git :host github :repo "minad/cape")
   :bind (("C-c p p" . completion-at-point) ; capf
          ("C-c p t" . complete-tag)         ; etags
          ("C-c p d" . cape-dabbrev)         ; or dabbrev-completion
@@ -1201,12 +1201,12 @@ You can register the cape-* functions in the completion-at-point-functions list.
 We will use the power of [[https://company-mode.github.io/][company]] but hide it under a cape.
 #+begin_src emacs-lisp
 (use-package company-org-block
-  :elpaca(company-org-block :type git :host github :repo "xenodium/company-org-block"))
+  :ensure(company-org-block :type git :host github :repo "xenodium/company-org-block"))
 #+end_src
 
 #+begin_src emacs-lisp
 (use-package company-yasnippet
-  :elpaca(company-yasnippet :type git :host github :repo "company-mode/company-mode"))
+  :ensure(company-yasnippet :type git :host github :repo "company-mode/company-mode"))
 #+end_src
 ** Consult :BIND:
 We replace some of emacs functions with their [[https://github.com/minad/consult][consult]] equivalent.
@@ -1244,7 +1244,7 @@ The available commands are:
 
 #+begin_src emacs-lisp
 (use-package consult
-  :elpaca (:type git :host github :repo "minad/consult")
+  :ensure (:type git :host github :repo "minad/consult")
   :init
   (bind-key "M-g" nil 'ergoemacs-override-keymap)
   :bind-keymap
@@ -1319,8 +1319,7 @@ The embark-consult also contains some candidates collectors that allow you to ru
 
 #+begin_src emacs-lisp
 (use-package embark-consult
-  :elpaca(:type git :host github :repo "oantolin/embark")
-  :ensure t ; only need to install it, embark loads it after consult if found
+  :ensure(:type git :host github :repo "oantolin/embark")
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
@@ -1338,7 +1337,7 @@ Corfu is a small package, which relies on the Emacs completion facilities and co
 
 #+begin_src emacs-lisp
 (use-package corfu
-  :elpaca (corfu :type git
+  :ensure (corfu :type git
                  :host github
                  :repo "minad/corfu"
                  :files (:defaults "extensions/*")
@@ -1401,7 +1400,7 @@ Embark makes it easy to choose a command to run based on what is near point, bot
 
 #+begin_src emacs-lisp
 (use-package embark
-  :elpaca(:type git :host github :repo "oantolin/embark")
+  :ensure(:type git :host github :repo "oantolin/embark")
   :bind (("C-." . embark-act)
          :map minibuffer-local-completion-map
          ("C-." . embark-act)
@@ -1453,7 +1452,7 @@ The annotations are added based on the completion category. For example find-fil
 
 #+begin_src emacs-lisp
 (use-package marginalia
-  :elpaca(:type git :host github :repo "minad/marginalia")
+  :ensure(:type git :host github :repo "minad/marginalia")
   :init (marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle))
@@ -1477,7 +1476,7 @@ A completion style is a back-end for completion and is used from a front-end tha
 
 #+begin_src emacs-lisp
 (use-package orderless
-  :elpaca (:type git :host github :repo "oantolin/orderless")
+  :ensure (:type git :host github :repo "oantolin/orderless")
   :custom-face
   (isearch ((t (:foreground "#71aa89" :background unspecified)))) ; verdiris-green
   (match ((t (:foreground "#71aa89" :background unspecified)))) ; verdiris-green
@@ -1515,7 +1514,7 @@ A completion style is a back-end for completion and is used from a front-end tha
 
 #+begin_src emacs-lisp
 (use-package eglot
-  :elpaca nil
+  :ensure nil
   :hook (python-mode . eglot-ensure)
         (LaTeX-mode-hook. eglot-ensure)
   :config
@@ -1537,7 +1536,7 @@ This is a project for another day.
 
 #+begin_src emacs-lisp
 (use-package eglot-ltex
-  :elpaca (:type git :host github :repo "emacs-languagetool/eglot-ltex")
+  :ensure (:type git :host github :repo "emacs-languagetool/eglot-ltex")
   :defer t
   :hook (text-mode . (lambda ()
                        (require 'eglot-ltex)
@@ -1560,7 +1559,7 @@ In order to integrate EGLOT even better into our completion framework, we use [[
 
 #+begin_src emacs-lisp
 (use-package consult-eglot
-  :elpaca (:type git :host github :repo "mohkale/consult-eglot/"))
+  :ensure (:type git :host github :repo "mohkale/consult-eglot/"))
 #+end_src
 ** Vertico :BIND:HOOK:FACE:
 
@@ -1577,7 +1576,7 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :elpaca (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
+  :ensure (vertico :files (:defaults "extensions/*") ; Special recipe to load extensions
                    :includes (vertico-indexed
                               vertico-flat
                               vertico-grid
@@ -1651,7 +1650,7 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
 
 #+begin_src emacs-lisp
 (use-package vertico-truncate
-  :elpaca (:type git :host github :repo "jdtsmith/vertico-truncate")
+  :ensure (:type git :host github :repo "jdtsmith/vertico-truncate")
   :config
   (vertico-truncate-mode 1)
   )
@@ -1666,7 +1665,7 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
 #+begin_src emacs-lisp
 
 (use-package yasnippet
-  :elpaca (:type git :host github :repo "oaotavora/yasnippet")
+  :ensure (:type git :host github :repo "oaotavora/yasnippet")
   :config (yas-global-mode)
   :custom
   (yas-snippet-dirs '("/home/adjoint_equivalence/.emacs.d/etc/yasnippet/snippets/"))
@@ -1687,7 +1686,7 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
 #+NAME: org-config
 #+begin_src emacs-lisp :noweb yes :tangle no
 (use-package org
-  :elpaca ( :package "org"
+  :ensure ( :package "org"
             :local-repo "org"
             :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
             :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
@@ -1788,7 +1787,7 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 
 #+begin_src emacs-lisp
 (use-package org-tempo
-  :elpaca nil
+  :ensure nil
   :custom
   (add-to-list 'org-structure-template-alist
              '("S" . "src emacs-lisp")))
@@ -1797,7 +1796,7 @@ A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
 #+begin_src emacs-lisp
 
 (use-package org-modern
-  :elpaca (:type git :host github :repo "minad/org-modern")
+  :ensure (:type git :host github :repo "minad/org-modern")
   :config
   (setq org-todo-keywords
         '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)" "CANCELED(c)")
@@ -1820,7 +1819,7 @@ Org mode provides a way to toggle visibility of hidden elements such as emphasis
 
 #+begin_src emacs-lisp
 (use-package org-appear
-  :elpaca (org-appear :type git :host github :repo "awth13/org-appear")
+  :ensure (org-appear :type git :host github :repo "awth13/org-appear")
   :hook (org-modern-mode . org-appear-mode)
   :custom
   (org-appear-autoemphasis t)  ;
@@ -1851,7 +1850,7 @@ Our exporter needs a new version of htmlize.
 
 #+begin_src emacs-lisp
 (use-package htmlize
-  :elpaca (:type git :host github :repo "hniksic/emacs-htmlize")
+  :ensure (:type git :host github :repo "hniksic/emacs-htmlize")
   )
 #+end_src
 
@@ -1934,7 +1933,7 @@ To get an overview of open action items, or of events that are important for a p
 #+end_quote
 #+begin_src emacs-lisp :noweb yes
 (use-package org-agenda
-  :elpaca nil
+  :ensure nil
   :hook (org-agenda-finalize . my-org-agenda-mode-hook)
   :bind (:map ergoemacs-override-keymap ("C-c a" . org-agenda))
   (:map org-agenda-mode-map ("q" . org-agenda-exit))
@@ -2085,7 +2084,7 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
 
 #+begin_src emacs-lisp :noweb yes
 (use-package org-gtd
-  :elpaca (:type git :host github :repo "Trevoke/org-gtd.el")
+  :ensure (:type git :host github :repo "Trevoke/org-gtd.el")
   :demand t
   :init
   (setq org-gtd-update-ack "3.0.0")
@@ -2145,7 +2144,7 @@ The column width is computed wrongly. Currently, we have a hard-coded solution t
 
 #+begin_src emacs-lisp
 (use-package org-timeblock
-  :elpaca (org-timeblock :type git
+  :ensure (org-timeblock :type git
                            :host github
                            :repo "ichernyshovvv/org-timeblock")
   :bind (:map ergoemacs-override-keymap ("C-c t" . org-timeblock))
@@ -2162,14 +2161,14 @@ The column width is computed wrongly. Currently, we have a hard-coded solution t
 At a later stage, we should incorporate[[https://github.com/rougier/nano-calendar][ nano-calendar]]. Since the package is dependent on nano-theme various strong modifications are required.
 #+begin_src emacs-lisp
 (use-package nano-calendar
-  :elpaca (:type git :host github :repo "rougier/nano-calendar")
+  :ensure (:type git :host github :repo "rougier/nano-calendar")
   :bind (:map ergoemacs-override-keymap ("C-c d" . nano-calendar)))
 #+end_src
 *** nano-agenda
 We use the [[https://github.com/rougier/nano-agenda][nano-agenda]] for a small mini-buffer style agenda overview.
 #+begin_src emacs-lisp
 (use-package nano-agenda
-  :elpaca (:type git :host github :repo "rougier/nano-agenda")
+  :ensure (:type git :host github :repo "rougier/nano-agenda")
   :bind (:map ergoemacs-override-keymap ("C-c n" . nano-agenda)))
 #+end_src
 ** TODO Caldav
@@ -2202,7 +2201,7 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 
  #+begin_src emacs-lisp :noweb yes
  (use-package mu4e
-   :elpaca `(mu4e :host github :files ("mu4e/*.el"
+   :ensure `(mu4e :host github :files ("mu4e/*.el"
                                        "build/mu4e/mu4e-meta.el"
                                        "build/mu4e/mu4e-config.el"
                                        "build/mu4e/mu4e.info")
@@ -2464,7 +2463,7 @@ See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
 
 #+begin_src emacs-lisp
 (use-package epg-config
-  :elpaca nil
+  :ensure nil
   :config
   (setq epg-gpg-program "/usr/bin/gpg"        ; What gpg program to use
         epg-user-id "Sebastian Halbig <Sebastian.Halbig@uni-marburg.de>"
@@ -2518,7 +2517,7 @@ We try to sign all mails. Encryption should also be managed automatically
 FOR NOW NO ORG-MSG
 #+begin_src emacs-lisp :tangle no
 (use-package org-msg
-  :elpaca (:type git
+  :ensure (:type git
            :host github
            :repo "jeremy-compostella/org-msg"
            :branch "mu-1.12-support-with-backward-compatibility")
@@ -2634,7 +2633,7 @@ This package allows to format the difference between two dates according to the 
 
 #+begin_src emacs-lisp
 (use-package relative-date
-  :elpaca (:type git :host github :repo "rougier/relative-date")
+  :ensure (:type git :host github :repo "rougier/relative-date")
   :demand t)
 #+end_src
 #+NAME: mu4e-my-date
@@ -2954,7 +2953,7 @@ Since auctex is old. It is quite cumbersome to get elpaca to play nicely with it
 
 #+begin_src emacs-lisp
 (use-package auctex
-  :elpaca  (auctex :pre-build (("./autogen.sh")
+  :ensure  (auctex :pre-build (("./autogen.sh")
                                ("./configure"
                                 "--without-texmf-dir"
                                 "--with-packagelispdir=./"
@@ -2971,8 +2970,8 @@ It should be fixed at some point in the future.
 
 #+begin_src emacs-lisp :noweb yes
 (use-package latex
-  :elpaca nil
-  :ensure auctex
+  :ensure nil
+  :after auctex
   :bind (:map LaTeX-mode-map
               ("C-v"         . TeX-view)
               ("\""          . my-toggle-tex-quote-region)
@@ -3328,7 +3327,7 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
 #+begin_src emacs-lisp
 
 (use-package auctex-latexmk
-  :elpaca (:type git :host github :repo "feng-li/auctex-latexmk")
+  :ensure (:type git :host github :repo "feng-li/auctex-latexmk")
   :after auctex
   :config
   (add-to-list 'TeX-command-list '("LatexMk"
@@ -3576,8 +3575,7 @@ However, since we do not believe in math environments inside math environments, 
 
 #+begin_src emacs-lisp
 (use-package math-delimiters
-  :elpaca (:url "https://github.com/oantolin/math-delimiters")
-  :ensure auctex
+  :ensure (:url "https://github.com/oantolin/math-delimiters")
   :commands math-delimiters-insert
   :custom
   (math-delimiters-display  '("\\begin{equation*}" . "\\end{equation*}"))
@@ -3586,8 +3584,7 @@ However, since we do not believe in math environments inside math environments, 
 
 #+begin_src emacs-lisp
 (use-package latex-change-env
-  :elpaca (:type git :host github :repo "slotThe/change-env")
-  :ensure auctex
+  :ensure (:type git :host github :repo "slotThe/change-env")
   :demand t
   :init
   :bind (:map LaTeX-mode-map
@@ -3708,12 +3705,12 @@ Some latex-commands that are auto-expanded by aas.
 
 #+end_src
 
-*** TODO Bibli/ography
+*** TODO Bibliography
 **** Titlecase
 
 #+begin_src emacs-lisp
 (use-package titlecase
-  :elpaca (titlecase
+  :ensure (titlecase
              :host codeberg
              :repo "acdw/titlecase.el")
   :after embark
@@ -3735,7 +3732,7 @@ We will use biblio for handling/downloading papers.
 
 #+begin_src emacs-lisp
 (use-package biblio-zbmath
-  :elpaca (biblio-zbmath :repo "~/.emacs.d/straight/repos/biblio-zbmath")
+  :ensure (biblio-zbmath :repo "~/.emacs.d/straight/repos/biblio-zbmath")
   )
 #+end_src
 **** Zotra
@@ -3779,7 +3776,7 @@ We will use biblio for handling/downloading papers.
 
 
 (use-package zotra
-  :elpaca (zotra
+  :ensure (zotra
              :host github
              :repo "mpedramfar/zotra")
   :demand t
@@ -3815,7 +3812,7 @@ We will use biblio for handling/downloading papers.
     (downcase str)))
 
 (use-package ebib
-  :elpaca (ebib
+  :ensure (ebib
              :host github
              :repo "joostkremers/ebib")
   :demand t
@@ -3980,7 +3977,7 @@ Jinx is a fast just-in-time spell-checker for Emacs. Jinx highlights misspelled 
 #+end_quote
 #+begin_src emacs-lisp
 (use-package jinx
-  :elpaca (:type git :host github :repo "minad/jinx")
+  :ensure (:type git :host github :repo "minad/jinx")
   :after vertico
   :init
   (setq ispell-alternate-dictionary "/usr/share/dict/en_GB.txt")
@@ -4021,7 +4018,7 @@ There is an integration into the completion framework, called [[https://github.c
 
 #+begin_src emacs-lisp
 (use-package nerd-icons-completion
-  :elpaca (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
+  :ensure (:type git :host github :repo "rainstormstudio/nerd-icons-completion")
   :after marginalia
   :hook (marginalia-mode . nerd-icons-completion-marginalia-setup)
   :config
@@ -4038,7 +4035,7 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
 
 #+begin_src emacs-lisp
 (use-package adaptive-wrap
-  :elpaca ( :repo "git://git.sv.gnu.org/emacs/elpa" :local-repo "adaptive-wrap" :branch "externals/adaptive-wrap" :files ("*" (:exclude ".git")))
+  :ensure ( :repo "git://git.sv.gnu.org/emacs/elpa" :local-repo "adaptive-wrap" :branch "externals/adaptive-wrap" :files ("*" (:exclude ".git")))
   :hook  ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode))
 #+end_src
 
@@ -4085,7 +4082,7 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
 
 #+begin_src emacs-lisp :noweb yes
 (use-package magit
-  :elpaca (:type git
+  :ensure (:type git
                  :host github
                  :repo "magit/magit")
   :config
@@ -4171,7 +4168,7 @@ First we define a consisted set of faces for todo keywords. This is incorporated
 
 #+begin_src emacs-lisp
 (use-package hl-todo
-  :elpaca (:type git :host github :repo "tarsius/hl-todo")
+  :ensure (:type git :host github :repo "tarsius/hl-todo")
   :config
   (setq hl-todo-exclude-modes nil)
   (setq hl-todo-keyword-faces
@@ -4192,7 +4189,7 @@ A git blame plugin for emacs inspired by VS Code’s GitLens plugin and Vim plug
 #+end_quote
 #+begin_src emacs-lisp
 (use-package blamer
-  :elpaca (:host github :repo "artawower/blamer.el")
+  :ensure (:host github :repo "artawower/blamer.el")
   :custom
   (blamer-idle-time 0.3)
   (blamer-min-offset 20)
@@ -6570,7 +6567,7 @@ For all the small additional goodies that make life a bit easier.
 Emacs-dashboard is used as the splash screen to show current tasks and projects
 #+begin_src emacs-lisp
 (use-package dashboard
-  :elpaca (:type git :host github :repo "emacs-dashboard/emacs-dashboard")
+  :ensure (:type git :host github :repo "emacs-dashboard/emacs-dashboard")
   :ensure t
   :config
   (dashboard-setup-startup-hook)
@@ -6634,7 +6631,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 
 #+begin_src emacs-lisp
 (use-package maxima
-  :elpaca (maxima :type git :flavor melpa :files ("maxima.el" "maxima-font-lock.el" ("keywords" "keywords/*") "maxima-pkg.el") :host gitlab :repo   "sasanidas/maxima")
+  :ensure (maxima :type git :flavor melpa :files ("maxima.el" "maxima-font-lock.el" ("keywords" "keywords/*") "maxima-pkg.el") :host gitlab :repo   "sasanidas/maxima")
   :bind (:map maxima-inferior-mode-map ("TAB" . maxima-complete))
   (:map maxima-mode-map          ("TAB" . maxima-complete))
   :init
@@ -6649,7 +6646,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 
 #+begin_src emacs-lisp
 (use-package visual-regexp
-  :elpaca (:host github :repo "benma/visual-regexp.el")
+  :ensure (:host github :repo "benma/visual-regexp.el")
   :bind (:map ergoemacs-override-keymap
               ("M-5" . vr/query-replace)
               ("M-%" . vr/query-replace)))
@@ -6659,7 +6656,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 ;; CHATGPT
 
 (use-package gptel
-  :elpaca (:host github :repo "karthink/gptel"))
+  :ensure (:host github :repo "karthink/gptel"))
 
 ;; (use-package emacs
 ;;   :init (column-number-mode)
@@ -6697,7 +6694,7 @@ See [[https://gitlab.com/sasanidas/maxima][maxima]]
 
 #+begin_src emacs-lisp
 (use-package org-timeblock
-  :elpaca (org-timeblock :type git
+  :ensure (org-timeblock :type git
                            :host github
                            :repo "ichernyshovvv/org-timeblock")
   :bind (:map ergoemacs-override-keymap ("M-n" . org-timeblock))
