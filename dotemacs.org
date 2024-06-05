@@ -3993,6 +3993,28 @@ Jinx is a fast just-in-time spell-checker for Emacs. Jinx highlights misspelled 
   (vertico-multiform-mode 1)
   )
 #+end_src
+** Dictcc
+We use [[https://github.com/martenlienen/dictcc.el][dict.cc]] to translate words.
+#+begin_quote
+An interface to look up translations on dict.cc without leaving emacs.
+#+end_quote
+#+begin_src emacs-lisp
+(use-package dictcc
+  :ensure (:type git :host github :repo "martenlienen/dictcc.el")
+)
+#+end_src
+** Powerthesaurus
+
+We use [[https://github.com/SavchenkoValeriy/emacs-powerthesaurus][powerthesaurus]] for fancy word juggling.
+#+begin_quote
+emacs-powerthesaurus is a plugin that integrates Emacs with the amazing powerthesaurus.org service for finding synonyms, antonyms, and related terms.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package powerthesaurus
+  :ensure (:type git :host github :repo "SavchenkoValeriy/emacs-powerthesaurus")
+)
+#+end_src
 ** Visuals
 *** TODO Nerd icons
 
@@ -5949,13 +5971,7 @@ Now we can set up flyspell and guess-language.
   :init (setq flyspell-generic-check-word-predicate  'mail-mode-flyspell-verify))
 #+end_src
 
-We use powerthesaurus for fancy word juggling.
-#+begin_src emacs-lisp
 
-;; (use-package powerthesaurus
-;;   :ensure jeison
-;;   )
-#+end_src
 
 ** Imenu list
 
