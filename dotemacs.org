@@ -1188,11 +1188,16 @@ You can register the cape-* functions in the completion-at-point-functions list.
     (progn
       (setq-local completion-at-point-functions '(cape-elisp-symbol cape-line))
       (add-to-list 'completion-at-point-functions (cape-company-to-capf #'company-yasnippet))))
+  (defun my-cape-mail-mode ()
+    "Specify lisp capes."
+    (progn
+      (setq-local completion-at-point-functions '(mu4e-complete-contact))))
   :custom
   (cape-dabbrev-min-length 3)
   :hook ((latex-mode LaTeX-mode) . my-cape-latex-mode)
   (org-mode               . my-cape-org-mode)
   (lisp-mode              . my-cape-lisp-mode)
+  (org-msg-edit-mode      . my-cape-mail-mode)
   )
 
 #+end_src
@@ -2513,14 +2518,13 @@ We try to sign all mails. Encryption should also be managed automatically
 
 #+end_src
 
-** Org-msg integration :INACTIVE:
-FOR NOW NO ORG-MSG
-#+begin_src emacs-lisp :tangle no
+** Org-msg integration
+#+begin_src emacs-lisp
 (use-package org-msg
   :ensure (:type git
            :host github
            :repo "jeremy-compostella/org-msg"
-           :branch "mu-1.12-support-with-backward-compatibility")
+           )
   :preface
   (defun org-msg-no-temp-buffer (orig-fun &rest args)
     "Advice to set `org-export-show-temporary-export-buffer' to `nil'."
@@ -2547,12 +2551,10 @@ FOR NOW NO ORG-MSG
               (mu4e-view-quit)
               (kill-buffer "*Org ASCII Export*")))
 (add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*"))))
-
-
 #+end_src
 ** TODO Mailcap
 
-[[https://www.gnu.org/software/emacs/manual/html_node/emacs-mime/mailcap.html][Mailcap.el]] is a part of emacs amd responsible for mime handling.
+[[https://www.gnu.org/software/emacs/manual/html_node/emacs-mime/mailcap.html][Mailcap.el]] is a part of emacs and responsible for mime handling.
 #+begin_quote
 Provides configuration of MIME media types from directly from Lisp and via the usual mailcap mechanism (RFC 1524). Deals with mime.types similarly.
 #+end_quote
@@ -3233,7 +3235,7 @@ We will now set up some magit to transform math expressions into something more 
 
 #+end_src
 
-See tony and tecosaur.
+See Tony and tecosaur.
 #+NAME: latex-code-folding
 #+begin_src emacs-lisp :tangle no
 (defconst my-string-offset-exceptions
