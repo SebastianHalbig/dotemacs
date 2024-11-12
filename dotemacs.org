@@ -1693,13 +1693,15 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
 #+begin_src emacs-lisp :noweb yes :tangle no
 (use-package org
   :ensure ( :package "org"
-            :local-repo "org"
-            :repo "https://git.savannah.gnu.org/git/emacs/org-mode.git"
+            ;; :local-repo "org"
+            :repo "https://code.tecosaur.net/tec/org-mode"
+            :branch "dev"
             :pre-build (progn (require 'elpaca-menu-org) (elpaca-menu-org--build))
-            :autoloads "org-loaddefs.el"
-            :build (:not elpaca--generate-autoloads-async)
-            :files (:defaults ("etc/styles/"
-                               "etc/styles/*" "doc/*.texi")))
+            ;;:autoloads "org-loaddefs.el"
+            ;;:build (:not elpaca--generate-autoloads-async)
+            ;;:files (:defaults ("etc/styles/"
+            ;;                   "etc/styles/*" "doc/*.texi"))
+            )
   :config
   (setq-default org-directory "~/Documents/org-files"
                 org-tags-column 0                    ; Tags next to header title
@@ -1924,6 +1926,29 @@ Set the style for the file.
 
 
 #+end_src
+
+** Org-prettify-math-settings
+
+#+begin_src emacs-lisp
+(use-package org-latex-preview
+  :after org
+  :ensure nil
+  :preface
+  :hook (org-mode . org-latex-preview-auto-mode)
+  :config
+  :custom
+  (org-latex-preview-width 1.0)
+  (org-latex-preview-default-process 'dvisvgm)
+  (org-latex-preview-numbered nil)
+  (org-latex-preview-auto-blacklist '(next-line previous-line))
+  (org-latex-preview-auto-generate 'live)
+  (org-latex-preview-preamble
+   '"\\documentclass{amsart}
+\\usepackage[type=org, math=fancy]{style}
+\\usepackage{xcolor}")
+  )
+#+end_src
+
 ** GTD
 In this subsection, we set up our variant of the "getting things done"-ecosystem.
 This involves:
@@ -3590,9 +3615,12 @@ However, since we do not believe in math environments inside math environments, 
   :ensure (:type git :host github :repo "slotThe/change-env")
   :demand t
   :init
-  :bind (:map LaTeX-mode-map
+  :bind ((:map org-mode-map
               ("$"       . my-insert-toggle-math)
               ("C-c r"   . latex-change-env))
+              (:map LaTeX-mode-map
+              ("$"       . my-insert-toggle-math)
+              ("C-c r"   . latex-change-env)))
   :custom
   (latex-change-env-math-display '("equation*" . "equation*"))
   (latex-change-env-math-inline  '("\\(" . "\\)"))
