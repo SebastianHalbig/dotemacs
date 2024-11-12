@@ -1197,7 +1197,8 @@ You can register the cape-* functions in the completion-at-point-functions list.
   :hook ((latex-mode LaTeX-mode) . my-cape-latex-mode)
   (org-mode               . my-cape-org-mode)
   (lisp-mode              . my-cape-lisp-mode)
-  (org-msg-edit-mode      . my-cape-mail-mode)
+  ;;(org-msg-edit-mode      . my-cape-mail-mode)
+  (mu4e-compose-mode      . my-cape-mail-mode)
   )
 
 #+end_src
@@ -2518,7 +2519,7 @@ We try to sign all mails. Encryption should also be managed automatically
 
 #+end_src
 
-** Org-msg integration
+** Org-msg integration :INACTIVE:
 #+begin_src emacs-lisp
 (use-package org-msg
   :ensure (:type git
