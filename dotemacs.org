@@ -4202,6 +4202,7 @@ Magit is a complete text-based user interface to Git. It fills the glaring gap b
 
 #+begin_src emacs-lisp :noweb yes
 (use-package magit
+  :after transient
   :ensure (:type git
                  :host github
                  :repo "magit/magit")
