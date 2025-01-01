@@ -4011,6 +4011,30 @@ This is only a rough setup to be able to write python code in emacs.
 
 
 * Various helpers
+
+** Text-based menus
+*** Transient
+[[https://github.com/magit/transient][Transient]] offers a toolkit to build text-based menues
+#+begin_quote
+Transient is the library used to implement the keyboard-driven “menus” in Magit. It is distributed as a separate package, so that it can be used to implement similar menus in other packages.
+Some things that Transient can do
+
+    Display current state of arguments
+    Display and manage lifecycle of modal bindings
+    Contextual user interface
+    Flow control for wizard-like composition of interactive forms
+    History & persistence
+    Rendering arguments for controlling CLI programs
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package transient
+  :ensure (:type git
+                 :host github
+                 :repo "magit/transient"
+                 )
+  )
+#+end_src
 ** Jinx spell checker
 [[https://github.com/minad/jinx][Jinx]] is a wonderful spell checker.
 #+begin_quote
