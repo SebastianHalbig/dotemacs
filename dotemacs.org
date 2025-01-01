@@ -71,9 +71,9 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] BUGFIX: mu4e execute "make-symbolic-link" in pre-build as sudo
 - [ ] Switch from lsp to eglot for texlab and ltex.
 - [ ] Mu4e: Do not hardcode the tags for refiling:
-  - [ ] my-prettify-tag-alist -> plist whose entries are ("tag-as-string" "tag-refile-folder" "tag-as-unicode-symbol")
-  - [ ] Remove mu4e-tagging-tags
-  - [ ] Remove hard-coded references to message tags.
+- [ ] my-prettify-tag-alist -> plist whose entries are ("tag-as-string" "tag-refile-folder" "tag-as-unicode-symbol")
+- [ ] Remove mu4e-tagging-tags
+- [ ] Remove hard-coded references to message tags.
 ** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
