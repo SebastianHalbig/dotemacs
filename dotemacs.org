@@ -1965,6 +1965,7 @@ To get an overview of open action items, or of events that are important for a p
 #+begin_src emacs-lisp :noweb yes
 (use-package org-agenda
   :ensure nil
+  :demand t
   :hook (org-agenda-finalize . my-org-agenda-mode-hook)
   :bind (:map ergoemacs-override-keymap ("C-c a" . org-agenda))
   (:map org-agenda-mode-map ("q" . org-agenda-exit))
@@ -2164,7 +2165,7 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
                   "/Entered on/ %U"))))
 (setq org-gtd-capture-templates org-capture-templates)
 #+end_src
-*** org-timeblocks
+*** org-timeblocks :INACTIVE:
 
 We use [[https://github.com/ichernyshovvv/org-timeblock][org-timeblocks]] in order to have a timetable view of the weekly tasks.
 #+begin_quote
