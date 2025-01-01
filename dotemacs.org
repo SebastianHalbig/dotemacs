@@ -4009,7 +4009,6 @@ This is only a rough setup to be able to write python code in emacs.
 
 #+end_src
 
-#+RESULTS:
 
 * Various helpers
 ** Jinx spell checker
