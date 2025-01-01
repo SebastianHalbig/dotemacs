@@ -4035,6 +4035,39 @@ Some things that Transient can do
                  )
   )
 #+end_src
+*** Casual suite
+The [[https://github.com/kickingvegas/casual-suite][casual suite]] offers text-based menus for a variety of modes.
+
+#+begin_quote
+An umbrella package to support a single installation point for all Casual user interfaces for Emacs. These user interfaces built with Transient are included via the Elisp library header Package-Requires. Included user interfaces are:
+
+    Casual - A collection of Transient user interfaces for various built-in Emacs modes.
+        Agenda - a Transient user interface for Org Agenda.
+        Bookmarks - a Transient user interface for the bookmark list.
+        Calc - a Transient user interface for Calc.
+        Dired - a Transient user interface for the Dired file manager.
+        EditKit - a Transient user interface library for Emacs editing commands.
+        IBuffer - a Transient user interface for IBuffer.
+        Info - a Transient user interface for Info.
+        I-Search - a Transient menu for I-Search.
+        RE-Builder - a Transient user interface for RE-Builder.
+    Casual Avy - a Transient user interface for Avy.
+    Casual Symbol Overlay - a Transient user interface for Symbol Overlay.
+#+end_quote
+#+begin_src emacs-lisp
+(use-package casual-suite
+  :ensure (casual-suite :host github :repo "kickingvegas/casual-suite" )
+  :demand t
+  :bind
+  (:map ergoemacs-override-keymap ("C-'" . #'casual-editkit-main-tmenu))
+  (:map calc-mode-map ("C-'" . casual-calc-tmenu))
+  (:map dired-mode-map ("C-'" . casual-dired-tmenu))
+  (:map isearch-mode-map ("C-'" . casual-isearch-tmenu))
+  (:map dired-mode-map ("C-'" . casual-dired-tmenu))
+  (:map org-agenda-mode-map ("C-'" . casual-agenda-tmenu))
+ )
+#+end_src
+
 ** Jinx spell checker
 [[https://github.com/minad/jinx][Jinx]] is a wonderful spell checker.
 #+begin_quote
