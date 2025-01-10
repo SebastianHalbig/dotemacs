@@ -4324,7 +4324,7 @@ A git blame plugin for emacs inspired by VS Code’s GitLens plugin and Vim plug
   (blamer-min-offset 20)
   :custom-face
   (blamer-face ((t :foreground "#7a88cf"
-                    :background nil
+                    :background unspecified
                     :italic t))))
 #+end_src
 * OLD :INACTIVE:noexport:
