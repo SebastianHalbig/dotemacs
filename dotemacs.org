@@ -152,7 +152,7 @@ The actual code-blocks will be found in different sections and inserted once the
 
 #+begin_src emacs-lisp :noweb yes
 <<elpaca-bootstrap>>
-<<elpaca-config>>
+
 (use-package emacs
   :demand t
   :config
@@ -235,14 +235,6 @@ Like straight, one needs to bootstrap elpaca.
 (elpaca `(,@elpaca-order))
 #+end_src
 
-#+NAME: elpaca-config
-#+begin_src emacs-lisp :tangle no
-(use-package elpaca
-  :init
-  (setf (alist-get 'remote (alist-get 'gnu-devel elpaca-menu-elpas)) "https://git.savannah.gnu.org/git/emacs/elpa.git/")
-  (elpaca-update-menus #'elpaca-menu-gnu-devel-elpa))
-(elpaca-wait)
-#+end_src
 ** use-package integration
 
 We will use elpaca in conjunction with use-package.
