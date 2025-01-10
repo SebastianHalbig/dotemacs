@@ -2983,16 +2983,11 @@ Since auctex is old. It is quite cumbersome to get elpaca to play nicely with it
 
 #+begin_src emacs-lisp
 (use-package auctex
-  :ensure  (auctex :pre-build (("./autogen.sh")
-                               ("./configure"
-                                "--without-texmf-dir"
-                                "--with-packagelispdir=./"
-                                "--with-packagedatadir=./")
-                               ("make"))
-                   :build (:not elpaca--compile-info) ;; Make will take care of this step
-                   :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
-                   :version (lambda (_) (require 'tex-site) AUCTeX-version)
-                   ))
+  :ensure (auctex :repo "https://git.savannah.gnu.org/git/auctex.git" :branch "main"
+                  :pre-build (("make" "elpa"))
+                  :build (:not elpaca--compile-info) ;; Make will take care of this step
+                  :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
+                  :version (lambda (_) (require 'tex-site) AUCTeX-version)))
 #+end_src
 
 Decoupling latex and auctex is not pretty at all.
