@@ -4709,9 +4709,6 @@ This defines an org sidebar using imenu-list.
 
 #+end_src
 
-#+RESULTS: my-org-sidebar
-: my-org-sidebar
-
 This toggles the org-sidebar.
 
 #+name: org-sidebar-toggle
@@ -4729,9 +4726,6 @@ This toggles the org-sidebar.
 
 #+end_src
 
-#+RESULTS: org-sidebar-toggle
-: my-org-sidebar-toggle
-
 Make sure tangle is applied to the base buffer and not the subtree.
 
 #+name: my-org-babel-tangle
@@ -4746,10 +4740,6 @@ Make sure tangle is applied to the base buffer and not the subtree.
     (org-babel-tangle)))
 
 #+end_src
-
-#+RESULTS: my-org-babel-tangle
-: my-org-babel-tangle
-
 
 Toggle code blocks folding, starting folded.
 
@@ -4795,9 +4785,6 @@ Toggle code blocks folding, starting folded.
 
 #+end_src
 
-#+RESULTS:
-: my-imenu-list-toggle-folding
-
 Some information for when a top node is closed
 
 #+begin_src emacs-lisp
@@ -4814,9 +4801,6 @@ Some information for when a top node is closed
 (setq hs-set-up-overlay #'my-display-code-line-counts)
 
 #+end_src
-
-#+RESULTS:
-: my-display-code-line-counts
 
 #+begin_src emacs-lisp
 
@@ -4843,10 +4827,6 @@ Some information for when a top node is closed
 
 #+end_src
 
-#+RESULTS:
-: my-imenu-list-ret-dwim
-
-
 *** Filter :INACTIVE:BINDING:
 
 This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries using the specified expression (e.g. "+HOOK +DEFER").
@@ -4859,9 +4839,6 @@ This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries usin
 
 #+end_src
 
-#+RESULTS:
-: imenu-list-refresh
-
 3 levels for org-imenu
 
 #+begin_src emacs-lisp
@@ -4869,9 +4846,6 @@ This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries usin
 (setq org-imenu-depth 3)
 
 #+end_src
-
-#+RESULTS:
-: 3
 
 
 #+begin_src emacs-lisp
@@ -4956,8 +4930,6 @@ This provide the ~my-org-imenu-filter~ that allow to filter sidebar entries usin
 
 #+end_src
 
-#+RESULTS:
-
 *** Configuration mode :INACTIVE:
 
 This section defines the ~my-config-mode~ to ease navigating and interacting with the configuration file.
@@ -5003,9 +4975,6 @@ Navigation commands using the ilist menu.
     (imenu-list-display-dwim)))
 
 #+end_src
-
-#+RESULTS:
-: my-config-mode-next-section
 
 A minor mode for configuration
 
@@ -5063,8 +5032,6 @@ An autoload function for my-config (that will load org mode).
 
 #+end_src
 
-#+RESULTS:
-
 *** Bugfix :BUGFIX:
 
 *Temporary bugfix* for babel emacs-lisp that does not take into account prologue/epilogue.
@@ -5087,8 +5054,6 @@ See https://list.orgmode.org/CA+G3_PNrdhx0Ejzw8UO7DgZ+ju1B7Ar_eTch5MMViEpKGwqq3w
             #'my-org-babel-expand-body:emacs-lisp)
 
 #+end_src
-
-#+RESULTS: org-babel-expand-body:emacs-lisp
 
 
 Some compat tools do not work as expected:
