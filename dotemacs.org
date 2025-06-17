@@ -4101,8 +4101,14 @@ gptel is a simple Large Language Model chat client for Emacs, with support for m
   (defun start-ollama ()
     (interactive)
     (get-buffer-create "*ollama*")
-    (async-shell-command "ollama serve" "*ollama*")
-  ))
+    (async-shell-command "ollama serve &" "*ollama*")
+  )
+  (defun stop-ollama ()
+    (interactive)
+    (get-buffer-create "*ollama*")
+    (async-shell-command "kill ollama" "*ollama*")
+  )
+  )
 #+end_src
 ** Jinx spell checker
 [[https://github.com/minad/jinx][Jinx]] is a wonderful spell checker.
