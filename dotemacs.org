@@ -1678,7 +1678,7 @@ The pointer for the currrent line is derived from: [[https://github.com/minad/ve
 #+end_src
 ** YASnippet
 
-We use [[https://github.com/joaotavora/yasnippet][yasnippet]] mostely for Latex.
+We use [[https://github.com/joaotavora/yasnippet][yasnippet]] mostly for Latex.
 #+begin_quote
 YASnippet is a template system for Emacs. It allows you to type an abbreviation and automatically expand it into function templates. Bundled language templates include: C, C++, C#, Perl, Python, Ruby, SQL, LaTeX, HTML, CSS and more. The snippet syntax is inspired from TextMate's syntax, you can even import most TextMate templates to YASnippet.
 #+end_quote
