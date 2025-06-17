@@ -3527,6 +3527,17 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
 #+end_src
 
 ** Cdlatex
+CDlatex does a lot of magic when it comes to editing latex. in particular, it allows for a smart usage of the <tab>-key
+
+#+begin_quote
+CDLaTeX is a minor mode supporting mainly mathematical and scientific
+text development with LaTeX.  CDLaTeX is really about speed.  AUCTeX
+(the major mode I recommend for editing LaTeX files) does have a hook
+based system for inserting environments and macros - but while this is
+useful and general, it is sometimes slow to use.  CDLaTeX tries to be
+quick, with very few and easy to remember keys, and intelligent
+on-the-fly help.
+#+end_quote
 #+begin_src emacs-lisp :noweb yes
 (use-package cdlatex
   :hook
@@ -3570,11 +3581,11 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
   (cdlatex-math-modify-alist
    '(;;  MATHCMD      TEXTCMD    ARG RMDOT IT
      (?b "\\mathbb"   "\\textbf" t   nil   nil)
-     (?f "\\mathbf"   "\\textsf" t   nil   nil)
+     (?f "\\mathbf"   "\\textbf" t   nil   nil)
      (?i "\\mathit"   "\\textit" t   nil   nil)
      (?k "\\mathfrak" nil        t   nil   nil)
      (?r "\\mathrm"   "\\textrm" t   nil   nil)
-     (?s nil          "\\textsc" t   nil   nil)
+     (?s "\\mathsf"   "\\textsf" t   nil   nil)
      (?t "\\text"     nil        t   nil   nil)
      (?u "\\lld"      ""         t   nil   nil)
      ))
@@ -3583,21 +3594,21 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
   ;; commands.
   (cdlatex-math-symbol-alist
    '(;;    LAYER 1        LAYER 2      LAYER 3
-     (?c  ("\\circ"           ""           "\\cos"   ))
-     (?C  ("\\coprod"     ""           "\\arccos"))
-     (?e  ("\\varepsilon"           "\\epsilon"         "\\exp"   ))
-     (?f  ("\\varphi"          "\\phi"          ""        ))
-     (?F  ("\\Phi"           ""           ""        ))
-     (?R  ("\\real"          "\\Re"        ""        ))
-     (?N  ("\\nat"       "\\nabla"          "\\exp"   ))
-     (?Z  ("\\integer"    ""           ""        ))
-     (?Q  ("\\rat"        "\\Theta"         ""        ))
-     (?0  ("\\varnothing" ""           ""        ))
-     (?{  ("\\subseteq"   "\\subset"         ""        ))
-     (?}  ("\\supseteq"   "\\supset"         ""        ))
-     (?.  ("\\cdot"           "\\dots"          ""        ))
-     (?^  ("\\otimes"          ""            ""        ))
-     (?ö  ("\\odot"           ""            ""        ))
+     (?c  ("\\circ"        ""           "\\cos"   ))
+     (?C  ("\\coprod"      ""           "\\arccos"))
+     (?e  ("\\varepsilon"  "\\epsilon"  "\\exp"   ))
+     (?f  ("\\varphi"      "\\phi"      ""        ))
+     (?F  ("\\Phi"         ""           ""        ))
+     (?R  ("\\real"        "\\Re"       ""        ))
+     (?N  ("\\nat"         "\\nabla"    "\\exp"   ))
+     (?Z  ("\\integer"     ""           ""        ))
+     (?Q  ("\\rat"         "\\Theta"    ""        ))
+     (?0  ("\\varnothing"  ""           ""        ))
+     (?{  ("\\subseteq"    "\\subset"   ""        ))
+     (?}  ("\\supseteq"    "\\supset"   ""        ))
+     (?.  ("\\cdot"        "\\dots"     ""        ))
+     (?^  ("\\otimes"      ""           ""        ))
+     (?ö  ("\\odot"        ""           ""        ))
      ))
   :config
   (setq cdlatex-tab-hook '(yas-expand indent-for-tab-command))
