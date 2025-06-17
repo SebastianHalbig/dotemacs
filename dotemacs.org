@@ -4008,6 +4008,24 @@ This is only a rough setup to be able to write python code in emacs.
 
 
 * Various helpers
+** Helpful
+
+[[https://github.com/Wilfred/helpful][Helpful]] is an alternative to the built-in Emacs help that provides much more contextual information.
+
+#+begin_src emacs-lisp
+(use-package helpful
+  :ensure (:type git :host github :repo "https://github.com/Wilfred/helpful")
+  :bind (:map ergoemacs-override-keymap
+              ("C-h f"   . helpful-callable) ; Look up callable
+              ("C-h v"   . helpful-variable) ; Look up variable
+              ("C-h k"   . helpful-key)      ; Look up key
+              ("C-c C-d" . helpful-at-point) ; Look up the current symbol at point
+              ("C-h F"   . helpful-function) ; Look up *F*unctions (excludes macros).
+              ("C-h C"   . helpful-command)) ; Look up *C*ommands.
+  :config
+  (setq help-window-select t)             ; Focus new help windows when opened
+  )
+#+end_src
 
 ** Text-based menus
 *** Transient
