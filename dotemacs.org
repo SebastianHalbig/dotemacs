@@ -4443,8 +4443,19 @@ A git blame plugin for emacs inspired by VS Code’s GitLens plugin and Vim plug
 #+end_src
 
 
-* OLD :INACTIVE:noexport:
+* Emacs as IDE :INACTIVE:
 
+(setq python-indent-guess-indent-offset t
+      python-indent-guess-indent-offset-verbose nil)
+
+** Python
+
+** Maxima
+
+** Singular
+
+* OLD :INACTIVE:noexport:
+** Elfeed
 We use [[https://github.com/skeeto/elfeed][elfeed]] to keep in touch with (relevant) preprints.
 
 #+begin_src emacs-lisp
@@ -4588,7 +4599,6 @@ Hook on elfeed post screen (visual mode).
     (setq-local truncate-lines nil)
     (setq-local shr-width 79)
     (set-buffer-modified-p nil)))
-
 #+end_src
 
 
@@ -4596,6 +4606,7 @@ Hook on elfeed post screen (visual mode).
 ** Bookmarks
 
 Setup bookmarks ([[file:elfeed.org][elfeed.org]]) using [[https://github.com/remyhonig/elfeed-org][elfeed-org]]. It is important to load it after elfeed such as to not load org immediately.
+No tabulation, ever.
 
 #+begin_src emacs-lisp
 
@@ -4603,7 +4614,7 @@ Setup bookmarks ([[file:elfeed.org][elfeed.org]]) using [[https://github.com/rem
   (require 'elfeed-org)
   (setq rmh-elfeed-org-files (list "~/.emacs.org/elfeed.org"))
   (elfeed-org))
-
+;; Let Emacs guess Python indent silently
 #+end_src
 ** Elfeed-Dashboard
 
