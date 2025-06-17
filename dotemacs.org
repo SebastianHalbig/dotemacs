@@ -3167,7 +3167,7 @@ It should be fixed at some point in the future.
 
    <<my-toggle-tex-quote-region>>
    <<latex-symbols-prettify>>
-   <<latex-code-folding>>
+   ; <<latex-code-folding>>
    (advice-add
    'TeX-source-correlate-sync-source
    :after
@@ -3402,7 +3402,7 @@ We will now set up some magit to transform math expressions into something more 
 
 #+end_src
 
-See Tony and tecosaur.
+See Tony and tecosaur. Currently not used!
 #+NAME: latex-code-folding
 #+begin_src emacs-lisp :tangle no
 (defconst my-string-offset-exceptions
