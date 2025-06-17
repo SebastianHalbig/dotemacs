@@ -108,6 +108,8 @@ This will generate a header at the top of the tangled file to indicate it is gen
 The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.html][early-init]] code is taken almost verbatim from [[https://protesilaos.com/emacs/dotemacs#h:7b7b5898-09f7-4128-8af0-4041f67cb729][Prot's config]] and combined with the early-init of [[https://github.com/rougier/dotemacs/blob/master/dotemacs.org][Rougier]].
 
 #+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+
 (setq frame-title-format '("%b")                ; We put the frame title into the "header"
       ring-bell-function 'ignore                ; We do not want any bells
       use-short-answers t                       ; y/n instead of yes/no
@@ -195,12 +197,12 @@ Elpaca:
 Like straight, one needs to bootstrap elpaca.
 #+NAME: elpaca-bootstrap
 #+begin_src emacs-lisp :tangle no
-(defvar elpaca-installer-version 0.8)
+(defvar elpaca-installer-version 0.11)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
 (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                              :ref nil :depth 1
+                              :ref nil :depth 1 :inherit ignore
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca--activate-package)))
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
@@ -210,7 +212,7 @@ Like straight, one needs to bootstrap elpaca.
   (add-to-list 'load-path (if (file-exists-p build) build repo))
   (unless (file-exists-p repo)
     (make-directory repo t)
-    (when (< emacs-major-version 28) (require 'subr-x))
+    (when (<= emacs-major-version 28) (require 'subr-x))
     (condition-case-unless-debug err
         (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
                   ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
@@ -230,7 +232,7 @@ Like straight, one needs to bootstrap elpaca.
   (unless (require 'elpaca-autoloads nil t)
     (require 'elpaca)
     (elpaca-generate-autoloads "elpaca" repo)
-    (load "./elpaca-autoloads")))
+    (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
 #+end_src
