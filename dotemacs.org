@@ -1687,7 +1687,8 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
 
 (use-package yasnippet
   :ensure (:type git :host github :repo "oaotavora/yasnippet")
-  :config (yas-global-mode)
+  :hook ((org-mode . yas-minor-mode-on)
+         (LaTeX-mode . yas-minor-mode-on))
   :custom
   (yas-snippet-dirs '("/home/adjoint_equivalence/.emacs.d/etc/yasnippet/snippets/"))
   (yas-inhibit-overlay-modification-protection nil))
