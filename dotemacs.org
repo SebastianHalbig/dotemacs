@@ -3859,21 +3859,25 @@ However, since we do not believe in math environments inside math environments, 
 )
 #+end_src
 
-** TO BE MODIFIED
-*** Bibliography :INACTIVE:
-We use reftex for handling the bibliography.
-Our setup follows Tony Zorman.
+** Bibliography
+*** Reftex
+We manage references using [[https://www.gnu.org/software/emacs/manual/html_mono/reftex.html][reftex]] to reference definitions, theorems, lemmas, etc.
+
+#+begin_quote
+RefTeX is a specialized package for support of labels, references, citations, and the index in LaTeX. RefTeX wraps itself round four LaTeX macros: \label, \ref, \cite, and \index. Using these macros usually requires looking up different parts of the document and searching through BibTeX database files. RefTeX automates these time-consuming tasks almost entirely. It also provides functions to display the structure of a document and to move around in this structure quickly.
+#+end_quote
 
 #+begin_src emacs-lisp
 
 (use-package reftex
+  :ensure nil
   :hook (LaTeX-mode . turn-on-reftex)
   :config (reftex-set-cite-format "\\cite[][]{%l}")
   :custom
   (reftex-plug-into-AUCTeX t)               ; Integrate reftex into auctex.
   (reftex-toc-split-windows-horizontally t) ; Show reftex TOC on the left.
   (reftex-ref-macro-prompt nil)             ; No unnecessary prompts
-  (reftex-label-alist              ; Tell reftex about some environments.
+  (reftex-label-alist                       ; Tell reftex about some environments.
    '(("section"     ?s "sec:"  "~\\ref{%s}" t (regexp "[Ss]ection\\(s\\)?"       ))
      ("definition"  ?d "def:"  "~\\ref{%s}" t (regexp "[Dd]efinition\\(s\\)?"    ))
      ("example"     ?x "ex:"   "~\\ref{%s}" t (regexp "[Ee]xample\\(s\\)?"       ))
@@ -3885,6 +3889,7 @@ Our setup follows Tony Zorman.
 
 #+end_src
 
+*** Biblio
 
 We will use [[https://github.com/cpitclaudel/biblio.el][biblio]] for grabbing bibliographic information about papers from the internet.
 #+begin_quote
@@ -3899,71 +3904,17 @@ biblio.el makes it easy to browse and gather bibliographic references and public
   )
 #+end_src
 
+Furthermore, we add a zbMath-backend for biblio.
 #+begin_src emacs-lisp
 (use-package biblio-zbmath
-  :ensure (biblio-zbmath :repo "~/.emacs.d/straight/repos/biblio-zbmath")
+  :ensure (biblio-zbmath :repo "~/.emacs.d/elpaca/repos/biblio-zbmath")
+  :bind
+  (:map LaTeX-mode-map ("C-c B" . #'biblio-zbMath-lookup))
+  (:map org-mode-map   ("C-c B" . #'biblio-zbMath-lookup))
   )
 #+end_src
-**** Zotra
 
-
-#+begin_src emacs-lisp
-(defun zotra-download-attachment-for-current-entry ()
-  (interactive)
-  (save-excursion
-    (bibtex-beginning-of-entry)
-    (let* ((entry (bibtex-parse-entry t))
-           (key (cdr (assoc "=key=" entry)))
-           (url (cdr (assoc "url" entry)))
-           (filename (concat (regularlise-file-name key) ".pdf"))
-           (filename (when entry
-                       (zotra-download-attachment
-                        url nil filename))))
-      (when filename
-        (bibtex-make-field (list "File" nil filename) t)))))
-
-
-(defun finalise-entry ()
-  (interactive)
-  (progn
-    (save-excursion
-      (bibtex-beginning-of-entry)
-      (let* ((entry (bibtex-parse-entry t))
-             (year (cdr (assoc "year" entry)))
-             (date (cdr (assoc "date" entry)))
-             (journaltitle (cdr (assoc "journaltitle" entry)))
-             (journal (cdr (assoc "journal" entry))))
-        (unless year
-          (bibtex-make-field (list "year" nil (number-to-string
-                                               (nth 5 (parse-time-string date))))))
-        (unless journal
-          (bibtex-make-field (list "journal" nil journaltitle))))
-      (bibtex-clean-entry t nil)
-      )))
-
-
-
-
-(use-package zotra
-  :ensure (zotra
-             :host github
-             :repo "mpedramfar/zotra")
-  :demand t
-  :config
-  (setq zotra-use-curl nil)
-  (setq zotra-url-retrieve-timeout 10)
-  (setq zotra-default-bibliography org-cite-global-bibliography)
-  (setq zotra-default-entry-format "biblatex")
-  (setq zotra-download-attachment-default-directory "~/Documents/mathematics/literature/pdfs/")
-  (setq zotra-backend 'zotra-server)
-  (setq zotra-local-server-directory "~/.emacs.d/zotra-server/")
-  (setq zotra-after-get-bibtex-entry-hook '(finalise-entry
-                                            ;; zotra-download-attachment-for-current-entry
-                                            bibtex-fill-entry))
-  )
-
-#+end_src
-**** Ebib
+*** Ebib
 
 #+begin_src emacs-lisp
 (defun regularlise-file-name (name)
@@ -4009,7 +3960,7 @@ biblio.el makes it easy to browse and gather bibliographic references and public
 
 #+end_src
 
-**** Citar
+*** Citar
 
 #+begin_src emacs-lisp
 (use-package citar
