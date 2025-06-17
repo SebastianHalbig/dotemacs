@@ -2967,6 +2967,134 @@ Message will be move to MAILDIR/archive/tag-dependent-folder.
 
 #+end_src
 
+* File system
+** Dired
+Emacs comes with its own directory editor called [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][dired]].
+
+#+begin_quote
+Dired makes an Emacs buffer containing a listing of a directory, and optionally some of its subdirectories as well. You can use the normal Emacs commands to move around in this buffer, and special Dired commands to operate on the listed files. Dired works with both local and remote directories.
+
+The Dired buffer is normally read-only, and inserting text in it is not allowed (however, the Wdired mode allows that, see Editing the Dired Buffer). Ordinary printing characters such as d and x are redefined for special Dired commands. Some Dired commands mark or flag the current file (that is, the file on the current line); other commands operate on the marked files or on the flagged files. You first mark certain files in order to operate on all of them with one command.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package dired
+  :ensure nil
+  :bind
+  (nil
+   :map dired-mode-map
+   ("c"      . dired-do-copy)
+   ("/"      . dired-goto-file)
+   ("+"      . dired-create-empty-file)
+   ("n"      . dired-create-directory)
+   ("p"      . dired-insert-subdir)
+   ("d"      . dired-kill-subdir)
+   ("f"      . dired-find-file-other-window)
+   ("<up>"   . (lambda () (interactive) (dired-next-line -1)))
+   ("<down>" . dired-next-line)
+   ("<left>" . dired-up-directory)
+   ("x"      . dired-do-delete)
+   ("X"      . dired-do-flagged-delete))
+  :config
+  (setq vc-follow-symlinks t)                       ; Follow sym-links without prompting
+  (setq dired-mouse-drag-files t)                   ; added in Emacs 29
+  (setq mouse-drag-and-drop-region-cross-program t) ; added in Emacs 29
+  (setq dired-kill-when-opening-new-dired-buffer t) ; added in Emacs 28
+  (setq dired-recursive-copies 'always)
+  (setq dired-recursive-deletes 'always)
+  (setq delete-by-moving-to-trash t)
+  (setq dired-dwim-target t)
+  (setq dired-listing-switches
+        "-g --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group"))
+
+#+end_src
+
+** Dirvish
+Since we want a more modern feeling for file navigation and directory editing, we will used [[https://github.com/alexluigit/dirvish][dirvish]].
+#+begin_quote
+Dirvish enhances Emacs’ built-in Dired mode, providing a visually appealing and highly customizable interface. More than just a facelift, Dirvish delivers a comprehensive suite of features, transforming Dired into a modern and fully functional file manager.
+#+end_quote
+#+begin_src emacs-lisp
+(use-package dirvish
+  :ensure (:type git :host github :repo "alexluigit/dirvish")
+  :hook ((dirvish-setup . dirvish-emerge-mode))
+  :bind
+  (:map ergoemacs-override-keymap
+        ("C-x d" . dirvish)
+        ("C-x D" . dirvish-side)
+        ("C-x a" . dirvish-quick-access)
+        :map dirvish-mode-map
+        ("SPC"      . consult-buffer)
+        ("C-<up>"   . dirvish-history-go-forward)
+        ("C-<down>" . dirvish-history-go-backward)
+        ("TAB"      . dirvish-subtree-toggle)
+        ("a"        . dirvish-quick-access)
+        ("p"        . dirvish-move)
+        ("P"        . dirvish-yank-menu)
+        ("f"        . dirvish-file-info-menu)
+        ("*"        . dirvish-mark-menu)
+        ("M-e"      . dirvish-emerge-menu)
+        ([remap dired-sort-toggle-or-edit] . dirvish-quicksort)
+        ([remap dired-do-redisplay] . dirvish-ls-switches-menu)
+        ([remap dired-do-copy] . dirvish-yank-menu))
+  :config
+  (dirvish-override-dired-mode)
+  (dirvish-define-preview exa (file)
+                          "Use `exa' to generate directory preview."
+                          :require ("exa")
+                          (when (file-directory-p file)
+                            `(shell . ("exa" "--color=always" "-al" "--group-directories-first" ,file))))
+  (add-to-list 'dirvish-preview-dispatchers 'exa)
+  (setq dirvish-quick-access-entries
+        '(("h" "~/"                                " Home")
+          ("e" "~/.emacs.d/    "                   " Emacs cache")
+          ("r" "~/Documents/mathematics/research"  " Research")
+          ("t" "~/Documents/mathematics/teaching"  " Teaching")
+          ("d" "~/Documents/organisation"          " Organisation")
+          ("t" "~/.local/share/Trash/files/" "Trash")))
+  (setq dirvish-emerge-groups '(("Research documents"
+                                 (extensions "tex" "bib")
+                                 nil nil)
+                                ("Plaintext documents"
+                                 (extensions "pdf" "epub" "org" "txt")
+                                 nil nil)
+                                ("Recent files"
+                                 (predicate . recent-files-today)
+                                 nil nil)
+                                ("Directories"
+                                 (predicate . directories)
+                                 nil nil)
+                                ("Pictures"
+                                 (extensions "jpg" "png" "svg" "gif")
+                                 t t)
+                                ("Video"
+                                 (extensions "mp4" "mkv" "webm")
+                                 t t)
+                                ("Audio"
+                                 (extensions "mp3" "flac" "wav" "ape" "aac")
+                                 t t)
+                                ("Archives"
+                                 (extensions "gz" "rar" "zip")
+                                 t t)
+                                ("Auxiliary files"
+                                 (extensions "aux" "auxlock" "bbl" "blg" "fls" "log" "out" "latexmkrc")
+                                 t t)
+                                ("other files"
+                                 (regex . ".*")
+                                 t t)
+                                ))
+  (setq dirvish-open-with-programs
+        `((,dirvish-video-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))
+          (,dirvish-audio-exts . ("tdrop" "-h" "25%" "-w" "25%" "-x" "1000" "-y" "1000" "mpv" "%f"))))
+  (setq dirvish-attributes '(vc-state file-size git-msg subtree-state all-the-icons collapse))
+  (setq dirvish-all-the-icons-height 0.8)
+  (setq dirvish-side-attributes dirvish-attributes)
+  (setq dirvish-side-preview-dispatchers (append '(vc-diff) dirvish-preview-dispatchers))
+  (setq dirvish-side-display-alist '((side . left) (slot . -1) (window-width . 0.2)))
+  (setq dirvish-side-header-line-format '(:left (project) :right (vc-info)))
+  (setq dirvish-side-mode-line-format '(:left (sort omit) :right (index)))
+  )
+#+end_src
 * Math-mode
 Writing long LaTeX documents is painful. In the following, we make set up some functionalities to make our life easier.
 We begin with some basic latex default settings.
@@ -4213,7 +4341,6 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
           )
   )
 #+end_src
-
 
 * Version control
 
