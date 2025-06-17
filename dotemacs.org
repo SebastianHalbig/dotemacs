@@ -4011,7 +4011,7 @@ This is only a rough setup to be able to write python code in emacs.
 
 ** Text-based menus
 *** Transient
-[[https://github.com/magit/transient][Transient]] offers a toolkit to build text-based menues
+[[https://github.com/magit/transient][Transient]] offers a toolkit to build text-based menus
 #+begin_quote
 Transient is the library used to implement the keyboard-driven “menus” in Magit. It is distributed as a separate package, so that it can be used to implement similar menus in other packages.
 Some things that Transient can do
