@@ -3702,6 +3702,70 @@ to insert a <generalized item> as specified by cdlatex. In case this fails, a ne
     (self-insert-command (if (numberp current-prefix-arg) current-prefix-arg 1))))
 #+end_src
 
+** Autocompletion
+Some latex-commands that are auto-expanded by aas.
+
+#+begin_src emacs-lisp
+(use-package aas
+  :after dash
+  :ensure (:url "https://github.com/ymarco/auto-activating-snippets")
+  :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
+  :config
+  (--each '(LaTeX-mode org-mode) ;; TODO integrate org-mode
+    (aas-set-snippets it
+                      :cond #'texmathp
+                      " from"     " \\from "
+                      " **"       " \\star"
+                      " mid"      " \\mid "
+                      " to"       " \\to "
+                      " mto"      " \\mapsto "
+                      " implies"  " \\implies "
+                      " in"       " \\in"
+                      " ..."      " \\dots"
+                      " blank"    " \\blank"
+                      " def"      " \\eqdef"
+                      " ~"        " \\sim"
+                      " =="       " \\cong"
+                      " ot"       " \\otimes"
+                      " bn"       " \\mathbb{N}"
+                      " bz"       " \\mathbb{Z}"
+                      " bq"       " \\mathbb{Q}"
+                      " br"       " \\mathbb{R}"
+                      " bc"       " \\mathbb{C}"
+                      " bf"       " \\mathbb{F}"
+                      " bp"       " \\mathbb{P}"
+                      "\\k"       " \\Bbbk"
+                      " fg"       " \\mathfrak{g}"
+                      " fh"       " \\mathfrak{h}"
+                      " cc"       " \\cat{C}"
+                      " cd"       " \\cat{D}"
+                      " cm"       " \\cat{M}"
+                      " cn"       " \\cat{N}"
+                      " zc"       " \\ZCat{C}"
+                      " subset"   " \\subset"
+                      " supset"   " \\supset"
+                      " ("    (lambda () (interactive)
+                                    (yas-expand-snippet "( $0 )"))
+                      " angle"    (lambda () (interactive)
+                                    (yas-expand-snippet "\\langle $0 \\rangle"))
+                      " adj"      (lambda () (interactive)
+                                    (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
+                      " hom"  (lambda () (interactive)
+                                (yas-expand-snippet "${1:\\cat{C}}(${2:s}, ${3:t})"))
+                      " coend" (lambda () (interactive)
+                                 (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
+                      " end"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
+                      " set"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\\\{$0\\\\}"))
+                      " sum"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
+                      ;;" //"    (lambda () (interactive)
+                      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
+                      " cat"   (lambda () (interactive)
+                                 (yas-expand-snippet "\\cat{${1:C}}$0")))))
+
+#+end_src
 ** Helpers
 *** TODO Toggle quotation marks
 
@@ -3821,89 +3885,11 @@ Our setup follows Tony Zorman.
 
 #+end_src
 
-*** Editing and Autocompletion :INACTIVE:
 
-
-Some latex-commands that are auto-expanded by aas.
-
-#+begin_src emacs-lisp
-(use-package aas
-  :after dash
-  :init
-  (yas-minor-mode 1)
-  (laas-mode 1)
-  :hook ((LaTeX-mode org-mode) . aas-activate-for-major-mode)
-  :config
-  (--each '(latex-mode) ;; TODO integrate qorg-mode
-    (aas-set-snippets it
-                      :cond #'(lambda()(and (texmathp) (car texmathp-why)))
-                      " :"      "\\from "
-                      " **"     "\\star"
-                      " mm"     "\\mid "
-                      " ->"     "\\to "
-                      " mt"     "\\mapsto "
-                      " =>"     "\\implies "
-                      " in"     "\\in"
-                      " ..."    "\\dots"
-                      " blank"  "\\blank"
-                      " def"    "\\defeq"
-                      " ~"      "\\sim"
-                      " =="     "\\cong"
-                      " ot"     "\\otimes"
-                      " bn"     "\\mathbb{N}"
-                      " bz"     "\\mathbb{Z}"
-                      " bq"     "\\mathbb{Q}"
-                      " br"     "\\mathbb{R}"
-                      " bc"     "\\mathbb{C}"
-                      " bf"     "\\mathbb{F}"
-                      " bp"     "\\mathbb{P}"
-                      " fg"     "\\mathfrak{g}"
-                      " fh"     "\\mathfrak{h}"
-                      " cc"     "\\cat{C}"
-                      " cd"     "\\cat{D}"
-                      " cm"     "\\cat{M}"
-                      " zc"     "\\ZCat{C}"
-                      " subset" "\\subset"
-                      " supset" "\\supset"
-                      " angled"    (lambda () (interactive)
-                                     (yas-expand-snippet "\\langle $0 \\rangle"))
-                      " adj"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\adj{${1:F}}{${2:U}}{${3:\\cc}}{${4:\\mm}} $0"))
-                      " hom"  (lambda () (interactive)
-                                (yas-expand-snippet "${1:\\cc}(${2:s}, ${3:t})"))
-                      " coend" (lambda () (interactive)
-                                 (yas-expand-snippet "\\int^{${2:C \\in \\cc}}"))
-                      " end"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\int_{${2:C \\in \\cc}}"))
-                      " set"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\\\{$0\\\\}"))
-                      " sum"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\sum_{${1:i=1}}^{${2:n}}$0"))
-                      ;;" gl"    (lambda () (interactive)
-                      ;;          (yas-expand-snippet "\\mathfrak{gl}_{${1:n}}$0"))
-                      ;;" //"    (lambda () (interactive)
-                      ;;          (yas-expand-snippet "\\frac{$1}{$2}$0"))
-                      " cat"   (lambda () (interactive)
-                                 (yas-expand-snippet "\\cat{$1}$0")))))
-
-#+end_src
-
-*** TODO Bibliography
-**** Titlecase
-
-#+begin_src emacs-lisp
-(use-package titlecase
-  :ensure (titlecase
-             :host codeberg
-             :repo "acdw/titlecase.el")
-  :after embark
-  :bind (:map embark-region-map
-              ("T" . titlecase-dwim)))
-
-#+end_src
-**** Biblio
-
-We will use biblio for handling/downloading papers.
+We will use [[https://github.com/cpitclaudel/biblio.el][biblio]] for grabbing bibliographic information about papers from the internet.
+#+begin_quote
+biblio.el makes it easy to browse and gather bibliographic references and publications from various sources, by keywords or by DOI. References are automatically fetched from well-curated sources, and formatted as BibTeX.
+#+end_quote
 
 #+begin_src emacs-lisp
 (use-package biblio
