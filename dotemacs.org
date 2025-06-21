@@ -2516,12 +2516,12 @@ See https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
 (use-package epg-config
   :ensure nil
   :config
-  (setq epg-gpg-program "/usr/bin/gpg"        ; What gpg program to use
+  (setq epg-gpg-program "/usr/bin/gpg"         ; What gpg program to use
         epg-user-id "Sebastian Halbig <Sebastian.Halbig@uni-marburg.de>"
-                                              ; GnuPG ID of your default identity
-        mml2015-use 'epg                      ; The package used for PGP/MIME.
-        mml2015-encrypt-to-self t             ; Add our own key ID to recipient list
-        mml2015-sign-with-sender t)           ; Use message sender to find a key to sign with.
+                                               ; GnuPG ID of your default identity
+        mml2015-use 'epg                       ; The package used for PGP/MIME.
+        mml-secure-openpgp-encrypt-to-self t   ; Add our own key ID to recipient list
+        mml-secure-openpgp-sign-with-sender t) ; Use message sender to find a key to sign with.
 
   (require 'epa-file)
   (epa-file-enable)
@@ -2581,22 +2581,24 @@ We try to sign all mails. Encryption should also be managed automatically
   :config
   (setq org-msg-startup "content"
         org-msg-options "toc:nil author:nil email:nil \\n:t broken-links:t"
-        org-msg-greeting-fmt "\nHi%s,\n\n"
+        ;; org-msg-greeting-fmt "\nHi%s,\n\n"
         org-msg-greeting-name-limit 3
-        org-msg-default-alternatives '((new        . (utf-8))
+        org-msg-default-alternatives '((new           . (utf-8))
                                        (reply-to-html . (utf-8))
                                        (reply-to-text . (utf-8)))
         org-msg-convert-citation t
         org-msg-signature "" )
   (advice-add 'org-msg-preview :around #'org-msg-no-temp-buffer)
-  (advice-add 'org-msg-ctrl-c-ctrl-c :around #'org-msg-no-temp-buffer)
-  (add-hook 'message-sent-hook
-            (lambda ()
-              (interactive)
-              (switch-to-buffer "*mu4e-article*")
-              (mu4e-view-quit)
-              (kill-buffer "*Org ASCII Export*")))
-(add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*"))))
+  ;; (advice-add 'org-msg-ctrl-c-ctrl-c :around #'org-msg-no-temp-buffer)
+  (add-hook 'message-send-hook 'mml-secure-message-sign-pgpmime)
+  ;; (add-hook 'message-sent-hook
+  ;;           (lambda ()
+  ;;             (interactive)
+  ;;             (switch-to-buffer "*mu4e-article*")
+  ;;             (mu4e-view-quit)
+  ;;             (kill-buffer "*Org ASCII Export*")))
+  ;; (add-to-list 'message-send-actions #' (lambda () (interactive)(kill-buffer '"*Org ASCII Export*")))
+)
 #+end_src
 ** TODO Mailcap
 
