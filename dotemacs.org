@@ -2236,6 +2236,29 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
   :config
   (org-gcal-reload-client-id-secret))
 #+end_src
+** Org roam
+[[https://github.com/org-roam/org-roam?tab=readme-ov-file][Org roam]] provides a digital variant of Luhman's Zettelkasten
+#+begin_quote
+Org-roam is a plain-text knowledge management system. It brings some of Roam's more powerful features into the Org-mode ecosystem.
+
+Org-roam borrows principles from the Zettelkasten method, providing a solution for non-hierarchical note-taking. It should also work as a plug-and-play solution for anyone already using Org-mode for their personal wiki.
+
++ Private and Secure: Edit your personal wiki completely offline, entirely in your control. Encrypt your notes with GPG. Take lasting notes in plain-text.
++ Networked Thought: Connect notes and thoughts together with ease using backlinks. Discover surprising and previously unseen connections in your notes with the built-in graph visualization.
++ Extensible and Powerful: Leverage Emacs' fantastic text-editing interface, and the mature Emacs and Org-mode ecosystem of packages.
++ Free and Open Source: Org-roam is licensed under the GNU General Public License version 3 or later.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package org-roam
+  :ensure (:url "https://github.com/org-roam/org-roam")
+  :custom
+  (org-roam-directory (concat (file-name-as-directory org-directory) "roam"))
+  :config
+  ;; If you're using a vertical completion framework, you might want a more informative completion interface
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  (org-roam-db-autosync-mode))
+#+end_src
 * Mu4e
  We use [[https://www.djcbsoftware.nl/code/mu/][mu4e]] for dealing with emails.
  #+begin_quote
