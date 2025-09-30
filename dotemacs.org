@@ -4203,11 +4203,61 @@ gptel is a simple Large Language Model chat client for Emacs, with support for m
   :ensure (:type git :host github :repo "karthink/gptel")
   :init
   (setq
-   gptel-model 'mistral:latest
-   gptel-backend (gptel-make-ollama "Ollama"
-                   :host "localhost:11434"
-                   :stream t
-                   :models '(mistral:latest)))
+   gptel-model 'deepseek-r1
+   gptel-backend (gptel-make-ollama "Ollama"  ;Ollama does run locally.
+    :host "localhost:11434"
+    :stream t
+    :models '((mistral:latest
+               :description "The latest model provided by Mistral AI"
+               :capabilities (tools)
+               )
+              (deepseek-r1
+               :description "The 8b parameter model of DeepSeek"
+               :capabilities (tools thinking))))
+   gptel-directives '((default .  "You are an AI writing assistant living inside emacs. Your job is to help in the creation of academic papers written in British English. Be precise and concise."))
+   )
+
+  (gptel-make-preset 'proofreader
+  :description "Preset for proofreading tasks"
+  :backend "Ollama"
+  :model 'mistral:latest
+  ;;:tools '("read_buffer" "spell_check" "grammar_check")
+  :system "Act as a proofreading expert tasked with correcting grammatical errors in a given text. Your job is to meticulously analyse the text, identify any grammatical mistakes, and make the necessary corrections to ensure clarity and accuracy. This includes checking for proper sentence structure, punctuation, verb tense consistency, and correct usage of words. Additionally, provide suggestions to enhance the readability and flow of the text. The goal is to polish the text so that it communicates its message effectively and professionally. The language, unless specified otherwise is British English. Oxford commas are being used."
+  :temperature 0.7)
+
+  (gptel-make-preset 'zen
+  :description "Preset for getting things done"
+  :backend "Ollama"
+  :model 'deepseek-r1\(\)
+  ;;:tools '("read_buffer" "spell_check" "grammar_check")
+  :system "You are an AI-tool livinig in an org-mode buffer and assisting with a Getting Things Done (GTD) weekly review process.
+The output should use headers and tags. Follow these two steps:
+
+### Step 1: Ask Questions
+Ask the following five questions to gather information for the review:
+1. How many tasks did you complete this week?
+2. How many tasks were deferred to next week or later?
+3. Were there any tasks that took longer than expected? If so, which ones?
+4. Did you prioritise any unimportant tasks over important ones? Please provide examples.
+5. Where do you feel most of your time was spent this week?
+
+After these questions wait for my response. Do not continue with step 2 on your own. I will answer the questions. After my answer decide whether you need more information on one of these questions or if you are prepared to write the report. If you need more information come up with follow up questions and iterate this process at most 3 times.
+If you are ready to write the report continue with step 2.
+
+### Step 2: Generate Report
+Based on the answers, generate a report with the following sections:
+
+#### a) Statistics of the Week
+- Use headers and tags to summarise the number of tasks completed and deferred.
+
+#### b) Areas of Improvement
+- Analyze where time might have been wasted or if unimportant tasks were prioritised.
+
+#### c) Summary and Recommendations
+- Summarise the week's productivity and offer recommendations for the upcoming week."
+  :temperature 0.7)
+
+
   (defun start-ollama ()
     (interactive)
     (get-buffer-create "*ollama*")
