@@ -2295,7 +2295,8 @@ Org-roam borrows principles from the Zettelkasten method, providing a solution f
                                 "--my-address=" ,"Sebastian.Halbig@uni-marburg.de"
                                 "--my-address=" ,"halbigs@mathematik.uni-marburg.de"
                                 "--my-address=" ,"xolotl.spam@web.de")
-                               ("mu" "--quiet" "index")))
+                               ("mu" "--quiet" "index"))
+                  )
    :after relative-date
    :commands (mu4e mu4e-update-index)
    :bind (:map ergoemacs-override-keymap
@@ -3155,10 +3156,10 @@ Since auctex is old. It is quite cumbersome to get elpaca to play nicely with it
 #+begin_src emacs-lisp
 (use-package auctex
   :ensure (auctex :repo "https://git.savannah.gnu.org/git/auctex.git" :branch "main"
-                  :pre-build (("make" "elpa"))
-                  :build (:not elpaca--compile-info) ;; Make will take care of this step
-                  :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
-                  :version (lambda (_) (require 'tex-site) AUCTeX-version)))
+        :pre-build (("make" "elpa"))
+        :build (:not elpaca--compile-info) ;; Make will take care of this step
+        :files ("*.el" "doc/*.info*" "etc" "images" "latex" "style")
+        :version (lambda (_) (require 'tex-site) AUCTeX-version)))
 #+end_src
 
 Decoupling latex and auctex is not pretty at all.
