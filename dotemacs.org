@@ -1953,7 +1953,7 @@ Set the style for the file.
   :after org
   :ensure nil
   :preface
-  :hook (org-mode . org-latex-preview-auto-mode)
+  :hook (org-mode . org-latex-preview-mode)
   :config
   :custom
   (org-latex-preview-width 1.0)
