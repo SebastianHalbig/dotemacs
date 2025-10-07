@@ -51,17 +51,11 @@ The documentation of each package-based (sub-)section is build like follows:
 + Optionally some explanations why (but not how) things are done in a certain way.
 
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
-** [2/19] Open Tasks
-- [ ] Write a transient for elpaca.
-- [X] Figure out why <<nerd-font-settings>> are not applied by emacsclient.
-- [ ] Modify elpacs keybindings.
+** [1/16] Open Tasks
 - [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
 - [ ] Use Werner's nomenclature in colour-coding instead of the hex values.
-- [ ] Change colour of org blocks. For example purplish-white (#f4f6fb).
-- [ ] Modify the Victor mono font to be compatible with Roboto mono.
 - [ ] Write a transient (i.e. 21st century) date-picker.
 - [ ] Create/use a template system for latex-based projects.
-- [X] Move the early-loading of org to a later stage.
 - [ ] Org agenda align tags.
 - [ ] BUGFIX: Only in some situations does org-gtd expand "inbox" to "inbox.org". this is weird.
 - [ ] Org caldav integration
@@ -69,7 +63,6 @@ This philosophy results in relatively short explanations and at least tries to a
 - [ ] BUGFIX: org-timeblock columns has a wrong width.(See the subsection)
 - [ ] BUGFIX: org-timeblock-quit close all agenda buffers.
 - [ ] BUGFIX: mu4e execute "make-symbolic-link" in pre-build as sudo
-- [ ] Switch from lsp to eglot for texlab and ltex.
 - [ ] Mu4e: Do not hardcode the tags for refiling:
 - [ ] my-prettify-tag-alist -> plist whose entries are ("tag-as-string" "tag-refile-folder" "tag-as-unicode-symbol")
 - [ ] Remove mu4e-tagging-tags
@@ -589,6 +582,18 @@ Dash]] makes working with lists better.
 (use-package dash
   :demand t)
 #+end_src
+
+** Elpaca transient
+
+A small internal transient menu to explore elpaca.
+#+begin_src emacs-lisp
+(use-package elpaca-transient
+  :after (elpaca transient)
+  :ensure nil
+  :load-path "~/.emacs.d/elpaca/repos/elpaca-transient/"
+)
+#+end_src
+
 * Design :FACE:HOOK:BIND:
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
