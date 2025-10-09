@@ -1767,8 +1767,8 @@ A extensive documentation can be found [[https://orgmode.org/org.html][here]].
                   ("=" (:weight bold :inherit lambda-urgent))
                   ("~" (lambda-meek))
                   ("+" (:box t :inverse-video t))))
-                <<org-html-export-settings>>                ; Export settings
-  <<org-faces>>
+  <<org-html-export-settings>>                               ; Export settings
+  <<org-faces>>                                              ; Changes some faces
   :hook
   <<org-hooks>>
   :custom-face
@@ -1801,6 +1801,15 @@ We want code-blocks and quotations to stand out.
     (if (eq lambda-themes-active-theme 'light) (my-org-blocks-light) (my-org-blocks-dark))))
 
 (add-hook 'lambda-themes-after-load-theme-hook #'my-org-colourise)
+
+;; moving tags to the right
+
+(add-to-list 'font-lock-extra-managed-props 'display)
+(font-lock-add-keywords 'org-mode
+                        `(("^.*?\\( \\)\\(:[[:alnum:]_@#%:]+:\\)$"
+                           (1 `(face nil
+                                     display (space :align-to (- right ,(org-string-width (match-string 2)) 3)))
+                              prepend))) t)
 #+end_src
 
 Finally, we have some hooks to add.
@@ -2073,18 +2082,25 @@ To get an overview of open action items, or of events that are important for a p
 ;;  Auto-update tags whenever the state is changed
 (setq org-tag-alist
       '((:startgroup)
-        ("mandatory"   . ?a)
-        ("dispensable" . ?d)   ; Put mutually exclusive tags here
+        ("init"         . ?i)
+        ("draft"        . ?d)
+        ("writing"      . ?w)
+        ("preprint"     . ?p)
+        ("published"    . ?P)
+        ("abandoned"    . ?a)
         (:endgroup)
-        ("bureaucracy" . ?b)
-        ("leisure"     . ?l)
-        ("music"       . ?m)
-        ("orga"        . ?o)
-        ("progn"       . ?p)
-        ("research"    . ?r)
-        ("sports"      . ?s)
-        ("teaching"    . ?t)
-        (""            . ?x)
+        (:startgroup)
+        ("extension"    . ?e)
+        ("polish"       . ?o)
+        (:endgroup)
+        (:startgroup)
+        ("leisure"      . ?l)
+        ("admin"        . ?A)
+        ("coding"       . ?c)
+        ("research"     . ?r)
+        ("teaching"     . ?t)
+        (:endgroup)
+        (""             . ?x)
         ))
 
 #+end_src
