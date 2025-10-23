@@ -3961,6 +3961,10 @@ Furthermore, we add a zbMath-backend for biblio.
   :bind
   (:map LaTeX-mode-map ("C-c B" . #'biblio-zbMath-lookup))
   (:map org-mode-map   ("C-c B" . #'biblio-zbMath-lookup))
+  :config
+  (put 'biblio-zbMath-query-history 'history-length 50)
+  (with-eval-after-load 'savehist
+  (add-to-list 'savehist-additional-variables 'biblio-zbMath-query-history))
   )
 #+end_src
 
