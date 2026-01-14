@@ -717,7 +717,6 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   :ensure (:type git :host github :repo "lambda-emacs/lambda-themes")
   :after dash
   :init
-  <<werner-colours>>
   :demand t
   :custom
   (lambda-themes-set-italic-comments t)  ; Italic comments.
@@ -1461,7 +1460,7 @@ YASnippet is a template system for Emacs. It allows you to type an abbreviation 
   (yas-inhibit-overlay-modification-protection nil))
 
 #+end_src
-* Org mode
+* Org mode :HOOK:BIND:FACE:
 
 [[https://orgmode.org/][Org mode]] is arguably one of the best features of emacs.
 
@@ -1543,8 +1542,8 @@ We want code-blocks and quotations to stand out.
 (defun my-org-blocks-light ()
   "Colourise org-blocks in a light theme."
   (progn
-    (set-face-attribute 'org-block nil :background "#f9f7f0");;large wild conv.(slight darker)
-    (set-face-attribute 'org-quote nil :background "#f9f7f0");;large wild conv.(slight darker)
+    (set-face-attribute 'org-block nil :background "#f9f7f0");;large wild conv.(slight. darker)
+    (set-face-attribute 'org-quote nil :background "#f9f7f0");;large wild conv.(slight. darker)
     ))
 
 (defun my-org-blocks-dark ()
