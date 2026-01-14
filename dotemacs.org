@@ -1578,19 +1578,6 @@ Finally, we have some hooks to add.
 (org-mode . my-org-colourise)                             ; colourise blocks
 (lambda-themes-after-load-theme-hook .my-org-colourise)   ; change colours if the theme changes
 #+end_src
-
-
-*** A short elisp helper
-
-A shortcut for emacs-lisp source blocks. Type "<S" (in org-mode) then press tab.
-
-#+begin_src emacs-lisp
-(use-package org-tempo
-  :ensure nil
-  :custom
-  (add-to-list 'org-structure-template-alist
-             '("S" . "src emacs-lisp")))
-#+end_src
 ** Modern Org mode
 #+begin_src emacs-lisp
 
