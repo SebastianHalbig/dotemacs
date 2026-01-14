@@ -582,16 +582,6 @@ Dash]] makes working with lists better.
 (use-package dash
   :demand t)
 #+end_src
-** Elpaca transient
-
-A small internal transient menu to explore elpaca.
-#+begin_src emacs-lisp
-(use-package elpaca-transient
-  :after (elpaca transient)
-  :ensure nil
-  :load-path "~/.emacs.d/elpaca/repos/elpaca-transient/"
-)
-#+end_src
 * Design :FACE:HOOK:BIND:
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
@@ -4604,6 +4594,17 @@ A git blame plugin for emacs inspired by VS Code’s GitLens plugin and Vim plug
 
 ** Singular
 
+* Other
+** Elpaca transient
+
+A small internal transient menu to explore elpaca.
+#+begin_src emacs-lisp
+(use-package elpaca-transient
+  :after (elpaca transient)
+  :ensure nil
+  :load-path "~/.emacs.d/elpaca/repos/elpaca-transient/"
+)
+#+end_src
 * OLD :INACTIVE:noexport:
 ** Elfeed
 We use [[https://github.com/skeeto/elfeed][elfeed]] to keep in touch with (relevant) preprints.
