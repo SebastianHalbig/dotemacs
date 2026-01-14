@@ -1922,7 +1922,7 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
    :map org-gtd-clarify-map
    ("C-c C-w" . org-gtd-organize)
    :map org-agenda-mode-map
-   ("C-c :" . org-gtd-agenda-transient
+   ("C-c :" . org-gtd-agenda-transient)
    )
   :custom-face
   (org-agenda-done ((t :strike-through nil)))
@@ -1950,32 +1950,13 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
                   "/Entered on/ %U"))))
 (setq org-gtd-capture-templates org-capture-templates)
 #+end_src
-*** org-timeblocks :INACTIVE:
+*** nano-calendar
 
-We use [[https://github.com/ichernyshovvv/org-timeblock][org-timeblocks]] in order to have a timetable view of the weekly tasks.
+The [[https://github.com/rougier/nano-calendar][ nano-calendar]] package shows a calendar with a heat meat depending on tasks for a given day.
+
 #+begin_quote
-Emacs package that provides interactive multiple-day timeblock view for orgmode tasks.
+This library offers an alternative to calendar. It’s very similar and offer only a few options, like the possibility to color day according to the number of item in the org-agenda.
 #+end_quote
-
-The column width is computed wrongly. Currently, we have a hard-coded solution to make them approx. 30 pixel smaller.
-
-#+begin_src emacs-lisp
-(use-package org-timeblock
-  :ensure (org-timeblock :type git
-                           :host github
-                           :repo "ichernyshovvv/org-timeblock")
-  :bind (:map ergoemacs-override-keymap ("C-c t" . org-timeblock))
-        (:map org-timeblock-mode-map    ("q"     . org-timeblock-quit))
-  :after (org-agenda)
-  :demand t
-  :custom
-  (org-timeblock-scale-options '(7 . 21))
-  (org-timeblock-span 7)
-  )
-#+end_src
-*** TODO nano-calendar :INACTIVE:
-
-At a later stage, we should incorporate[[https://github.com/rougier/nano-calendar][ nano-calendar]]. Since the package is dependent on nano-theme various strong modifications are required.
 #+begin_src emacs-lisp
 (use-package nano-calendar
   :ensure (:type git :host github :repo "rougier/nano-calendar")
@@ -4128,7 +4109,7 @@ emacs-powerthesaurus is a plugin that integrates Emacs with the amazing powerthe
 )
 #+end_src
 ** Visuals
-*** TODO Nerd icons
+*** Nerd icons
 
 [[https://github.com/rainstormstudio/nerd-icons.el][Nerd icons]] allows us to use nerd fonts for icons.
 We use the "fake" proportional variant, see this [[https://github.com/ryanoasis/nerd-fonts/discussions/1103][discussion]].
@@ -4188,6 +4169,18 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
   )
 #+end_src
 
+*** Rainbow mode
+
+Rainbow mode displays colours as background behind their hex strings.
+#+begin_quote
+This minor mode sets background color to strings that match color
+names, e.g. #0000ff is displayed in white with a blue background.
+#+end_quote
+
+#+begin_src emacs-lisp
+(use-package rainbow-mode
+  :ensure t)
+#+end_src
 * Version control
 
 We use [[https://magit.vc/][magit]] in combination with git for version control.
@@ -4334,7 +4327,6 @@ A git blame plugin for emacs inspired by VS Code’s GitLens plugin and Vim plug
                     :background unspecified
                     :italic t))))
 #+end_src
-
 
 * Emacs as IDE :INACTIVE:
 
