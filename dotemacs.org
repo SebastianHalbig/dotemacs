@@ -582,7 +582,6 @@ Dash]] makes working with lists better.
 (use-package dash
   :demand t)
 #+end_src
-
 ** Elpaca transient
 
 A small internal transient menu to explore elpaca.
@@ -593,7 +592,6 @@ A small internal transient menu to explore elpaca.
   :load-path "~/.emacs.d/elpaca/repos/elpaca-transient/"
 )
 #+end_src
-
 * Design :FACE:HOOK:BIND:
 The design is based on a variant of [[https://github.com/rougier/nano-emacs][nano-emacs]] called [[https://github.com/Lambda-Emacs/lambda-themes][lambda-themes]].
 
@@ -994,7 +992,7 @@ Choosing this theme is done when we set up the modeline due to the fact that we 
   (outline-8 ((t (:height 1.0 :foreground unspecified :inherit lambda-strong))))
   )
 #+end_src
-** TODO The font stack
+** The font stack
 
 This is the font stack we install:
 
@@ -1073,7 +1071,6 @@ If one evokes "emacs" this is automatically the case; for "emacsclient" some car
 
 We additionally define some fonts for common character sets.
 To get a list of all character sets type "M-x list-character-sets"
-
 ** Lambda modeline
 
 The modeline is [[https://github.com/Lambda-Emacs/lambda-line][lambda-line]].
@@ -1871,7 +1868,6 @@ Org mode provides a way to toggle visibility of hidden elements such as emphasis
   (org-appear-inside-latex t)  ;
   )
 #+end_src
-
 ** TODO HTML-Export
 
 We treat ~code~ and =verbatim= faces differently among export.
@@ -1959,7 +1955,6 @@ Set the style for the file.
 
 
 #+end_src
-
 ** Org-prettify-math-settings
 
 #+begin_src emacs-lisp
@@ -1981,7 +1976,6 @@ Set the style for the file.
 \\usepackage{xcolor}")
   )
 #+end_src
-
 ** GTD
 In this subsection, we set up our variant of the "getting things done"-ecosystem.
 This involves:
@@ -2159,18 +2153,23 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
   :ensure (:type git :host github :repo "Trevoke/org-gtd.el")
   :demand t
   :init
-  (setq org-gtd-update-ack "3.0.0")
+  (setq org-gtd-update-ack "4.0.0")
   :custom
   (org-edna-use-inheritance t)
   (org-gtd-organize-hooks '(org-gtd-set-area-of-focus org-set-tags-command))
-  :config
-  (setq org-gtd-directory (car org-agenda-files))
-  (setq org-gtd-canceled "CANCELED")
-  (setq org-gtd-inbox (concat (file-name-as-directory org-gtd-directory) "inbox"))
-  (setq org-gtd-archive-location '(lambda() (concat
-                                             (file-name-as-directory org-gtd-directory)
-                                             "archive.org::datetree/")))
+  (org-gtd-directory (car org-agenda-files))
+  (org-gtd-inbox (concat (file-name-as-directory org-gtd-directory) "inbox"))
+  (org-gtd-archive-location '(lambda() (concat
+                                        (file-name-as-directory org-gtd-directory)
+                                        "archive.org::datetree/")))
+  (org-todo-keywords '((sequence "TODO" "NEXT" "WAIT" "|" "DONE" "CANCEL")))
+  (org-gtd-keyword-mapping '((todo . "TODO")
+                             (next . "NEXT")
+                             (wait . "WAIT")
+                             (done . "DONE")
+                             (canceled . "CANCEL")))
   <<org-gtd-capture-templates>>
+  :config
   (org-edna-mode)
   (org-gtd-mode 1)
   :bind
@@ -2178,7 +2177,10 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
    ("C-c d e" . org-gtd-engage)
    ("C-c d p" . org-gtd-process-inbox)
    :map org-gtd-clarify-map
-   ("C-c C-w" . org-gtd-organize))
+   ("C-c C-w" . org-gtd-organize)
+   :map org-agenda-mode-map
+   ("C-c :" . org-gtd-agenda-transient
+   )
   :custom-face
   (org-agenda-done ((t :strike-through nil)))
   (org-done  ((t :strike-through nil)))
@@ -2248,6 +2250,7 @@ We want to sync the agenda/calendar over multiple devices. Since we're lazy we w
 
 #+begin_src emacs-lisp
 (use-package org-gcal
+  :after org
   :init
   (setq org-gcal-client-id         "609704434601-f52c59f8oo68jg4nfkkrbhfrf3senhbl.apps.googleusercontent.com"
         org-gcal-client-secret     "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"
@@ -2302,12 +2305,12 @@ Org-roam borrows principles from the Zettelkasten method, providing a solution f
                                        "build/mu4e/mu4e.info")
                   :repo "djcb/mu"
                   :main "mu4e/mu4e.el"
-                  :pre-build (("./autogen.sh")
-                              ("ninja" "-C" "build")
-                              (make-symbolic-link (expand-file-name "./build/mu/mu")
-                                                  (expand-file-name "/bin/mu")
-                                                  t)
-                              )
+                  ;; :pre-build (("./autogen.sh")
+                  ;;             ("ninja" "-C" "build")
+                  ;;             (make-symbolic-link (expand-file-name "./build/mu/mu")
+                  ;;                                 (expand-file-name "/bin/mu")
+                  ;;                                 t)
+                  ;;             )
                   :build (:not elpaca--compile-info)
                   :post-build (("mu" "init" "--quiet" "--maildir" ,
                                 (concat (file-name-as-directory (getenv "HOME"))
@@ -2365,7 +2368,6 @@ Org-roam borrows principles from the Zettelkasten method, providing a solution f
  #+end_src
 ** The :custom settings
 
-
 #+NAME: mu4e-custom
 #+begin_src emacs-lisp :tangle no
 (mu4e-update-interval 300             "Update every five minutes")
@@ -2415,7 +2417,7 @@ Org-roam borrows principles from the Zettelkasten method, providing a solution f
 (setq user-mail-address "SebastianHalbig@gmx.de")
 
 (setq professional-mail-signature (concat
-                      "Sebastian Halbig — https://sebastianhalbig.github.io/main.html\n"
+                      "Sebastian Halbig — https://sebastianhalbig.github.io\n"
                       "BBB home room: "
                       "https://webconf.hrz.uni-marburg.de/n/rooms/qyd-8ge-d1k-vuk/join\n"
                       "Philipps-Universität Marburg — Research Group Algebraic Lie Theory\n"
@@ -2446,7 +2448,7 @@ We define the various mail contexts.
                       (mu4e-maildir-shortcuts . (("/Web/inbox" . ?i)
                                                  ("/Web/archive" . ?a)
                                                  ("/Web/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.staff.uni-marburg.de")
+                      (smtpmail-smtp-server . "smtp.web.de")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
 #+end_src
@@ -2472,7 +2474,7 @@ We define the various mail contexts.
                       (mu4e-maildir-shortcuts . (("/TUD/inbox" . ?i)
                                                  ("/TUD/archive" . ?a)
                                                  ("/TUD/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.uni-marburg.de")
+                      (smtpmail-smtp-server . "msx.tu-dresden.de")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
 #+end_src
@@ -2515,7 +2517,7 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
               :match-func (lambda (msg)
                             (when msg (mu4e-message-contact-field-matches
                                        msg :to "halbigs@mathematik.uni-marburg.de")))
-              :vars `((user-mail-address . "Sebastian.Halbig@uni-marburg.de") ;;"halbigs@mathematik.uni-marburg.de"
+              :vars `((user-mail-address . "halbigs@mathematik.uni-marburg.de")
                       (user-full-name . "Sebastian Halbig")
                       (message-signature . ,professional-mail-signature)
                       (mu4e-sent-folder . "/MarburgInternal/sent")
@@ -2524,7 +2526,7 @@ Currently we reroute the mail to the main account to avoid a bug of the mail ser
                       (mu4e-maildir-shortcuts . (("/MarburgInternal/inbox" . ?i)
                                                  ("/MarburgInternal/archive" . ?a)
                                                  ("/MarburgInternal/sent" . ?s)))
-                      (smtpmail-smtp-server . "smtp.uni-marburg.de") ;; "smtp.mathematik.uni-marburg.de"
+                      (smtpmail-smtp-server . "smtp.mathematik.uni-marburg.de")
                       (smtpmail-stream-type . starttls)
                       (smtpmail-smtp-service . 587))))
 #+end_src
@@ -3021,7 +3023,6 @@ Message will be move to MAILDIR/archive/tag-dependent-folder.
 (define-key mu4e-headers-mode-map (kbd "r") 'mu4e-headers-mark-for-archive)
 
 #+end_src
-
 * File system
 ** Dired
 Emacs comes with its own directory editor called [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][dired]].
@@ -3063,7 +3064,6 @@ The Dired buffer is normally read-only, and inserting text in it is not allowed 
         "-g --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group"))
 
 #+end_src
-
 ** Dirvish
 Since we want a more modern feeling for file navigation and directory editing, we will used [[https://github.com/alexluigit/dirvish][dirvish]].
 #+begin_quote
@@ -3153,7 +3153,6 @@ Dirvish enhances Emacs’ built-in Dired mode, providing a visually appealing an
 * Math-mode
 Writing long LaTeX documents is painful. In the following, we make set up some functionalities to make our life easier.
 We begin with some basic latex default settings.
-
 ** Auctex and LaTeX
 
 The bedrock of editing LaTeX in emacs is [[https://www.gnu.org/software/auctex/manual/auctex.html][auctex]].
@@ -3575,7 +3574,6 @@ We compile LaTeX files using latexmk and view the resulting pdf in evince.
   )
 
 #+end_src
-
 ** Cdlatex
 CDlatex does a lot of magic when it comes to editing latex. in particular, it allows for a smart usage of the <tab>-key
 
@@ -3751,7 +3749,6 @@ to insert a <generalized item> as specified by cdlatex. In case this fails, a ne
     ;; insert according to the universal argument
     (self-insert-command (if (numberp current-prefix-arg) current-prefix-arg 1))))
 #+end_src
-
 ** Autocompletion
 Some latex-commands that are auto-expanded by aas.
 
@@ -3822,7 +3819,7 @@ Some latex-commands that are auto-expanded by aas.
 We want to be able to toggle quotation marks quickly.
 Expected behaviour (assuming ``text'' as quotation marks in this example):
 (i)   * some text -> ``* some text
-(ii) ``quoted text* -> ``quoted text''
+(ii) ``open quotation and text* -> ``open quotation and text''
 (iii) /marked text* -> ``marked text''
 (iv) ``/quoted and marked text*'' -> quoted and marked text
 
@@ -3833,8 +3830,8 @@ TODO: Since there are various different quotation signs (of different length) th
   (interactive)
   (if (use-region-p)
       (save-excursion
-        (let* ((beg-pos (mark))
-               (end-pos (point))
+        (let* ((beg-pos (min (mark) (point)))
+               (end-pos (max (mark) (point)))
                (start-quoted nil)
                (end-quoted nil))
           (if (> beg-pos 1)
@@ -3908,7 +3905,6 @@ However, since we do not believe in math environments inside math environments, 
     (latex-change-env-cycle '(equation* align* gather* equation align gather)))
 )
 #+end_src
-
 ** Bibliography
 *** Reftex
 We manage references using [[https://www.gnu.org/software/emacs/manual/html_mono/reftex.html][reftex]] to reference definitions, theorems, lemmas, etc.
@@ -4069,7 +4065,6 @@ Settings for bibtex
       org-image-actual-width `( ,(truncate (* (frame-pixel-width) 0.85)))
       org-startup-with-inline-images t)
 #+end_src
-
 ** Org bib mode :HOOK:
 
 Dedicated header line for org-bib-mode
@@ -4127,7 +4122,6 @@ An autoload function for my-config (that will load org mode).
   t)
 
 #+end_src
-
 ** TODO Python :DEFER:MODE:
 
 This is only a rough setup to be able to write python code in emacs.
@@ -4140,7 +4134,6 @@ This is only a rough setup to be able to write python code in emacs.
   (advice-add 'python-mode :before 'elpy-enable))
 
 #+end_src
-
 
 * Various helpers
 ** Helpful
@@ -4161,7 +4154,6 @@ This is only a rough setup to be able to write python code in emacs.
   (setq help-window-select t)             ; Focus new help windows when opened
   )
 #+end_src
-
 ** Text-based menus
 *** Transient
 [[https://github.com/magit/transient][Transient]] offers a toolkit to build text-based menus
@@ -4217,7 +4209,6 @@ An umbrella package to support a single installation point for all Casual user i
   (:map org-agenda-mode-map ("C-'" . casual-agenda-tmenu))
  )
 #+end_src
-
 ** LLMs
 [[https://github.com/karthink/gptel?tab=readme-ov-file#ollama][Gptel]] offers an integration of many large language models into emacs.
 #+begin_quote
@@ -4228,34 +4219,87 @@ gptel is a simple Large Language Model chat client for Emacs, with support for m
   :ensure (:type git :host github :repo "karthink/gptel")
   :init
   (setq
-   gptel-model 'deepseek-r1
+   gptel-model 'ministral-3:3b
    gptel-backend (gptel-make-ollama "Ollama"  ;Ollama does run locally.
-    :host "localhost:11434"
-    :stream t
-    :models '((mistral:latest
-               :description "The latest model provided by Mistral AI"
-               :capabilities (tools)
-               )
-              (deepseek-r1
-               :description "The 8b parameter model of DeepSeek"
-               :capabilities (tools thinking))))
+                   :host "localhost:11434"
+                   :stream t
+                   :models '((ministral-3:3b
+                              :description "The latest small model provided by Mistral AI"
+                              :capabilities (tools)
+                              )
+                             (ministral-3:8b
+                              :description "The latest medium-small model provided by Mistral AI"
+                              :capabilities (tools)
+                              )
+                             (deepseek-r1
+                              :description "The 8b parameter model of DeepSeek"
+                              :capabilities (tools thinking))))
    gptel-directives '((default .  "You are an AI writing assistant living inside emacs. Your job is to help in the creation of academic papers written in British English. Be precise and concise."))
    )
 
+  (defvar math-rag-python
+    (expand-file-name "~/.ollama/ingest/.venv/bin/python"))
+
+  (defvar math-rag-engine
+    (expand-file-name "~/.ollama/ingest/query_engine.py"))
+
+  (defvar math-rag-workspace
+    (expand-file-name "~/.ollama/ingest/rag_workspace"))
+
+  (defun math-rag-query (query)
+    "Run the local math RAG engine inside its venv and return JSON."
+    (let* ((cmd (format
+                 "%s %s --workspace %s --query %S --json"
+                 math-rag-python
+                 math-rag-engine
+                 math-rag-workspace
+                 query))
+           (output (shell-command-to-string cmd)))
+      (json-parse-string output :array-type 'list)))
+
+  (gptel-make-tool
+   :name "search_math_library"
+   :function #'math-rag-query
+   :description "Search your local mathematical research library. Call with '<Type>:<Question>'.
+Use types: Definition, Theorem, Proof, or Summarise based on context.
+Use this when the user asks for specific mathematical concepts or research details.
+"
+   :args '((:name "query"
+                  :type "string"
+                  :description "The mathematical concept or question to search for."))
+   :category "research")
+
+
+  (gptel-make-preset "agentic-writer"
+    :description "Preset for a LaTeX writing assistant."
+    :backend (gptel-get-backend "Ollama") ;; Assumes an Ollama backend is defined
+    :model 'ministral-3:3b
+    :tools '("search_math_library")
+    :system "You are a writing assistant for mathematical research. Your main duty is text expansion based on structured requests of the form: <type>:<structure>.
+
+When provided with a request, use the 'search_math_library' tool to find relevant definitions, theorems, or proofs. Avoid conversational preambles like 'A Hopf algebra is...'.
+
+Strict Requirements:
+1. Language: British English.
+2. Punctuation: Use Oxford commas consistently.
+3. Output: Provide polished LaTeX-ready text. Use environemnts and functions appropriately.
+4. Logic: Use the tool with the format 'Type:Concept' before expanding the text."
+    :temperature 0.7)
+
   (gptel-make-preset 'proofreader
-  :description "Preset for proofreading tasks"
-  :backend "Ollama"
-  :model 'mistral:latest
-  ;;:tools '("read_buffer" "spell_check" "grammar_check")
-  :system "Act as a proofreading expert tasked with correcting grammatical errors in a given text. Your job is to meticulously analyse the text, identify any grammatical mistakes, and make the necessary corrections to ensure clarity and accuracy. This includes checking for proper sentence structure, punctuation, verb tense consistency, and correct usage of words. Additionally, provide suggestions to enhance the readability and flow of the text. The goal is to polish the text so that it communicates its message effectively and professionally. The language, unless specified otherwise is British English. Oxford commas are being used."
-  :temperature 0.7)
+    :description "Preset for proofreading tasks"
+    :backend "Ollama"
+    :model 'mistral:latest
+    ;;:tools '("read_buffer" "spell_check" "grammar_check")
+    :system "Act as a proofreading expert tasked with correcting grammatical errors in a given text. Your job is to meticulously analyse the text, identify any grammatical mistakes, and make the necessary corrections to ensure clarity and accuracy. This includes checking for proper sentence structure, punctuation, verb tense consistency, and correct usage of words. Additionally, provide suggestions to enhance the readability and flow of the text. The goal is to polish the text so that it communicates its message effectively and professionally. The language, unless specified otherwise is British English. Oxford commas are being used."
+    :temperature 0.7)
 
   (gptel-make-preset 'zen
-  :description "Preset for getting things done"
-  :backend "Ollama"
-  :model 'deepseek-r1\(\)
-  ;;:tools '("read_buffer" "spell_check" "grammar_check")
-  :system "You are an AI-tool livinig in an org-mode buffer and assisting with a Getting Things Done (GTD) weekly review process.
+    :description "Preset for getting things done"
+    :backend "Ollama"
+    :model 'deepseek-r1\(\)
+    ;;:tools '("read_buffer" "spell_check" "grammar_check")
+    :system "You are an AI-tool livinig in an org-mode buffer and assisting with a Getting Things Done (GTD) weekly review process.
 The output should use headers and tags. Follow these two steps:
 
 ### Step 1: Ask Questions
@@ -4280,19 +4324,19 @@ Based on the answers, generate a report with the following sections:
 
 #### c) Summary and Recommendations
 - Summarise the week's productivity and offer recommendations for the upcoming week."
-  :temperature 0.7)
+    :temperature 0.7)
 
 
   (defun start-ollama ()
     (interactive)
     (get-buffer-create "*ollama*")
     (start-process "ollama-server" "*ollama*" "ollama" "serve")
-  )
+    )
   (defun stop-ollama ()
     (interactive)
     (delete-process "ollama-server")
     (kill-buffer "*ollama*")
-  )
+    )
   )
 #+end_src
 ** Jinx spell checker
@@ -4393,9 +4437,11 @@ visual-fill-column-mode is a small Emacs minor mode that mimics the effect of fi
   :demand t
   :custom (visual-fill-column-center-text t)
   (visual-fill-column-enable-sensible-window-split t)
-  :hook  ((( latex-mode LaTeX-mode org-mode) . visual-fill-column-mode)
+  :hook  (((latex-mode LaTeX-mode org-mode) . visual-fill-column-mode)
           ((latex-mode LaTeX-mode) . adaptive-wrap-prefix-mode)
           )
+  :config
+  (advice-add 'text-scale-adjust :after #'visual-fill-column-adjust)
   )
 #+end_src
 
@@ -4733,14 +4779,6 @@ We give elfeed the mu4e looks and feel.
   (advice-add 'elfeed-search-quit-window :after #'elfeed-dashboard-update-links))
 #+end_src
 
-** Benchmark
-
-#+begin_src emacs-lisp  :prologue "" :epilogue ""
-
-(my-report-time "News")
-
-#+end_src
-
 
 ** Term & shell :ADVICE:
 
@@ -4778,9 +4816,6 @@ Kill term buffer when exiting.
 
 #+end_src
 
-
-** TODO Miscellaneous
-For all the small additional goodies that make life a bit easier.
 
 ** Spotify
 We use smudge to control spotify from within emacs.
