@@ -51,13 +51,8 @@ The documentation of each package-based (sub-)section is build like follows:
 + Optionally some explanations why (but not how) things are done in a certain way.
 
 This philosophy results in relatively short explanations and at least tries to avoid that the actual code and its description are out-of-sync.
-** [1/16] Open Tasks
-- [ ] Integrate Werner's nomenclature into rainbow mode. A possible starting point is this pull request integrating [[https://github.com/a13/open-color.el/pull/1][rainbow colours in open colour]].
-- [ ] Use Werner's nomenclature in colour-coding instead of the hex values.
+** [1/13] Open Tasks
 - [ ] Write a transient (i.e. 21st century) date-picker.
-- [ ] Create/use a template system for latex-based projects.
-- [ ] Org agenda align tags.
-- [ ] BUGFIX: Only in some situations does org-gtd expand "inbox" to "inbox.org". this is weird.
 - [ ] Org caldav integration
 - [ ] Modify org-timeblock colours.
 - [ ] BUGFIX: org-timeblock columns has a wrong width.(See the subsection)
