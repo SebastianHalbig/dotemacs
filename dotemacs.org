@@ -1899,6 +1899,7 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
   (setq org-gtd-update-ack "4.0.0")
   :custom
   (org-edna-use-inheritance t)
+  (org-gtd-areas-of-focus '("Family" "Research" "Teaching" "Grants and Applications" "Admin"))
   (org-gtd-organize-hooks '(org-gtd-set-area-of-focus org-set-tags-command))
   (org-gtd-directory (car org-agenda-files))
   (org-gtd-inbox (concat (file-name-as-directory org-gtd-directory) "inbox"))
@@ -1911,10 +1912,10 @@ It is summarised in the following pictogram, taken from the org-gtd manual:
                              (wait . "WAIT")
                              (done . "DONE")
                              (canceled . "CANCEL")))
-  <<org-gtd-capture-templates>>
   :config
   (org-edna-mode)
   (org-gtd-mode 1)
+  <<org-gtd-capture-templates>>
   :bind
   (("C-c c"   . org-capture)
    ("C-c d e" . org-gtd-engage)
@@ -1960,7 +1961,7 @@ This library offers an alternative to calendar. It’s very similar and offer on
 #+begin_src emacs-lisp
 (use-package nano-calendar
   :ensure (:type git :host github :repo "rougier/nano-calendar")
-  :bind (:map ergoemacs-override-keymap ("C-c d" . nano-calendar)))
+  :bind (:map ergoemacs-override-keymap ("C-c d d" . nano-calendar)))
 #+end_src
 *** nano-agenda
 We use the [[https://github.com/rougier/nano-agenda][nano-agenda]] for a small mini-buffer style agenda overview.
